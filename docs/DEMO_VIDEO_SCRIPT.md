@@ -1,23 +1,26 @@
 # Demo video script (target 3 minutes)
 
+The demo is built around **GaugeBench Studio** (`python -m gaugebench app`), because judges remember what they see working.
+
 **Before recording:**
-- Generate a fresh suite, run the models once so the results are cached, and open `report.html` in Chrome.
-- Use a large terminal font (18 pt or more) and a clean desktop.
-- Record with OBS or the Xbox Game Bar (Win+G) at 1080p.
+- Run `python -m gaugebench app`, and make the browser window full screen at 1080p (F11). Zoom the page to about 110% if the text looks small.
+- Do one practice generation so everything is warm. Pick a seed you like and note it, so you can get the same task again with **Lock**.
+- Make sure `.env` has `GEMINI_API_KEY` and you still have free-tier quota (each "Ask Gemini" is one request).
+- Record with OBS or the Xbox Game Bar (Win+G).
 
 | Time | Show on screen | Say (roughly) |
 |---|---|---|
-| 0:00–0:15 | Title slide, then one gauge image full screen | "Factories still run on analogue gauges, and companies want AI to read them from camera photos. But can it? We built GaugeBench to find out." |
-| 0:15–0:35 | A grid of 4 different task images: glare dial, dual scale, panel, tank level | "GaugeBench is a factory. It generates gauge photos with questions and answers we already know: 9 kinds of questions and 11 difficulty settings, like glare, camera tilt and log scales." |
-| 0:35–1:05 | Terminal: `python -m gaugebench generate runs/live --per-family 3 --sweep 0 --seed 42`. Then open one `task.json` and scroll to `"validation"` | "One command builds a new suite. Each task is checked before we keep it. A separate image reader re-reads the needle from the pixels and must agree with our answer. Here is the evidence for this task: every check, with numbers." |
-| 1:05–1:25 | `generation_log.json`: the rejection reasons | "Candidates that fail are thrown away and regenerated, for example when glare hides the needle or the needle sits right on a zone boundary. That is how we guarantee every answer can actually be seen in the image." |
-| 1:25–1:45 | Report: the scorer sanity table (oracle 100%, near-miss 0%) | "To prove the scoring works: an answerer that knows the key scores 100%, and one that is just outside the tolerance scores 0%. Random guessing sits near 9%." |
-| 1:45–2:30 | Report: leaderboard → per-family table → one capability curve (glare or scale type) → range-trap or wrong-ring table | "Now a real model. Gemini 3.5 Flash-Lite gets 67% overall, and the split is the interesting part. It is perfect at saying which colour band a needle is in, but it reads the exact value right only 37% of the time. Here's a typical miss: the needle is at 4.6 bar and the model says 'approximately 4'. It snaps to the nearest tick. That's the gap between seeing a gauge and reading one." [[update numbers after the full run; optionally add one capability curve]] |
-| 2:30–2:45 | Failure gallery: zoom into one striking failure | "Here the key is 4.2 bar, and the model said 42: it missed the multiplier. In a plant, that matters." |
-| 2:45–3:00 | README / architecture slide | "Everything is reproducible from a seed, cached so we never pay twice, and extendable with new instruments. GaugeBench shows exactly where AI can be trusted to read instruments, and where it can't. Thank you." |
+| 0:00–0:15 | Title slide, then Studio with an empty inspection window | "Factories still run on analogue gauges, and companies want AI to read them from camera photos. But can it? We built GaugeBench to find out." |
+| 0:15–0:40 | Bench: click **Read the value**, turn the Glare, Tilt and Multiplier knobs, press **Generate** | "GaugeBench is a factory for visual tasks. I pick an instrument and the conditions: glare, camera tilt, a ×10 multiplier. Press Generate, and a brand-new task is drawn, photographed and checked in about a second." |
+| 0:40–1:05 | Toggle **Validator vision**, then point at the factory floor (choose a setting that produces rejects, e.g. Panel alarm with L5) | "Before any task is published, an independent checker re-reads the needle from the pixels. This is what it sees: needle in orange, glare in cyan. Down here is the factory floor: candidates it threw away because glare hid the needle or the numbers overlapped. Nobody, human or model, is ever asked an unreadable question." |
+| 1:05–1:30 | Hover the **loupe** over the dial, type a reading, **Submit** → stamp + tolerance strip | "Now I read it myself, with the loupe. The tolerance is half the smallest division, the same rule the models get. I'm within tolerance, so it's stamped PASS, and the strip shows my reading against the key." |
+| 1:30–1:55 | **Ask Gemini** → its marker lands on the strip; open its reasoning | "Now the same image and question go to Gemini. Here's its answer on the same strip, and its reasoning. It snapped to the nearest tick: close, but outside tolerance." (If it gets it right, say so. Honesty plays well.) |
+| 1:55–2:30 | **Archive** tab: gemini-3.5-flash-lite selected, family chips show accuracy; filter **Wrong**, open one task in the drawer | "Across the whole suite: Gemini is perfect at judging which colour zone a needle is in, but reads the exact value right only about a third of the time. Every wrong answer is here with the image, the key and the model's reasoning." |
+| 2:30–2:45 | Open **full report** from the Archive: the scorer sanity table | "And the scoring is proven fair: an answerer with the key scores 100%, one just outside tolerance scores 0%, and random guessing about 7%." |
+| 2:45–3:00 | Architecture slide or README | "Everything is reproducible from a seed, cached so we never pay twice, and extendable to new instruments. GaugeBench shows exactly where AI can be trusted to read instruments, and where it can't. Thank you." |
 
 **Tips:**
 - Record each part separately and join them in Clipchamp (built into Windows). Re-recording one part is easier than redoing the whole video.
-- If generation feels slow on camera, cut the wait. Say "this takes about 10 seconds" and jump ahead.
-- Keep the mouse still and zoom in (Win + Plus) when showing small numbers.
+- Gemini takes a few seconds to answer. Cut the wait in editing if it drags.
+- Keep the mouse still when you're not pointing at something, and move it slowly when using the loupe.
 - Upload to YouTube as **Unlisted** or to Google Drive with link access, then check the link in a private window.

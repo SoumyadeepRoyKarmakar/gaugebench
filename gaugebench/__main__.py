@@ -8,6 +8,7 @@
     python -m gaugebench list-models gemini
     python -m gaugebench report    runs/demo
     python -m gaugebench all       runs/demo --per-family 20 --sweep 6   (generate + baselines + report)
+    python -m gaugebench app                                              (interactive web app)
 """
 from __future__ import annotations
 
@@ -76,7 +77,17 @@ def main(argv=None) -> int:
     a.add_argument("suite", type=Path)
     gen_args(a)
 
+    ap = sub.add_parser("app", help="open GaugeBench Studio, the interactive web app")
+    ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--suites", type=Path, default=Path("runs"), help="folder holding generated suites")
+    ap.add_argument("--gemini-model", default=None, help="model id for the Ask Gemini button")
+    ap.add_argument("--no-browser", action="store_true")
+
     args = p.parse_args(argv)
+    if args.cmd == "app":
+        from .app import DEFAULT_GEMINI, serve
+        serve(args.port, args.suites, not args.no_browser, args.gemini_model or DEFAULT_GEMINI)
+        return 0
     if args.cmd == "list-models":
         from .models.gemini import list_models
         print("\n".join(list_models()))

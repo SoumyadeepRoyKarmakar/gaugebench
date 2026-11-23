@@ -119,10 +119,28 @@ python -m gaugebench evaluate runs/demo --model gemini:<model-id> --workers 1   
 
 python -m gaugebench report runs/demo        # open runs/demo/report.html
 
-python -m pytest -q                          # 12 tests incl. mutation tests of the validator
+python -m pytest -q                          # 15 tests incl. mutation tests of the validator
+
+python -m gaugebench app                     # GaugeBench Studio, the interactive web app
 ```
 
 Evaluation runs are **resumable and cached**. Tasks already answered are never paid for twice. To add another provider, write a `Model` subclass in `gaugebench/models/` that returns `{"text": ...}`.
+
+## GaugeBench Studio (interactive web app)
+
+`python -m gaugebench app` opens a local web app at `http://127.0.0.1:8765`. It needs no extra installs (Python standard library server, vanilla JS front end).
+
+**Bench**: the factory, live.
+- Pick one of the 9 instruments and set the 11 conditions on rotary knobs (or roll a random L1–L5 mix), then **Generate**. A new task is drawn, photographed and validated in about a second.
+- Read it yourself, using the **loupe** (hover to magnify) if you like. You are scored with the same tolerance the models get, on a paper work order with a tolerance strip that shows your reading against the key.
+- **Validator vision** shows what the independent checker measured: needle pixels in orange, set points in magenta, glare in cyan.
+- The **factory floor** shows every candidate that was rejected before this task was published, and why (glare over the needle, numbers overlapping, needle on a zone edge...).
+- **Ask Gemini** sends the exact same image and question to the model (needs `GEMINI_API_KEY` in `.env`) and puts its answer on the same strip, with its reasoning.
+- The answer key and the true needle value stay on the server until you submit or reveal (enforced by a test).
+
+**Archive**: browse any suite in `runs/` as a grid, filter by family or by right/wrong for any model, and open a task to see the image, the key, every model's answer and reasoning, and all validator checks.
+
+Keyboard: `G` generate, `Enter` submit, `1`–`9` pick a choice, `L` loupe, `V` validator vision, `Esc` close.
 
 ## Code map
 
@@ -138,6 +156,7 @@ Evaluation runs are **resumable and cached**. Tasks already answered are never p
 | `generate.py` | sample → validate → publish or reject; deterministic seeds |
 | `models/` | Claude and Gemini adapters (official SDKs) and offline baselines |
 | `evaluate.py`, `score.py`, `report.py` | running models, scoring, and the HTML report |
+| `app.py`, `web/` | GaugeBench Studio: JSON API and the interactive front end |
 
 ## Limitations (honest statement)
 

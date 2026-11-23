@@ -161,3 +161,39 @@ def test_label_overlap_detected():
 def sample_gauge_fixed(sc):
     from gaugebench.spec import GaugeSpec
     return GaugeSpec(scale=sc, value=(sc.vmin + sc.vmax) / 2, unit="rpm")
+
+
+def test_studio_api_hides_key_until_answered(tmp_path):
+    """The web app must never leak the answer key (or the true needle value) before
+    the reader commits, and must score answers exactly like the benchmark."""
+    import json as _json
+    import threading
+    import urllib.request
+    from http.server import ThreadingHTTPServer
+    from gaugebench.app import State, make_handler
+
+    state = State(tmp_path, "unused")
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(state))
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{httpd.server_address[1]}"
+
+    def call(path, body=None):
+        req = urllib.request.Request(base + path, data=None if body is None else _json.dumps(body).encode(),
+                                     headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req) as r:
+            return _json.loads(r.read())
+
+    try:
+        meta = call("/api/meta")
+        assert "read_value" in [f["id"] for f in meta["families"]]
+        t = call("/api/generate", {"family": "read_value", "factors": {}, "seed": "4242"})
+        blob = _json.dumps(t)
+        assert "answer" not in t and "tolerance" not in t and "gauges" not in t
+        assert "key=" not in blob and "cv=" not in blob
+        key = state.get(t["id"])["task"]
+        right = call("/api/answer", {"id": t["id"], "answer": str(key["answer"])})
+        assert right["score"]["correct"] and right["key"]["answer"] == key["answer"]
+        wrong = call("/api/answer", {"id": t["id"], "answer": str(key["answer"] + 10 * key["tolerance"])})
+        assert not wrong["score"]["correct"]
+    finally:
+        httpd.shutdown()
