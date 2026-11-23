@@ -232,10 +232,23 @@ def check_legibility(scene: Scene, i: int) -> list[Check]:
         gap_px = min(gaps) if gaps else 0.0
     all_labels = r.labels + r.sec_labels
     lbl_px = min(lb.height_px for lb in all_labels) * s if all_labels else 0.0
+    clash = _label_clash(r.labels) or _label_clash(r.sec_labels)
     return [
         Check("tick_divisions_resolvable", gap_px >= MIN_TICK_GAP_PX, f"min tick gap {gap_px:.1f}px"),
         Check("labels_legible", lbl_px >= MIN_LABEL_PX, f"label height {lbl_px:.1f}px"),
+        Check("labels_do_not_overlap", clash is None, clash or "all printed numbers separated"),
     ]
+
+
+def _label_clash(labels) -> str | None:
+    """Printed numbers must not touch each other (bounding boxes + 3 px padding)."""
+    pad = 3.0
+    for i, a in enumerate(labels):
+        for b in labels[i + 1:]:
+            if (abs(a.x - b.x) < (a.width_px + b.width_px) / 2 + pad
+                    and abs(a.y - b.y) < (a.height_px + b.height_px) / 2):
+                return f"labels '{a.text}' and '{b.text}' overlap"
+    return None
 
 
 def margin_check(name: str, margin: float, needed: float, unit: str = "") -> Check:

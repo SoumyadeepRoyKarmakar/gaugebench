@@ -57,13 +57,15 @@ def evaluate(suite: Path, model: Model, workers: int = 4, limit: int | None = No
         return rec
 
     n_ok = 0
-    with ThreadPoolExecutor(max_workers=workers) as ex:
+    with ThreadPoolExecutor(max_workers=workers) as ex, open(out, "a", encoding="utf-8") as live:
         futs = [ex.submit(run, t) for t in todo]
         for i, fut in enumerate(as_completed(futs), 1):
             rec = fut.result()
             with lock:
                 done[rec["id"]] = rec
                 n_ok += rec["correct"]
+                live.write(json.dumps(rec, ensure_ascii=False) + "\n")   # saved immediately:
+                live.flush()                                              # an interrupted run loses nothing
             if i % 10 == 0 or i == len(futs):
                 log(f"  {i}/{len(futs)}  running acc {n_ok / i:.1%}  ({time.time() - t0:.0f}s)")
 

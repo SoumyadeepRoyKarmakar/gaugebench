@@ -66,6 +66,7 @@ class LabelInfo:
     x: float
     y: float
     height_px: float
+    width_px: float = 0.0
 
 
 @dataclass
@@ -149,7 +150,7 @@ def render_gauge(spec: GaugeSpec) -> GaugeRender:
             txt = fmt_value(t.value)
             lx, ly = polar(cx, cy, R * R_LABEL, a)
             d.text((lx, ly), txt, font=f_lbl, fill=ink + (255,), anchor="mm")
-            labels.append(LabelInfo(t.value, txt, lx / SS, ly / SS, lbl_px / SS))
+            labels.append(LabelInfo(t.value, txt, lx / SS, ly / SS, lbl_px / SS, d.textlength(txt, font=f_lbl) / SS))
 
     # optional inner secondary scale, printed in red (dual-scale dials, e.g. bar + psi)
     sec_ticks_m = sec_major_m = None
@@ -174,7 +175,8 @@ def render_gauge(spec: GaugeSpec) -> GaugeRender:
                 txt = fmt_value(t.value)
                 lx, ly = polar(cx, cy, R * R_SEC_LABEL, a)
                 d.text((lx, ly), txt, font=font(f2px), fill=red + (255,), anchor="mm")
-                sec_labels.append(LabelInfo(t.value, txt, lx / SS, ly / SS, f2px / SS))
+                sec_labels.append(LabelInfo(t.value, txt, lx / SS, ly / SS, f2px / SS,
+                                            d.textlength(txt, font=font(f2px)) / SS))
 
     # unit + multiplier text
     unit_px = int(R * 0.10)

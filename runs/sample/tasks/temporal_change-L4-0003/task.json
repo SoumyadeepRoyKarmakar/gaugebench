@@ -117,6 +117,11 @@
       "detail": "label height 18.1px"
     },
     {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
+    },
+    {
       "name": "tick_divisions_resolvable",
       "passed": true,
       "detail": "min tick gap 7.3px"
@@ -125,6 +130,11 @@
       "name": "labels_legible",
       "passed": true,
       "detail": "label height 16.9px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
     },
     {
       "name": "change_larger_than_reading_error",

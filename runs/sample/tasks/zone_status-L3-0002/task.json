@@ -100,6 +100,11 @@
       "detail": "label height 24.3px"
     },
     {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
+    },
+    {
       "name": "needle_clear_of_zone_boundary",
       "passed": true,
       "detail": "margin 15.3deg (need 2.5)"

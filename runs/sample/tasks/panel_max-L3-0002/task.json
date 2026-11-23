@@ -1,26 +1,27 @@
 {
   "id": "panel_max-L3-0002",
   "family": "panel_max",
-  "question": "These 3 pressure gauges have different ranges. Which gauge shows the highest pressure in bar? Answer with its tag. Allowed options: PI-603, PI-626, PI-632. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <choice>' using one of the allowed options.",
-  "answer": "PI-626",
+  "question": "These 4 pressure gauges have different ranges. Which gauge shows the highest pressure in bar? Answer with its tag. Allowed options: PI-201, PI-218, PI-222, PI-231. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <choice>' using one of the allowed options.",
+  "answer": "PI-218",
   "answer_type": "choice",
   "tolerance": null,
   "choices": [
-    "PI-603",
-    "PI-626",
-    "PI-632"
+    "PI-201",
+    "PI-218",
+    "PI-222",
+    "PI-231"
   ],
   "unit": "bar",
   "factors": {
-    "scale_kind": "sqrt",
-    "sweep": "90",
+    "scale_kind": "offset",
+    "sweep": "180",
     "minors_per_major": 2,
-    "label_every": 1,
-    "multiplier": "x1",
+    "label_every": 2,
+    "multiplier": "x10",
     "face": "dark",
     "glare": 0,
-    "tilt": 15,
-    "blur": 1.0,
+    "tilt": 0,
+    "blur": 2.0,
     "noise": 0.0,
     "lighting": 0.7
   },
@@ -28,22 +29,66 @@
     {
       "scale": {
         "vmin": 0,
-        "vmax": 16,
+        "vmax": 10,
         "kind": "linear",
-        "start_angle": -45.0,
-        "sweep": 90.0,
-        "major_step": 2,
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 1,
         "minors_per_major": 2,
-        "label_every": 1,
+        "label_every": 2,
         "tick_origin": null
       },
-      "value": 3.603158702756702,
+      "value": 2.1928497906018696,
       "unit": "bar",
       "multiplier": 1.0,
       "face": "dark",
       "zones": [],
       "setpoint": null,
-      "tag": "PI-603",
+      "tag": "PI-201",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 16,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 2,
+        "minors_per_major": 2,
+        "label_every": 2,
+        "tick_origin": null
+      },
+      "value": 14.988351574787409,
+      "unit": "bar",
+      "multiplier": 1.0,
+      "face": "dark",
+      "zones": [],
+      "setpoint": null,
+      "tag": "PI-218",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 25,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 5,
+        "minors_per_major": 2,
+        "label_every": 2,
+        "tick_origin": null
+      },
+      "value": 1.6795779550362058,
+      "unit": "bar",
+      "multiplier": 1.0,
+      "face": "dark",
+      "zones": [],
+      "setpoint": null,
+      "tag": "PI-222",
       "secondary": null,
       "secondary_unit": ""
     },
@@ -52,63 +97,41 @@
         "vmin": 0,
         "vmax": 10,
         "kind": "linear",
-        "start_angle": -45.0,
-        "sweep": 90.0,
+        "start_angle": -90.0,
+        "sweep": 180.0,
         "major_step": 1,
         "minors_per_major": 2,
-        "label_every": 1,
+        "label_every": 2,
         "tick_origin": null
       },
-      "value": 8.731693912258669,
+      "value": 0.6461773487469911,
       "unit": "bar",
       "multiplier": 1.0,
       "face": "dark",
       "zones": [],
       "setpoint": null,
-      "tag": "PI-626",
-      "secondary": null,
-      "secondary_unit": ""
-    },
-    {
-      "scale": {
-        "vmin": 0,
-        "vmax": 6,
-        "kind": "linear",
-        "start_angle": -45.0,
-        "sweep": 90.0,
-        "major_step": 1,
-        "minors_per_major": 2,
-        "label_every": 1,
-        "tick_origin": null
-      },
-      "value": 3.006361424154139,
-      "unit": "bar",
-      "multiplier": 1.0,
-      "face": "dark",
-      "zones": [],
-      "setpoint": null,
-      "tag": "PI-632",
+      "tag": "PI-231",
       "secondary": null,
       "secondary_unit": ""
     }
   ],
   "meta": {
-    "n_gauges": 3,
+    "n_gauges": 4,
     "angle_trap": false,
-    "trap_tag": "PI-626",
+    "trap_tag": "PI-218",
     "suite_kind": "mixed",
     "level": 3,
     "sweep_factor": null,
-    "attempts": 1,
+    "attempts": 5,
     "generator_version": "0.1.0"
   },
-  "seed": 230266920849992,
+  "seed": 274087951512856,
   "image": "tasks/panel_max-L3-0002/image.png",
   "validation": [
     {
       "name": "pixel_reread_needle",
       "passed": true,
-      "detail": "cv=3.582 key=3.603 err=0.0214 tol=0.5"
+      "detail": "cv=2.189 key=2.193 err=0.0036 tol=0.25"
     },
     {
       "name": "needle_not_glared",
@@ -118,22 +141,27 @@
     {
       "name": "needle_contrast",
       "passed": true,
-      "detail": "contrast=84.4"
+      "detail": "contrast=61.1"
     },
     {
       "name": "tick_divisions_resolvable",
       "passed": true,
-      "detail": "min tick gap 14.0px"
+      "detail": "min tick gap 22.6px"
     },
     {
       "name": "labels_legible",
       "passed": true,
-      "detail": "label height 18.2px"
+      "detail": "label height 18.3px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
     },
     {
       "name": "pixel_reread_needle",
       "passed": true,
-      "detail": "cv=8.703 key=8.732 err=0.0288 tol=0.25"
+      "detail": "cv=14.98 key=14.99 err=0.012 tol=0.5"
     },
     {
       "name": "needle_not_glared",
@@ -143,22 +171,27 @@
     {
       "name": "needle_contrast",
       "passed": true,
-      "detail": "contrast=93.9"
+      "detail": "contrast=60.0"
     },
     {
       "name": "tick_divisions_resolvable",
       "passed": true,
-      "detail": "min tick gap 10.8px"
+      "detail": "min tick gap 28.5px"
     },
     {
       "name": "labels_legible",
       "passed": true,
-      "detail": "label height 17.7px"
+      "detail": "label height 18.3px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
     },
     {
       "name": "pixel_reread_needle",
       "passed": true,
-      "detail": "cv=2.988 key=3.006 err=0.0181 tol=0.25"
+      "detail": "cv=1.701 key=1.68 err=0.0216 tol=1.25"
     },
     {
       "name": "needle_not_glared",
@@ -168,22 +201,57 @@
     {
       "name": "needle_contrast",
       "passed": true,
-      "detail": "contrast=83.8"
+      "detail": "contrast=62.8"
     },
     {
       "name": "tick_divisions_resolvable",
       "passed": true,
-      "detail": "min tick gap 17.5px"
+      "detail": "min tick gap 45.5px"
     },
     {
       "name": "labels_legible",
       "passed": true,
-      "detail": "label height 17.0px"
+      "detail": "label height 18.3px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=0.6532 key=0.6462 err=0.00705 tol=0.25"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=64.3"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 22.6px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 18.3px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
     },
     {
       "name": "winner_clear_margin",
       "passed": true,
-      "detail": "margin 5.13 bar (need 1.5)"
+      "detail": "margin 12.8 bar (need 1.5)"
     }
   ]
 }

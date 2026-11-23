@@ -1,12 +1,12 @@
 {
   "id": "sweep-sweep-90-000",
   "family": "read_value",
-  "question": "This is a photo of an industrial gauge. What is the actual measured value it shows, in psi? Take into account everything printed on the dial. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
-  "answer": 30.0,
+  "question": "This is a photo of an industrial gauge. What is the actual measured value it shows, in °C? Take into account everything printed on the dial. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 53.0,
   "answer_type": "number",
   "tolerance": 5.0,
   "choices": null,
-  "unit": "psi",
+  "unit": "°C",
   "factors": {
     "scale_kind": "linear",
     "sweep": "90",
@@ -24,7 +24,7 @@
     {
       "scale": {
         "vmin": 0,
-        "vmax": 300,
+        "vmax": 200,
         "kind": "linear",
         "start_angle": -45.0,
         "sweep": 90.0,
@@ -33,8 +33,8 @@
         "label_every": 1,
         "tick_origin": null
       },
-      "value": 30.155970697366115,
-      "unit": "psi",
+      "value": 52.91967240875388,
+      "unit": "°C",
       "multiplier": 1.0,
       "face": "light",
       "zones": [],
@@ -48,16 +48,16 @@
     "suite_kind": "sweep",
     "level": null,
     "sweep_factor": "sweep",
-    "attempts": 1,
+    "attempts": 2,
     "generator_version": "0.1.0"
   },
-  "seed": 72129907367623,
+  "seed": 208110062917761,
   "image": "tasks/sweep-sweep-90-000/image.png",
   "validation": [
     {
       "name": "pixel_reread_needle",
       "passed": true,
-      "detail": "cv=30.27 key=30.16 err=0.116 tol=5"
+      "detail": "cv=52.73 key=52.92 err=0.192 tol=5"
     },
     {
       "name": "needle_not_glared",
@@ -67,17 +67,22 @@
     {
       "name": "needle_contrast",
       "passed": true,
-      "detail": "contrast=195.3"
+      "detail": "contrast=181.5"
     },
     {
       "name": "tick_divisions_resolvable",
       "passed": true,
-      "detail": "min tick gap 11.0px"
+      "detail": "min tick gap 16.8px"
     },
     {
       "name": "labels_legible",
       "passed": true,
       "detail": "label height 27.5px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
     }
   ]
 }

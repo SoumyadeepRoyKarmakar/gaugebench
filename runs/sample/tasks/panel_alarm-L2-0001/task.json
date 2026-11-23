@@ -177,6 +177,11 @@
       "detail": "label height 15.3px"
     },
     {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
+    },
+    {
       "name": "pixel_reread_needle",
       "passed": true,
       "detail": "cv=185.8 key=185.5 err=0.358 tol=25"
@@ -202,6 +207,11 @@
       "detail": "label height 15.8px"
     },
     {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
+    },
+    {
       "name": "pixel_reread_needle",
       "passed": true,
       "detail": "cv=350.9 key=351 err=0.0772 tol=25"
@@ -225,6 +235,11 @@
       "name": "labels_legible",
       "passed": true,
       "detail": "label height 15.2px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
     },
     {
       "name": "all_needles_clear_of_danger_boundary",

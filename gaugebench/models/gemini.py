@@ -19,7 +19,8 @@ from .base import Model
 SYSTEM = ("You are an experienced plant technician reading analogue instruments from photos. "
           "Read the instrument carefully and answer exactly the question asked.")
 BLIND_NOTE = "(No image is attached. Answer as best you can anyway.)"
-RETRY_CODES = {429, 500, 503}
+RETRY_CODES = {429, 500, 503, 504}
+REQUEST_TIMEOUT_MS = 120_000
 
 
 class Gemini(Model):
@@ -53,6 +54,12 @@ class Gemini(Model):
                     delay = min(delay * 2, 120)
                     continue
                 return {"text": "", "error": f"api_{e.code}: {e.message}"}
+            except Exception as e:          # network errors / request timeouts from the HTTP layer
+                if attempt + 1 < self.max_tries:
+                    time.sleep(delay)
+                    delay = min(delay * 2, 120)
+                    continue
+                return {"text": "", "error": f"network: {type(e).__name__}: {e}"}
 
         cand = resp.candidates[0] if resp.candidates else None
         usage = resp.usage_metadata
@@ -80,4 +87,5 @@ def _client() -> genai.Client:
     if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")):
         raise SystemExit("No Gemini API key found. Get a free key at https://aistudio.google.com, then run:\n"
                          '  $env:GEMINI_API_KEY = "your-key"      (PowerShell)')
-    return genai.Client()
+    # 2-minute per-request limit so a stuck or overloaded endpoint fails fast and gets retried
+    return genai.Client(http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS))

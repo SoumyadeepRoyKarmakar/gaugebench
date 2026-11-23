@@ -1,67 +1,66 @@
 {
   "id": "panel_alarm-L4-0003",
   "family": "panel_alarm",
-  "question": "This control panel has 5 gauges, each with its own coloured bands (green = normal, yellow = warning, red = danger). Exactly one gauge has its needle in the red danger band. Which one? Answer with its tag. Allowed options: PI-319, PI-322, PI-325, PI-327, PI-330. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <choice>' using one of the allowed options.",
-  "answer": "PI-330",
+  "question": "This control panel has 4 gauges, each with its own coloured bands (green = normal, yellow = warning, red = danger). Exactly one gauge has its needle in the red danger band. Which one? Answer with its tag. Allowed options: PI-403, PI-415, PI-422, PI-433. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <choice>' using one of the allowed options.",
+  "answer": "PI-415",
   "answer_type": "choice",
   "tolerance": null,
   "choices": [
-    "PI-319",
-    "PI-322",
-    "PI-325",
-    "PI-327",
-    "PI-330"
+    "PI-403",
+    "PI-415",
+    "PI-422",
+    "PI-433"
   ],
   "unit": "",
   "factors": {
     "scale_kind": "sqrt",
-    "sweep": "180",
+    "sweep": "270",
     "minors_per_major": 5,
-    "label_every": 1,
+    "label_every": 2,
     "multiplier": "x1",
-    "face": "light",
-    "glare": 0,
-    "tilt": 0,
-    "blur": 2.0,
-    "noise": 8.0,
-    "lighting": 0.7
+    "face": "dark",
+    "glare": 2,
+    "tilt": 15,
+    "blur": 1.0,
+    "noise": 0.0,
+    "lighting": 0.45
   },
   "gauges": [
     {
       "scale": {
         "vmin": 0,
-        "vmax": 100,
+        "vmax": 400,
         "kind": "sqrt",
-        "start_angle": -90.0,
-        "sweep": 180.0,
-        "major_step": 10,
+        "start_angle": -135.0,
+        "sweep": 270.0,
+        "major_step": 100,
         "minors_per_major": 5,
-        "label_every": 1,
+        "label_every": 2,
         "tick_origin": null
       },
-      "value": 66.21299731518762,
-      "unit": "m³/h",
+      "value": 234.29165821160703,
+      "unit": "L/min",
       "multiplier": 1.0,
-      "face": "light",
+      "face": "dark",
       "zones": [
         {
           "lo": 0.0,
-          "hi": 70,
-          "name": "normal"
-        },
-        {
-          "lo": 70,
-          "hi": 90,
-          "name": "warning"
-        },
-        {
-          "lo": 90,
           "hi": 100,
           "name": "danger"
+        },
+        {
+          "lo": 100,
+          "hi": 200,
+          "name": "warning"
+        },
+        {
+          "lo": 200,
+          "hi": 400,
+          "name": "normal"
         }
       ],
       "setpoint": null,
-      "tag": "PI-319",
+      "tag": "PI-403",
       "secondary": null,
       "secondary_unit": ""
     },
@@ -70,25 +69,25 @@
         "vmin": 0,
         "vmax": 50,
         "kind": "sqrt",
-        "start_angle": -90.0,
-        "sweep": 180.0,
+        "start_angle": -135.0,
+        "sweep": 270.0,
         "major_step": 10,
         "minors_per_major": 5,
-        "label_every": 1,
+        "label_every": 2,
         "tick_origin": null
       },
-      "value": 6.369901316158106,
+      "value": 41.6016433176026,
       "unit": "m³/h",
       "multiplier": 1.0,
-      "face": "light",
+      "face": "dark",
       "zones": [
         {
           "lo": 0.0,
-          "hi": 20,
+          "hi": 30,
           "name": "normal"
         },
         {
-          "lo": 20,
+          "lo": 30,
           "hi": 40,
           "name": "warning"
         },
@@ -99,7 +98,7 @@
         }
       ],
       "setpoint": null,
-      "tag": "PI-322",
+      "tag": "PI-415",
       "secondary": null,
       "secondary_unit": ""
     },
@@ -108,17 +107,17 @@
         "vmin": 0,
         "vmax": 50,
         "kind": "sqrt",
-        "start_angle": -90.0,
-        "sweep": 180.0,
+        "start_angle": -135.0,
+        "sweep": 270.0,
         "major_step": 10,
         "minors_per_major": 5,
-        "label_every": 1,
+        "label_every": 2,
         "tick_origin": null
       },
-      "value": 5.427884037950325,
+      "value": 23.971845839213746,
       "unit": "m³/h",
       "multiplier": 1.0,
-      "face": "light",
+      "face": "dark",
       "zones": [
         {
           "lo": 0.0,
@@ -127,112 +126,74 @@
         },
         {
           "lo": 20,
-          "hi": 40,
+          "hi": 30,
           "name": "warning"
         },
         {
-          "lo": 40,
+          "lo": 30,
           "hi": 50,
           "name": "danger"
         }
       ],
       "setpoint": null,
-      "tag": "PI-325",
+      "tag": "PI-422",
       "secondary": null,
       "secondary_unit": ""
     },
     {
       "scale": {
         "vmin": 0,
-        "vmax": 50,
+        "vmax": 400,
         "kind": "sqrt",
-        "start_angle": -90.0,
-        "sweep": 180.0,
-        "major_step": 10,
+        "start_angle": -135.0,
+        "sweep": 270.0,
+        "major_step": 100,
         "minors_per_major": 5,
-        "label_every": 1,
+        "label_every": 2,
         "tick_origin": null
       },
-      "value": 28.033904721954773,
-      "unit": "m³/h",
+      "value": 150.4596491321503,
+      "unit": "L/min",
       "multiplier": 1.0,
-      "face": "light",
+      "face": "dark",
       "zones": [
         {
           "lo": 0.0,
-          "hi": 20,
-          "name": "normal"
-        },
-        {
-          "lo": 20,
-          "hi": 40,
-          "name": "warning"
-        },
-        {
-          "lo": 40,
-          "hi": 50,
-          "name": "danger"
-        }
-      ],
-      "setpoint": null,
-      "tag": "PI-327",
-      "secondary": null,
-      "secondary_unit": ""
-    },
-    {
-      "scale": {
-        "vmin": 0,
-        "vmax": 100,
-        "kind": "sqrt",
-        "start_angle": -90.0,
-        "sweep": 180.0,
-        "major_step": 10,
-        "minors_per_major": 5,
-        "label_every": 1,
-        "tick_origin": null
-      },
-      "value": 94.85106376857941,
-      "unit": "m³/h",
-      "multiplier": 1.0,
-      "face": "light",
-      "zones": [
-        {
-          "lo": 0.0,
-          "hi": 80,
-          "name": "normal"
-        },
-        {
-          "lo": 80,
-          "hi": 90,
-          "name": "warning"
-        },
-        {
-          "lo": 90,
           "hi": 100,
+          "name": "normal"
+        },
+        {
+          "lo": 100,
+          "hi": 300,
+          "name": "warning"
+        },
+        {
+          "lo": 300,
+          "hi": 400,
           "name": "danger"
         }
       ],
       "setpoint": null,
-      "tag": "PI-330",
+      "tag": "PI-433",
       "secondary": null,
       "secondary_unit": ""
     }
   ],
   "meta": {
-    "n_gauges": 5,
+    "n_gauges": 4,
     "suite_kind": "mixed",
     "level": 4,
     "sweep_factor": null,
-    "attempts": 1,
+    "attempts": 5,
     "generator_version": "0.1.0"
   },
-  "seed": 7421496405003,
+  "seed": 83596921181859,
   "image": "tasks/panel_alarm-L4-0003/image.png",
   "validation": [
     {
       "name": "pixel_reread_needle",
       "passed": true,
-      "detail": "cv=66.09 key=66.21 err=0.124 tol=1"
+      "detail": "cv=234.2 key=234.3 err=0.071 tol=10"
     },
     {
       "name": "needle_not_glared",
@@ -242,22 +203,27 @@
     {
       "name": "needle_contrast",
       "passed": true,
-      "detail": "contrast=67.2"
+      "detail": "contrast=55.4"
     },
     {
       "name": "tick_divisions_resolvable",
       "passed": true,
-      "detail": "min tick gap 4.7px"
+      "detail": "min tick gap 16.9px"
     },
     {
       "name": "labels_legible",
       "passed": true,
-      "detail": "label height 18.3px"
+      "detail": "label height 17.5px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
     },
     {
       "name": "pixel_reread_needle",
       "passed": true,
-      "detail": "cv=6.368 key=6.37 err=0.00196 tol=1"
+      "detail": "cv=41.6 key=41.6 err=0.00657 tol=1"
     },
     {
       "name": "needle_not_glared",
@@ -267,22 +233,27 @@
     {
       "name": "needle_contrast",
       "passed": true,
-      "detail": "contrast=76.2"
+      "detail": "contrast=52.2"
     },
     {
       "name": "tick_divisions_resolvable",
       "passed": true,
-      "detail": "min tick gap 9.7px"
+      "detail": "min tick gap 12.9px"
     },
     {
       "name": "labels_legible",
       "passed": true,
-      "detail": "label height 18.3px"
+      "detail": "label height 16.8px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
     },
     {
       "name": "pixel_reread_needle",
       "passed": true,
-      "detail": "cv=5.457 key=5.428 err=0.029 tol=1"
+      "detail": "cv=23.95 key=23.97 err=0.0246 tol=1"
     },
     {
       "name": "needle_not_glared",
@@ -292,72 +263,57 @@
     {
       "name": "needle_contrast",
       "passed": true,
-      "detail": "contrast=69.4"
+      "detail": "contrast=53.1"
     },
     {
       "name": "tick_divisions_resolvable",
       "passed": true,
-      "detail": "min tick gap 9.7px"
+      "detail": "min tick gap 14.0px"
     },
     {
       "name": "labels_legible",
       "passed": true,
-      "detail": "label height 18.3px"
+      "detail": "label height 18.2px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
     },
     {
       "name": "pixel_reread_needle",
       "passed": true,
-      "detail": "cv=28 key=28.03 err=0.0344 tol=1"
+      "detail": "cv=150.3 key=150.5 err=0.175 tol=10"
     },
     {
       "name": "needle_not_glared",
       "passed": true,
-      "detail": "0.00 of needle under glare"
+      "detail": "0.03 of needle under glare"
     },
     {
       "name": "needle_contrast",
       "passed": true,
-      "detail": "contrast=75.5"
+      "detail": "contrast=53.5"
     },
     {
       "name": "tick_divisions_resolvable",
       "passed": true,
-      "detail": "min tick gap 9.7px"
+      "detail": "min tick gap 16.7px"
     },
     {
       "name": "labels_legible",
       "passed": true,
-      "detail": "label height 18.3px"
+      "detail": "label height 17.3px"
     },
     {
-      "name": "pixel_reread_needle",
+      "name": "labels_do_not_overlap",
       "passed": true,
-      "detail": "cv=94.77 key=94.85 err=0.0842 tol=1"
-    },
-    {
-      "name": "needle_not_glared",
-      "passed": true,
-      "detail": "0.00 of needle under glare"
-    },
-    {
-      "name": "needle_contrast",
-      "passed": true,
-      "detail": "contrast=67.9"
-    },
-    {
-      "name": "tick_divisions_resolvable",
-      "passed": true,
-      "detail": "min tick gap 4.7px"
-    },
-    {
-      "name": "labels_legible",
-      "passed": true,
-      "detail": "label height 18.3px"
+      "detail": "all printed numbers separated"
     },
     {
       "name": "all_needles_clear_of_danger_boundary",
       "passed": true,
-      "detail": "margin 4.54deg (need 3)"
+      "detail": "margin 4.79deg (need 3)"
     }
   ]
 }

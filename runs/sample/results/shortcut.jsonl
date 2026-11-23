@@ -1,6 +1,6 @@
 {"id": "read_value-L1-0000", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 60.0", "parsed": 60.0, "correct": true, "parse_ok": true, "abs_err": 3.0, "err_tol_units": 0.6}
 {"id": "read_value-L2-0001", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 3.0", "parsed": 3.0, "correct": false, "parse_ok": true, "abs_err": 184.0, "err_tol_units": 18.4}
-{"id": "read_value-L3-0002", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 20.0", "parsed": 20.0, "correct": false, "parse_ok": true, "abs_err": 243.0, "err_tol_units": 48.6}
+{"id": "read_value-L3-0002", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 3.0", "parsed": 3.0, "correct": false, "parse_ok": true, "abs_err": 447.0, "err_tol_units": 89.4}
 {"id": "read_value-L4-0003", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 200.0", "parsed": 200.0, "correct": false, "parse_ok": true, "abs_err": 155.0, "err_tol_units": 6.2}
 {"id": "zone_status-L1-0000", "family": "zone_status", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: normal", "parsed": "normal", "correct": false, "parse_ok": true, "abs_err": null, "err_tol_units": null}
 {"id": "zone_status-L2-0001", "family": "zone_status", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: normal", "parsed": "normal", "correct": false, "parse_ok": true, "abs_err": null, "err_tol_units": null}
@@ -13,10 +13,10 @@
 {"id": "panel_alarm-L1-0000", "family": "panel_alarm", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: PI-201", "parsed": "PI-201", "correct": false, "parse_ok": true, "abs_err": null, "err_tol_units": null}
 {"id": "panel_alarm-L2-0001", "family": "panel_alarm", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: PI-701", "parsed": "PI-701", "correct": false, "parse_ok": true, "abs_err": null, "err_tol_units": null}
 {"id": "panel_alarm-L3-0002", "family": "panel_alarm", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: PI-606", "parsed": "PI-606", "correct": false, "parse_ok": true, "abs_err": null, "err_tol_units": null}
-{"id": "panel_alarm-L4-0003", "family": "panel_alarm", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: PI-319", "parsed": "PI-319", "correct": false, "parse_ok": true, "abs_err": null, "err_tol_units": null}
+{"id": "panel_alarm-L4-0003", "family": "panel_alarm", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: PI-403", "parsed": "PI-403", "correct": false, "parse_ok": true, "abs_err": null, "err_tol_units": null}
 {"id": "panel_max-L1-0000", "family": "panel_max", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: PI-520", "parsed": "PI-520", "correct": true, "parse_ok": true, "abs_err": null, "err_tol_units": null}
 {"id": "panel_max-L2-0001", "family": "panel_max", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: PI-427", "parsed": "PI-427", "correct": true, "parse_ok": true, "abs_err": null, "err_tol_units": null}
-{"id": "panel_max-L3-0002", "family": "panel_max", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: PI-626", "parsed": "PI-626", "correct": true, "parse_ok": true, "abs_err": null, "err_tol_units": null}
+{"id": "panel_max-L3-0002", "family": "panel_max", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: PI-218", "parsed": "PI-218", "correct": true, "parse_ok": true, "abs_err": null, "err_tol_units": null}
 {"id": "panel_max-L4-0003", "family": "panel_max", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: PI-101", "parsed": "PI-101", "correct": true, "parse_ok": true, "abs_err": null, "err_tol_units": null}
 {"id": "temporal_change-L1-0000", "family": "temporal_change", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 0", "parsed": 0.0, "correct": false, "parse_ok": true, "abs_err": 62.0, "err_tol_units": 15.5}
 {"id": "temporal_change-L2-0001", "family": "temporal_change", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 0", "parsed": 0.0, "correct": false, "parse_ok": true, "abs_err": 388.0, "err_tol_units": 7.76}
@@ -40,7 +40,7 @@
 {"id": "sweep-scale_kind-log-000", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 500.5", "parsed": 500.5, "correct": false, "parse_ok": true, "abs_err": 477.5, "err_tol_units": 95.5}
 {"id": "sweep-sweep-270-000", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 80.0", "parsed": 80.0, "correct": false, "parse_ok": true, "abs_err": 24.5, "err_tol_units": 12.25}
 {"id": "sweep-sweep-180-000", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 100.0", "parsed": 100.0, "correct": false, "parse_ok": true, "abs_err": 18.0, "err_tol_units": 3.6}
-{"id": "sweep-sweep-90-000", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 150.0", "parsed": 150.0, "correct": false, "parse_ok": true, "abs_err": 120.0, "err_tol_units": 24.0}
+{"id": "sweep-sweep-90-000", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 100.0", "parsed": 100.0, "correct": false, "parse_ok": true, "abs_err": 47.0, "err_tol_units": 9.4}
 {"id": "sweep-minors_per_major-2-000", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 8.0", "parsed": 8.0, "correct": false, "parse_ok": true, "abs_err": 5.1, "err_tol_units": 10.2}
 {"id": "sweep-minors_per_major-5-000", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 300.0", "parsed": 300.0, "correct": false, "parse_ok": true, "abs_err": 233.0, "err_tol_units": 23.3}
 {"id": "sweep-minors_per_major-10-000", "family": "read_value", "model": "shortcut", "latency_s": 0.0, "text": "ANSWER: 60.0", "parsed": 60.0, "correct": false, "parse_ok": true, "abs_err": 23.700000000000003, "err_tol_units": 23.700000000000003}

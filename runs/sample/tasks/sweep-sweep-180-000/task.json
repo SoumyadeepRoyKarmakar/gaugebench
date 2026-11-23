@@ -78,6 +78,11 @@
       "name": "labels_legible",
       "passed": true,
       "detail": "label height 27.5px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
     }
   ]
 }

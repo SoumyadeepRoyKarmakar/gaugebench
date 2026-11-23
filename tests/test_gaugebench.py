@@ -138,7 +138,7 @@ def test_gemini_adapter_offline(monkeypatch, tmp_path):
                                    candidates=[SimpleNamespace(finish_reason="STOP")],
                                    usage_metadata=SimpleNamespace(prompt_token_count=600, candidates_token_count=20))
 
-    monkeypatch.setattr(gm.genai, "Client", lambda: SimpleNamespace(models=FakeModels()))
+    monkeypatch.setattr(gm.genai, "Client", lambda **kw: SimpleNamespace(models=FakeModels()))
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
     monkeypatch.setattr(gm.time, "sleep", lambda s: None)
     img = tmp_path / "x.png"
@@ -146,3 +146,18 @@ def test_gemini_adapter_offline(monkeypatch, tmp_path):
     out = gm.Gemini("some-gemini-model").answer({"question": "Q?"}, str(img))
     assert len(calls) == 2 and out["text"].endswith("4.2") and out["input_tokens"] == 600
     assert score({"answer_type": "number", "answer": 4.2, "tolerance": 0.05}, out["text"])["correct"]
+
+
+def test_label_overlap_detected():
+    """Crowded printed numbers (e.g. 9 labels squeezed onto a 90-degree dial) must be flagged."""
+    from gaugebench.validate import _label_clash
+    sc = Scale(vmin=0, vmax=40, start_angle=-45, sweep=90, major_step=5, minors_per_major=5)
+    crowded = render_gauge(sample_gauge_fixed(sc))
+    assert _label_clash(crowded.labels) is not None
+    roomy = render_gauge(sample_gauge_fixed(Scale(vmin=0, vmax=40, major_step=5, minors_per_major=5)))
+    assert _label_clash(roomy.labels) is None
+
+
+def sample_gauge_fixed(sc):
+    from gaugebench.spec import GaugeSpec
+    return GaugeSpec(scale=sc, value=(sc.vmin + sc.vmax) / 2, unit="rpm")

@@ -95,6 +95,11 @@
       "detail": "label height 27.5px"
     },
     {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
+    },
+    {
       "name": "needles_separated",
       "passed": true,
       "detail": "margin 91.1deg (need 8)"

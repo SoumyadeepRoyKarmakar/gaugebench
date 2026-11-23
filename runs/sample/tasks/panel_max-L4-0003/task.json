@@ -131,6 +131,11 @@
       "detail": "label height 18.0px"
     },
     {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
+    },
+    {
       "name": "pixel_reread_needle",
       "passed": true,
       "detail": "cv=6.749 key=6.751 err=0.00275 tol=1.25"
@@ -156,6 +161,11 @@
       "detail": "label height 15.9px"
     },
     {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
+    },
+    {
       "name": "pixel_reread_needle",
       "passed": true,
       "detail": "cv=6.708 key=6.721 err=0.0128 tol=0.25"
@@ -179,6 +189,11 @@
       "name": "labels_legible",
       "passed": true,
       "detail": "label height 14.2px"
+    },
+    {
+      "name": "labels_do_not_overlap",
+      "passed": true,
+      "detail": "all printed numbers separated"
     },
     {
       "name": "winner_clear_margin",
