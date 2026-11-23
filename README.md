@@ -124,7 +124,7 @@ python -m gaugebench evaluate runs/demo --model gemini:<model-id> --workers 1   
 
 python -m gaugebench report runs/demo        # open runs/demo/report.html
 
-python -m pytest -q                          # 18 tests incl. mutation tests of the validator
+python -m pytest -q                          # 19 tests incl. mutation tests of the validator
 
 python -m gaugebench app                     # GaugeBench Studio, the interactive web app
 ```
@@ -145,11 +145,19 @@ Evaluation runs are **resumable and cached**. Tasks already answered are never p
 - **Copy link** recreates exactly the task on screen (instrument, seed and conditions) for anyone running the app.
 - **Task pack** downloads the image plus a JSON with the key, the factors and the full validation evidence, so any live task can join a dataset.
 
+**Daily**: five gauges a day, the same for everyone (seeded by the date), ramping from a clean L1 to a brutal L5. You get one shot. Your result is a row of tiles you can copy and share (🟧 right, 🟨 right with a hint, ⬛ missed), with a day streak and a countdown to the next one.
+
 **Challenge**: you against a model, head to head, on 5, 10 or 20 real tasks from a suite. After each answer you see the model's recorded answer and reasoning on the same image; at the end you get the final score and your time against the model's. It makes no API calls, because the model's answers come from the suite's results.
 
 **Archive**: browse any suite in `runs/` as a grid, filter by family or by right/wrong for any model, and open a task to see the image, the key, every model's answer and reasoning, and all validator checks.
 
-Keyboard: `G` generate, `Enter` submit, `1`–`9` pick a choice, `L` loupe, `V` validator vision, `Esc` close.
+**Hints**: every task has a *Hint* button that explains how to read that instrument (division size, which ring, the multiplier, the meter's reading rule) without ever giving the value away (enforced by a test). Answers given after a hint are marked as assisted.
+
+**Your record**: click your score in the header to see your rank (Trainee → Apprentice → Technician → Senior technician → Calibration engineer → Metrologist, based on recent accuracy), accuracy per instrument, best streak, and how you miss: near misses (snapping to a tick, like the models) or wild misses (a missed multiplier or the wrong scale). Rank-ups and 5-in-a-row streaks get a little celebration.
+
+Small touches: synthesised mechanical sounds (knob clicks, the stamp, pass/fail chimes; `M` to mute), confetti on wins, and a shortcuts panel (`?`).
+
+Keyboard: `G` generate, `Enter` submit, `1`–`9` pick a choice, `H` hint, `L` loupe, `V` validator vision, `M` sound, `R` your record, `?` shortcuts, `Esc` close.
 
 ## Code map
 

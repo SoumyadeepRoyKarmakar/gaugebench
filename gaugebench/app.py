@@ -182,6 +182,67 @@ def _strip_format(q: str) -> str:
     return re.sub(r"\s*Allowed options:.*$", "", q).strip()       # shown as buttons instead
 
 
+def _num(v: float) -> str:
+    return f"{v:.6g}"
+
+
+def _division_hint(scale: dict, unit: str, mult: float = 1.0) -> str:
+    """How to count divisions on a scale. Uses only the printed scale, never the needle value."""
+    kind = scale.get("kind", "linear")
+    if kind == "log":
+        return ("It's a logarithmic scale: the gap from 1 to 10 is as wide as from 10 to 100, and the small "
+                "ticks between them are 2, 3, 4 ... 9.")
+    if kind == "sqrt":
+        return ("It's a square-root (flow) scale: the divisions are squeezed together at the low end and spread "
+                "out higher up, so count them carefully.")
+    div = scale["major_step"] / max(1, scale["minors_per_major"])
+    text = f"Each small division on the printed scale is {_num(div)}"
+    if mult and mult != 1:
+        text += (f". The dial is marked ×{_num(mult)}, so multiply what you read by {_num(mult)} to get {unit}.")
+    else:
+        text += f" {unit}."
+    return text
+
+
+def hint_for(t: dict) -> str:
+    """A nudge on *how* to read this instrument, never the reading itself."""
+    fam = t["family"]
+    g = t["gauges"][0] if t.get("gauges") else None
+    unit = t.get("unit", "")
+    if fam in ("read_value", "level_reading") and g:
+        lead = "Read at the top surface of the liquid. " if fam == "level_reading" else "Find the two labelled ticks either side of the needle. "
+        return lead + _division_hint(g["scale"], unit, g.get("multiplier", 1.0))
+    if fam == "dual_scale" and g:
+        secondary = t["meta"].get("asked_scale") == "secondary"
+        ring = "inner red ring" if secondary else "outer black ring"
+        sc = g["secondary"] if secondary else g["scale"]
+        return f"The question asks for {unit}: use the {ring} and ignore the other one. " + _division_hint(sc, unit)
+    if fam == "setpoint_deviation" and g:
+        return ("Read the black needle and the thin red set-point needle separately, then subtract: actual minus "
+                "set point. " + _division_hint(g["scale"], unit, g.get("multiplier", 1.0)))
+    if fam == "temporal_change" and g:
+        return ("Read photo A and photo B on the same scale, then take B minus A (negative if it fell). "
+                + _division_hint(g["scale"], unit, g.get("multiplier", 1.0)))
+    if fam == "zone_status":
+        return "Follow the needle tip outwards to the coloured arc behind it. The tip decides, not the needle's middle."
+    if fam == "panel_alarm":
+        return "Check each dial's tip against its own red band. The furthest-turned needle isn't necessarily the one in red."
+    if fam == "panel_max":
+        return ("Each dial has a different range, so convert every needle to bar using its own numbers. "
+                "The needle turned furthest is often not the highest pressure.")
+    if fam == "panel_count":
+        return "Go dial by dial and ask one question: is the tip on green? Count the ones that aren't."
+    if fam == "dial_meter":
+        return ("Start at the left dial. On each dial take the number the pointer has just passed, in that dial's own "
+                "direction (follow the red arrow). Then write the digits left to right.")
+    if fam == "vernier":
+        return ("Whole millimetres: the last main-scale line to the left of the vernier 0. Tenths: the one vernier line "
+                "that lines up exactly with a main-scale line. Remember the big numbers are centimetres.")
+    if fam == "digital_display":
+        return "Read the digits and the decimal point, then look at the small ×10 / ×100 indicators in the top-right corner."
+    return "Take it step by step: find the scale, then the pointer, then apply anything printed on the instrument."
+
+
 def key_view(t: dict) -> dict:
     return {"answer": t["answer"], "tolerance": t["tolerance"], "unit": t["unit"],
             "answer_type": t["answer_type"], "choices": t["choices"]}
@@ -422,6 +483,15 @@ def make_handler(state: State):
                     return self._json({"key": key_view(rec["task"]), "checks": rec["checks"]})
                 if u.path == "/api/ask":
                     return self._ask(body)
+                if u.path == "/api/hint":
+                    if body.get("suite"):                    # a Challenge round (task from a suite on disk)
+                        tasks = state.suites.load(body["suite"])["tasks"]
+                        task = next((t for t in tasks if t["id"] == body["id"]), None)
+                        if task is None:
+                            raise KeyError(body["id"])
+                    else:                                    # a live Bench / Daily task
+                        task = state.get(body["id"])["task"]
+                    return self._json({"hint": hint_for(task)})
                 if u.path == "/api/challenge/start":
                     n = max(1, min(30, int(body.get("n", 10))))
                     seed = int(body["seed"]) if str(body.get("seed", "")).isdigit() else secrets.randbits(32)

@@ -279,3 +279,19 @@ def test_challenge_api_hides_key_until_answered(tmp_path):
             assert e.code == 404
     finally:
         httpd.shutdown()
+
+
+def test_hints_never_contain_the_answer():
+    """Hints teach how to read an instrument; they must not leak the key for any family."""
+    from gaugebench.app import hint_for, make_live_task
+    from gaugebench.spec import BASE_FACTORS
+    from gaugebench.tasks import FAMILIES
+    for fam in FAMILIES:
+        for seed in (11, 12):
+            t = make_live_task(fam, {**BASE_FACTORS, "multiplier": "x10"}, seed)["task"]
+            h = hint_for(t)
+            assert 20 < len(h) < 400
+            if t["answer_type"] == "number":
+                assert f"{t['answer']}" not in h and f"{t['answer']:g}" not in h.split("division")[0]
+            else:
+                assert t["answer"] not in h

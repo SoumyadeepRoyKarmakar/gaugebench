@@ -228,7 +228,7 @@
       this.el.setAttribute("aria-valuetext", txt);
       const base = S.meta?.base?.[this.name];
       this.el.classList.toggle("is-changed", base != null && String(base) !== String(this.value));
-      if (fire) this.onChange(this.name, this.value);
+      if (fire) { this.onChange(this.name, this.value); sfx.tick(); }
     }
     bind() {
       let startY = 0, startI = 0, dragging = false, moved = false;
@@ -426,6 +426,8 @@
     $$("input, button", form).forEach((el) => (el.disabled = false));
     $("#verdict").hidden = true;
     $("#ticket-notice").hidden = true;
+    $("#ticket-hint").hidden = true;
+    S.hinted = false;
     $("#gemini-box").hidden = true;
     $("#gem-result").hidden = true;
     $("#gem-wait").hidden = true;
@@ -467,6 +469,7 @@
       S.lastKey = r.key;
       S.lastYou = r.score.parsed;
       bump("you", r.score.correct);
+      record({ f: t.family, c: r.score.correct, tu: r.score.err_tol_units ?? null, h: !!S.hinted, m: "bench" });
       showVerdict(r.score.correct ? "pass" : "fail", r.key, r.score);
       if (r.checks) { S.checksFull = r.checks; renderChecks(r.checks); }
     } catch (err) { handleErr(err); }
@@ -492,6 +495,8 @@
     stamp.className = "stamp " + kind;
     stamp.textContent = kind === "pass" ? "PASS" : kind === "fail" ? "FAIL" : "KEY";
     void stamp.offsetWidth;
+    sfx.stamp();
+    if (kind === "pass") sfx.pass(); else if (kind === "fail") sfx.fail();
     renderReadout();
     $("#gemini-box").hidden = false;
     const avail = S.meta.gemini.available;
@@ -509,6 +514,7 @@
       rows.push(["You", num ? fmtExact(S.lastYou) + unit : S.lastYou, "r-you"]);
     }
     rows.push(["Key", num ? `${fmtNum(key.answer)} ± ${fmtNum(key.tolerance)}${unit}` : key.answer, ""]);
+    if (S.hinted && S.lastYou != null) rows.push(["Assist", "hint used", ""]);
     if (S.lastGem) rows.push(["Gemini", S.lastGem.parsed == null ? "no answer" : (num ? fmtExact(S.lastGem.parsed) + unit : S.lastGem.parsed), "r-gem"]);
     if (num && S.lastYou != null && key.tolerance) {
       const tu = Math.abs(S.lastYou - key.answer) / key.tolerance;
@@ -606,6 +612,16 @@
     const f = (a) => `${String(a[0]).padStart(2, "0")}/${String(a[1]).padStart(2, "0")}`;
     $("#tally-you").textContent = f(S.tally.you);
     $("#tally-gem").textContent = f(S.tally.gem);
+    const hist = getHistory();
+    const rk = rankOf(hist);
+    const chip = $("#rank-chip");
+    chip.textContent = rk.name;
+    chip.title = rk.acc == null ? `Answer ${rk.need} more to get ranked` : `Recent accuracy ${rk.acc.toFixed(0)}%`;
+    const st = currentStreak(hist), sEl = $("#streak");
+    const was = sEl.textContent;
+    sEl.hidden = st < 2;
+    sEl.textContent = st >= 2 ? `🔥${st}` : "";
+    if (st >= 2 && was !== sEl.textContent) { sEl.classList.remove("pop"); void sEl.offsetWidth; sEl.classList.add("pop"); }
     if (flash) {
       const led = $(`[data-led="${flash}"]`);
       led.classList.add("on");
@@ -734,7 +750,8 @@
       const keyTxt = t.answer_type === "number" ? `${fmtNum(t.answer)}${t.unit ? " " + t.unit : ""}` : t.answer;
       const ans = r && !r.error ? (t.answer_type === "number" ? fmtExact(r.parsed) : r.parsed ?? "—") : null;
       const card = h("button", { class: "card", "data-id": t.id, title: t.id },
-        h("img", { src: `/thumb/${encodeURIComponent(A.suite)}/${encodeURIComponent(t.id)}.jpg`, loading: "lazy", alt: "" }),
+        h("img", { src: `/thumb/${encodeURIComponent(A.suite)}/${encodeURIComponent(t.id)}.jpg`, loading: "lazy", alt: "",
+                   onload: (e) => e.target.classList.add("loaded") }),
         h("span", { class: `card-badge ${badge}` }, badge === "pass" ? "✓" : badge === "fail" ? "✗" : "·"),
         h("div", { class: "card-body" },
           h("div", { class: "card-fam" }, d.family_labels[t.family] || t.family),
@@ -788,9 +805,10 @@
     } catch (e) { toast(e.message, true); }
   }
   function closeDrawer() {
-    const dr = $("#drawer");
-    dr.classList.remove("is-open");
-    dr.setAttribute("aria-hidden", "true");
+    for (const dr of $$(".drawer.is-open")) {
+      dr.classList.remove("is-open");
+      dr.setAttribute("aria-hidden", "true");
+    }
   }
 
   // ------------------------------------------------------------------ task pack download
@@ -815,7 +833,180 @@
   }
 
   // ------------------------------------------------------------------ challenge
-  const C = { suite: null, model: null, n: 10, family: "", tasks: [], i: 0, you: 0, gem: 0, log: [], t0: 0, timer: null, total: 0, choice: null, done: false };
+  // ------------------------------------------------------------------ sound (synthesised, no files)
+  const SND = { on: store.get("gb-sound", true), ctx: null };
+  function audio() {
+    if (!SND.ctx) { try { SND.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { SND.on = false; } }
+    if (SND.ctx && SND.ctx.state === "suspended") SND.ctx.resume();
+    return SND.ctx;
+  }
+  function tone(freq, dur, type = "sine", vol = 0.06, when = 0, slideTo = null) {
+    const ctx = audio(); if (!ctx) return;
+    const t0 = ctx.currentTime + when;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t0);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+  }
+  function noise(dur, vol, freq) {
+    const ctx = audio(); if (!ctx) return;
+    const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = buf; f.type = "bandpass"; f.frequency.value = freq; g.gain.value = vol;
+    src.connect(f).connect(g).connect(ctx.destination); src.start();
+  }
+  const sfx = {
+    tick: () => SND.on && noise(0.02, 0.35, 3200),
+    click: () => SND.on && (noise(0.04, 0.5, 1600), tone(150, 0.07, "square", 0.025)),
+    stamp: () => SND.on && (tone(95, 0.2, "sine", 0.22, 0, 48), noise(0.07, 0.6, 500)),
+    pass: () => SND.on && (tone(660, 0.12, "triangle", 0.06, 0.12), tone(990, 0.22, "triangle", 0.05, 0.22)),
+    fail: () => SND.on && tone(196, 0.28, "sawtooth", 0.035, 0.12, 130),
+    chime: () => SND.on && [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.3, "triangle", 0.045, i * 0.08)),
+  };
+  function setSound(on) {
+    SND.on = on; store.set("gb-sound", on);
+    const b = $("#btn-sound");
+    b.setAttribute("aria-pressed", String(on));
+    b.title = on ? "Sound on (M)" : "Sound off (M)";
+    if (on) sfx.click();
+  }
+
+  // ------------------------------------------------------------------ confetti
+  function confetti() {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const cv = $("#confetti"), ctx = cv.getContext("2d");
+    const W = (cv.width = innerWidth * devicePixelRatio), H = (cv.height = innerHeight * devicePixelRatio);
+    const cols = ["#ff6b1a", "#ff8a45", "#7ea6ff", "#efebe2", "#39e07f", "#f5d33a"];
+    const P = Array.from({ length: 160 }, () => ({
+      x: W / 2 + (Math.random() - 0.5) * W * 0.25, y: H * 0.32, vx: (Math.random() - 0.5) * 22 * devicePixelRatio,
+      vy: (-Math.random() * 20 - 6) * devicePixelRatio, w: (4 + Math.random() * 6) * devicePixelRatio, h: (8 + Math.random() * 10) * devicePixelRatio,
+      r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, c: cols[(Math.random() * cols.length) | 0], needle: Math.random() < 0.2,
+    }));
+    const t0 = performance.now();
+    (function frame(t) {
+      const age = t - t0;
+      ctx.clearRect(0, 0, W, H);
+      for (const p of P) {
+        p.vy += 0.55 * devicePixelRatio; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.globalAlpha = Math.max(0, 1 - age / 2200);
+        ctx.fillStyle = p.c;
+        if (p.needle) { ctx.beginPath(); ctx.moveTo(0, -p.h); ctx.lineTo(p.w / 3, p.h / 2); ctx.lineTo(-p.w / 3, p.h / 2); ctx.fill(); }
+        else ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      }
+      if (age < 2300) requestAnimationFrame(frame); else ctx.clearRect(0, 0, W, H);
+    })(t0);
+  }
+
+  // ------------------------------------------------------------------ your record + rank
+  const RANKS = [[0, "Apprentice"], [40, "Technician"], [60, "Senior technician"], [75, "Calibration engineer"], [90, "Metrologist"]];
+  const getHistory = () => store.get("gb-history", []);
+  function rankOf(hist) {
+    const recent = hist.slice(-60);
+    if (recent.length < 5) return { idx: -1, name: "Trainee", acc: null, need: 5 - recent.length };
+    const acc = (100 * recent.reduce((s, e) => s + (e.c ? (e.h ? 0.5 : 1) : 0), 0)) / recent.length;
+    let idx = 0;
+    RANKS.forEach(([min], i) => { if (acc >= min) idx = i; });
+    return { idx, name: RANKS[idx][1], acc, next: RANKS[idx + 1] };
+  }
+  function currentStreak(hist) {
+    let s = 0;
+    for (let i = hist.length - 1; i >= 0 && hist[i].c; i--) s++;
+    return s;
+  }
+  function record(entry) {
+    const hist = getHistory();
+    const before = rankOf(hist);
+    hist.push({ ...entry, t: Date.now() });
+    if (hist.length > 600) hist.splice(0, hist.length - 600);
+    store.set("gb-history", hist);
+    const after = rankOf(hist);
+    renderTally();
+    if (after.idx > before.idx && after.idx >= 0) {
+      setTimeout(() => { toast(`Rank up: you're now a ${after.name}!`); confetti(); sfx.chime(); }, 700);
+    }
+    const st = currentStreak(hist);
+    if (entry.c && st > 0 && st % 5 === 0) setTimeout(() => { toast(`${st} in a row. Sharp eyes!`); sfx.chime(); }, 600);
+  }
+
+  function openRecord() {
+    const hist = getHistory();
+    const rk = rankOf(hist);
+    const body = $("#record-body");
+    const n = hist.length, right = hist.filter((e) => e.c).length, hinted = hist.filter((e) => e.h).length;
+    const best = (() => { let b = 0, s = 0; for (const e of hist) { s = e.c ? s + 1 : 0; b = Math.max(b, s); } return b; })();
+    const acc = rk.acc ?? (n ? (100 * right) / n : 0);
+    const C2 = 2 * Math.PI * 52, frac = Math.min(1, acc / 100);
+    const byFam = {};
+    for (const e of hist) { (byFam[e.f] ||= [0, 0]); byFam[e.f][1]++; if (e.c) byFam[e.f][0]++; }
+    const label = (f) => S.meta.families.find((x) => x.id === f)?.label || f;
+    const wrongNum = hist.filter((e) => !e.c && e.tu != null);
+    const near = wrongNum.filter((e) => e.tu <= 2).length, wild = wrongNum.filter((e) => e.tu > 20).length;
+    const nextTxt = rk.idx < 0 ? `Answer ${rk.need} more task${rk.need === 1 ? "" : "s"} to get ranked.`
+      : rk.next ? `${(rk.next[0] - acc).toFixed(0)} points of accuracy to ${rk.next[1]}.` : "Top rank. Nothing left to prove.";
+    body.innerHTML = n === 0 ? `<p class="rec-empty">No readings yet. Answer a task on the Bench, play the Daily, or take on the Challenge, and your record builds up here.</p>` : `
+      <div class="rec-hero">
+        <svg class="rec-dial" viewBox="0 0 132 132" aria-label="Recent accuracy ${acc.toFixed(0)}%">
+          <circle class="rd-track" cx="66" cy="66" r="52" stroke-dasharray="${C2 * 0.75} ${C2}" transform="rotate(135 66 66)"/>
+          <circle class="rd-fill" cx="66" cy="66" r="52" stroke-dasharray="${C2 * 0.75} ${C2}" stroke-dashoffset="${C2 * 0.75}" transform="rotate(135 66 66)" id="rd-fill"/>
+          <line class="rd-needle" id="rd-needle" x1="66" y1="66" x2="66" y2="26" style="transform: rotate(-135deg)"/>
+          <circle cx="66" cy="66" r="5" fill="var(--accent)"/>
+          <text x="66" y="104" text-anchor="middle" font-size="18">${acc.toFixed(0)}%</text>
+        </svg>
+        <div>
+          <div class="dr-kicker">Current rank</div>
+          <div class="rec-rank">${esc(rk.name)}</div>
+          <div class="rec-next">${nextTxt}</div>
+          ${rk.idx >= 0 && rk.next ? `<div class="rec-bar"><span style="width:${Math.max(4, ((acc - RANKS[rk.idx][0]) / (rk.next[0] - RANKS[rk.idx][0])) * 100)}%"></span></div>` : ""}
+        </div>
+      </div>
+      <div class="rec-grid">
+        <div><b>${n}</b><span>Readings</span></div>
+        <div><b>${n ? Math.round((100 * right) / n) : 0}%</b><span>All-time</span></div>
+        <div><b>${best}</b><span>Best streak</span></div>
+        <div><b>${hinted}</b><span>Hints used</span></div>
+      </div>
+      <section class="dr-section"><h4>By instrument</h4><div class="fam-bars">${Object.entries(byFam).sort((a, b) => b[1][1] - a[1][1]).map(([f, [c, t]]) =>
+        `<div class="fam-bar"><span>${esc(label(f))}</span><span class="fb-track"><span style="width:${(100 * c) / t}%"></span></span><span class="fb-n">${c}/${t}</span></div>`).join("")}</div></section>
+      ${wrongNum.length ? `<section class="dr-section"><h4>When you miss a number</h4><p class="rec-next">${near} of ${wrongNum.length} were near misses (within 2× the tolerance)${wild ? ` and ${wild} were way off (over 20×, usually a missed multiplier or the wrong scale)` : ""}. ${near >= wrongNum.length / 2 ? "Like the models, you snap to the nearest tick. Try the loupe." : "Check the multiplier and which ring you're reading."}</p></section>` : ""}
+      <section class="dr-section"><h4>Last ${Math.min(40, n)} readings</h4><div class="recent">${hist.slice(-40).map((e) => `<i class="${e.c ? (e.h ? "hint" : "ok") : "no"}" title="${esc(label(e.f))}"></i>`).join("")}</div></section>
+      <button class="ghost-dark rec-reset" id="rec-reset">Reset my record</button>`;
+    const dr = $("#record");
+    dr.classList.add("is-open"); dr.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const f = $("#rd-fill"), nd = $("#rd-needle");
+      if (f) f.setAttribute("stroke-dashoffset", String(C2 * 0.75 * (1 - frac)));
+      if (nd) nd.style.transform = `rotate(${-135 + 270 * frac}deg)`;
+    }));
+    $("#rec-reset")?.addEventListener("click", () => {
+      if (!confirm("Reset your whole record? This can't be undone.")) return;
+      store.set("gb-history", []); renderTally(); openRecord();
+    });
+  }
+
+  // ------------------------------------------------------------------ hints
+  async function getHint(where) {
+    const bench = where === "bench";
+    const t = bench ? S.task : C.tasks[C.i];
+    if (!t) return;
+    if (bench ? S.answered : !$("#ch-result").hidden) return;
+    try {
+      const r = await api("/api/hint", bench || C.mode === "daily" ? { id: t.id } : { id: t.id, suite: C.suite });
+      const box = bench ? $("#ticket-hint") : $("#ch-hint-box");
+      box.hidden = false;
+      box.innerHTML = `<span class="callout-icon" aria-hidden="true">?</span><div><b>Hint.</b> ${esc(r.hint)}</div>`;
+      if (bench) S.hinted = true; else C.hinted[C.i] = true;
+      (bench ? $("#btn-hint") : $("#ch-hint")).disabled = true;
+      sfx.tick();
+    } catch (e) { handleErr(e); }
+  }
+
+  // ------------------------------------------------------------------ rounds engine (Challenge + Daily)
+  const C = { mode: "challenge", suite: null, model: null, n: 10, family: "", tasks: [], i: 0, you: 0, gem: 0, log: [], hinted: [],
+              t0: 0, timer: null, total: 0, choice: null, done: false };
   let challengeReady = false;
 
   function initChallenge() {
@@ -841,9 +1032,6 @@
     $("#ch-model").addEventListener("change", (e) => (C.model = e.target.value));
     $("#ch-family").addEventListener("change", (e) => (C.family = e.target.value));
     $("#ch-start").addEventListener("click", startChallenge);
-    $("#ch-form").addEventListener("submit", submitRound);
-    $("#ch-quit").addEventListener("click", () => endChallenge(true));
-    attachLoupe($("#ch-vp"), $("#ch-img"), $("#ch-loupe"), () => true);
     chooseSuite(pick.name);
   }
 
@@ -869,30 +1057,39 @@
   async function startChallenge() {
     try {
       const d = await api("/api/challenge/start", { suite: C.suite, model: C.model, n: C.n, family: C.family });
-      Object.assign(C, { tasks: d.tasks, i: 0, you: 0, gem: 0, log: [], total: 0, done: false });
-      $("#ch-setup").hidden = true;
-      $("#ch-end").hidden = true;
-      $("#ch-play").hidden = false;
-      $("#sb-model").textContent = C.model.replace(/^gemini-/, "Gemini ").replace(/^claude-/, "Claude ");
-      $("#sb-you").textContent = "0"; $("#sb-gem").textContent = "0";
-      renderRound();
+      C.mode = "challenge";
+      startRounds(d.tasks);
     } catch (e) { toast(e.message, true); }
+  }
+
+  function startRounds(tasks) {
+    Object.assign(C, { tasks, i: 0, you: 0, gem: 0, log: [], hinted: [], total: 0, done: false });
+    const daily = C.mode === "daily";
+    $(".scoreboard").classList.toggle("solo", daily);
+    $("#sb-model").textContent = daily ? `Daily #${dailyNumber()}` : C.model.replace(/^gemini-/, "Gemini ").replace(/^claude-/, "Claude ");
+    $("#sb-you").textContent = "0"; $("#sb-gem").textContent = daily ? "" : "0";
+    $("#ch-end").hidden = true;
+    $("#ch-play").hidden = false;
+    setView("play");
+    renderRound();
   }
 
   function renderPips() {
     const p = $("#pips");
     p.innerHTML = "";
+    const daily = C.mode === "daily";
     C.tasks.forEach((_, k) => {
       const l = C.log[k];
-      p.append(h("span", { class: "pip" + (k === C.i && !C.done ? " now" : ""), title: `round ${k + 1}` },
-        h("i", { class: "y" + (l ? (l.you ? " ok" : " no") : "") }), h("i", { class: "g" + (l ? (l.gem ? " ok" : " no") : "") })));
+      p.append(h("span", { class: "pip" + (daily ? " solo" : "") + (k === C.i && !C.done ? " now" : ""), title: `round ${k + 1}` },
+        h("i", { class: "y" + (l ? (l.you ? (l.hint ? " hint" : " ok") : " no") : "") }),
+        daily ? null : h("i", { class: "g" + (l ? (l.gem ? " ok" : " no") : "") })));
     });
   }
 
   function renderRound() {
     const t = C.tasks[C.i];
     C.choice = null;
-    $("#sb-round").textContent = `Round ${C.i + 1} / ${C.tasks.length}`;
+    $("#sb-round").textContent = `Round ${C.i + 1} / ${C.tasks.length}` + (C.mode === "daily" ? ` · L${C.i + 1}` : "");
     $("#ch-kicker").textContent = `Round ${C.i + 1}`;
     $("#ch-family-label").textContent = t.family_label;
     $("#ch-q").textContent = t.question;
@@ -901,6 +1098,7 @@
     const vp = $("#ch-vp");
     vp.classList.remove("has-img"); void vp.offsetWidth; vp.classList.add("has-img");
     $("#ch-result").hidden = true;
+    $("#ch-hint-box").hidden = true;
     $("#ch-form").hidden = false;
     $$("#ch-form input, #ch-form button").forEach((el) => (el.disabled = false));
     const num = t.answer_type === "number";
@@ -936,13 +1134,18 @@
     if (!t || !$("#ch-result").hidden) return;
     const raw = t.answer_type === "number" ? $("#ch-input").value.trim().replace(",", ".") : C.choice;
     if (raw == null || raw === "") { toast(t.answer_type === "number" ? "Type your answer first." : "Pick an option first."); return; }
+    const daily = C.mode === "daily";
     try {
-      const r = await api("/api/challenge/answer", { suite: C.suite, model: C.model, id: t.id, answer: raw });
+      const r = daily ? await api("/api/answer", { id: t.id, answer: raw })
+        : await api("/api/challenge/answer", { suite: C.suite, model: C.model, id: t.id, answer: raw });
       clearInterval(C.timer);
       const secs = (Date.now() - C.t0) / 1000;
       C.total += secs;
-      const you = r.score.correct, gem = r.model.correct;
-      C.log[C.i] = { id: t.id, family: t.family_label, you, gem, secs, modelSecs: r.model.latency_s };
+      const you = r.score.correct, gem = daily ? null : r.model.correct;
+      const hint = !!C.hinted[C.i];
+      C.log[C.i] = { id: t.id, family: t.family_label, fam: t.family, you, gem, hint, secs, modelSecs: daily ? null : r.model.latency_s };
+      record({ f: t.family, c: you, tu: r.score.err_tol_units ?? null, h: hint, m: C.mode });
+      sfx.stamp(); (you ? sfx.pass : sfx.fail)();
       if (you) { C.you++; bumpScore("#sb-you", C.you); }
       if (gem) { C.gem++; bumpScore("#sb-gem", C.gem); }
       $$("#ch-form input, #ch-form button").forEach((el) => (el.disabled = true));
@@ -951,24 +1154,28 @@
       const unit = r.key.unit ? " " + r.key.unit : "";
       const fmt = (v) => (v == null ? "no answer" : num ? fmtExact(v) + unit : v);
       const keyTxt = num ? `${fmtNum(r.key.answer)} ± ${fmtNum(r.key.tolerance)}${unit}` : r.key.answer;
-      const call = you && !gem ? "You read it right where the model failed."
+      const call = daily ? (you ? (hint ? "Correct, with a hint." : "Correct. Clean read.") : "Not this time. Compare your reading with the key.")
+        : you && !gem ? "You read it right where the model failed."
         : !you && gem ? "The model got this one. Look again with the loupe."
         : you && gem ? "Both correct." : "Both wrong. A hard one.";
       const last = C.i === C.tasks.length - 1;
       const res = $("#ch-result");
       res.hidden = false;
       res.innerHTML = `
-        <div class="ch-row"><span class="who">You</span><span class="val">${esc(fmt(r.score.parsed))}</span><span class="mark ${you ? "ok" : "no"}">${you ? "✓" : "✗"}</span></div>
-        <div class="ch-row"><span class="who">Model</span><span class="val">${esc(fmt(r.model.parsed))}</span><span class="mark ${gem ? "ok" : "no"}">${gem ? "✓" : "✗"}</span></div>
+        <div class="ch-row"><span class="who">You</span><span class="val">${esc(fmt(r.score.parsed))}${hint ? ' <span class="hint-tag">hint</span>' : ""}</span><span class="mark ${you ? "ok" : "no"}">${you ? "✓" : "✗"}</span></div>
+        ${daily ? "" : `<div class="ch-row"><span class="who">Model</span><span class="val">${esc(fmt(r.model.parsed))}</span><span class="mark ${gem ? "ok" : "no"}">${gem ? "✓" : "✗"}</span></div>`}
         <div class="ch-row key"><span class="who">Key</span><span class="val">${esc(keyTxt)}</span><span></span></div>
         <p class="ch-callout">${call}</p>
-        ${r.model.text ? `<details><summary>Model's reasoning</summary><pre>${esc(r.model.text)}</pre></details>` : ""}
+        ${!daily && r.model.text ? `<details><summary>Model's reasoning</summary><pre>${esc(r.model.text)}</pre></details>` : ""}
         <button class="btn btn-ink ch-next" id="ch-next">${last ? "See final score" : "Next round"} <kbd>↵</kbd></button>`;
       $("#ch-next").addEventListener("click", nextRound);
       scrollOnPhone(res);
       setTimeout(() => $("#ch-next").focus({ preventScroll: true }), 30);
       renderPips();
-    } catch (err) { toast(err.message, true); }
+    } catch (err) {
+      if (err.data?.code === "task_expired") { toast("These rounds expired when the app restarted. Start again.", true); endRounds(true); return; }
+      toast(err.message, true);
+    }
   }
 
   function bumpScore(sel, v) {
@@ -979,27 +1186,29 @@
 
   function nextRound() {
     if (C.i < C.tasks.length - 1) { C.i++; renderRound(); }
-    else endChallenge(false);
+    else endRounds(false);
   }
 
-  function endChallenge(quit) {
+  function endRounds(quit) {
     clearInterval(C.timer);
     C.done = true;
     const played = C.log.filter(Boolean);
-    if (quit && !played.length) { $("#ch-play").hidden = true; $("#ch-setup").hidden = false; return; }
+    const back = C.mode === "daily" ? "daily" : "challenge";
+    if (quit && !played.length) { $("#ch-play").hidden = true; setView(back); return; }
+    if (C.mode === "daily") { if (!quit) finishDaily(); $("#ch-play").hidden = true; setView("daily"); return; }
     $("#ch-play").hidden = true;
     const end = $("#ch-end");
     end.hidden = false;
     const n = played.length;
     const ms = played.map((l) => l.modelSecs).filter((x) => x != null);
     const avgModel = ms.length ? ms.reduce((a, b) => a + b, 0) / ms.length : null;
-    const verdict = C.you > C.gem ? "You out-read the machine." : C.you < C.gem ? "The machine wins this round." : "Dead heat.";
-    const model = esc(C.model);
+    const win = C.you > C.gem;
+    const verdict = win ? "You out-read the machine." : C.you < C.gem ? "The machine wins this round." : "Dead heat.";
     end.innerHTML = `
       <div class="end-card">
         <div class="end-kicker">${quit ? "Challenge ended early" : "Final score"} · ${n} round${n === 1 ? "" : "s"}</div>
         <div class="end-score"><span class="sb-score" style="color:var(--accent)">${C.you}</span><span class="end-vs">VS</span><span class="sb-score" style="color:var(--blue)">${C.gem}</span></div>
-        <div class="end-who"><span>You</span><span>${model}</span></div>
+        <div class="end-who"><span>You</span><span>${esc(C.model)}</span></div>
         <div class="end-verdict">${verdict}</div>
         <p class="end-sub">You averaged ${(C.total / Math.max(1, n)).toFixed(1)} s per task${avgModel != null ? `; the model took ${avgModel.toFixed(1)} s` : ""}. Same images, same tolerance.</p>
         <div class="end-actions">
@@ -1013,32 +1222,183 @@
           <div class="ei-res">you <span class="${l.you ? "ok" : "no"}">${l.you ? "✓" : "✗"}</span> · model <span class="${l.gem ? "ok" : "no"}">${l.gem ? "✓" : "✗"}</span></div></div></div>`).join("")}
       </div>`;
     $("#end-again").addEventListener("click", startChallenge);
-    $("#end-setup").addEventListener("click", () => { end.hidden = true; $("#ch-setup").hidden = false; });
+    $("#end-setup").addEventListener("click", () => { end.hidden = true; setView("challenge"); });
+    if (win && !quit) { confetti(); sfx.chime(); }
+  }
+
+  // ------------------------------------------------------------------ GaugeBench Daily
+  const DAILY_EPOCH = Date.UTC(2026, 10, 23);
+  const dateKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const dailyNumber = (d = new Date()) => Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - DAILY_EPOCH) / 864e5) + 1;
+  function fnv(str) { let x = 0x811c9dc5; for (const ch of str) { x ^= ch.charCodeAt(0); x = Math.imul(x, 0x01000193) >>> 0; } return x >>> 0; }
+  function dailyPlan(key = dateKey()) {
+    let s = fnv(`gaugebench-daily:${key}`);
+    const rnd = () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const fams = S.meta.families.map((f) => f.id);
+    for (let i = fams.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [fams[i], fams[j]] = [fams[j], fams[i]]; }
+    return fams.slice(0, 5).map((f, i) => ({ family: f, level: i + 1, seed: fnv(`${key}:${i}:${f}`) }));
+  }
+  const dailyStore = () => store.get("gb-daily", { results: {}, streak: 0, best: 0, last: null });
+  function shareText(res, n) {
+    const sq = res.grid.map((g) => (g === "ok" ? "🟧" : g === "hint" ? "🟨" : "⬛")).join("");
+    return `GaugeBench Daily #${n} · ${res.score}/5\n${sq}\nL1 → L5 · read the gauge, beat the glare`;
+  }
+
+  let dailyTimer;
+  function renderDaily() {
+    const key = dateKey(), n = dailyNumber(), plan = dailyPlan(key);
+    const ds = dailyStore(), res = ds.results[key];
+    const label = (f) => S.meta.families.find((x) => x.id === f)?.label || f;
+    const played = Object.keys(ds.results).length;
+    const avg = played ? (Object.values(ds.results).reduce((a, r) => a + r.score, 0) / played).toFixed(1) : "–";
+    const nice = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+    $("#daily-card").innerHTML = `
+      <div class="dly-top">
+        <div>
+          <div class="dly-kicker">GaugeBench Daily</div>
+          <h1 class="dly-title">Five gauges.<br>One shot.</h1>
+          <p class="dly-sub">The same five instruments for everyone today, from a clean L1 to a brutal L5. Hints are allowed but they show on your result.</p>
+        </div>
+        <div class="dly-date"><b>#${n}</b>${esc(nice)}</div>
+      </div>
+      <div class="dly-rounds">${plan.map((p, i) => {
+        const g = res ? res.grid[i] : "";
+        return `<div class="dly-round ${g}"><svg viewBox="0 0 32 32" aria-hidden="true">${FAMILY_ICONS[p.family] || ""}</svg>
+          <span class="dr-name">${esc(label(p.family))}</span><span class="dr-lvl">L${p.level}</span></div>`; }).join("")}</div>
+      <div class="dly-stats">
+        <div class="dly-stat"><b>${ds.streak || 0}${ds.streak >= 2 ? " 🔥" : ""}</b><span>Day streak</span></div>
+        <div class="dly-stat"><b>${ds.best || 0}</b><span>Best streak</span></div>
+        <div class="dly-stat"><b>${played}</b><span>Played</span></div>
+        <div class="dly-stat"><b>${avg}</b><span>Avg score</span></div>
+      </div>
+      ${res ? `
+        <div class="dly-actions">
+          <div class="dly-share" id="dly-share">
+            <div class="ds-head">GaugeBench Daily #${n} · <b>${res.score}/5</b></div>
+            <div class="ds-tiles">${res.grid.map((g, i) => `<span class="ds-tile ${g}" title="L${i + 1}">L${i + 1}</span>`).join("")}</div>
+            <div class="ds-foot">${res.score === 5 ? "Perfect read." : res.score >= 3 ? "Steady hands." : "The gauges won today."}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-blue" id="dly-copy" style="width:auto">Copy result</button>
+            <div class="dly-next">Next daily in <b id="dly-count">--:--:--</b></div>
+          </div>
+        </div>` : `
+        <div class="dly-actions">
+          <button class="big-button" id="dly-start"><span class="bb-cap">Start today's daily</span></button>
+          <span class="dly-next" id="dly-prep"></span>
+        </div>`}`;
+    $("#daily-dot").hidden = !!res;
+    if (res) {
+      $("#dly-copy").addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(shareText(res, n)); toast("Result copied. Paste it anywhere."); }
+        catch (_) { window.prompt("Copy your result:", shareText(res, n)); }
+      });
+      clearInterval(dailyTimer);
+      const tick = () => {
+        const now = new Date(), mid = new Date(now); mid.setHours(24, 0, 0, 0);
+        const s = Math.max(0, Math.floor((mid - now) / 1000));
+        const el = $("#dly-count");
+        if (!el) { clearInterval(dailyTimer); return; }
+        el.textContent = `${String(Math.floor(s / 3600)).padStart(2, "0")}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+        if (s === 0) renderDaily();
+      };
+      tick(); dailyTimer = setInterval(tick, 1000);
+    } else {
+      $("#dly-start").addEventListener("click", startDaily);
+    }
+  }
+
+  async function startDaily() {
+    const btn = $("#dly-start"), prep = $("#dly-prep");
+    btn.disabled = true;
+    const plan = dailyPlan();
+    const tasks = [];
+    try {
+      for (let i = 0; i < plan.length; i++) {
+        prep.textContent = `Preparing today's gauges ${i + 1}/5…`;
+        const p = plan[i];
+        const t = await api("/api/generate", { family: p.family, level: p.level, seed: String(p.seed), factors: {} });
+        tasks.push({ id: t.id, family: t.family, family_label: t.family_label, question: t.question, answer_type: t.answer_type,
+                     choices: t.choices, unit: t.unit, image: t.image });
+      }
+      C.mode = "daily";
+      sfx.click();
+      startRounds(tasks);
+    } catch (e) {
+      toast(e.message, true);
+      btn.disabled = false; prep.textContent = "";
+    }
+  }
+
+  function finishDaily() {
+    const key = dateKey(), ds = dailyStore();
+    if (ds.results[key]) return;
+    const grid = C.tasks.map((_, i) => { const l = C.log[i]; return !l ? "no" : l.you ? (l.hint ? "hint" : "ok") : "no"; });
+    const score = grid.filter((g) => g !== "no").length;
+    ds.results[key] = { score, grid };
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    ds.streak = ds.last === dateKey(y) ? (ds.streak || 0) + 1 : 1;
+    ds.best = Math.max(ds.best || 0, ds.streak);
+    ds.last = key;
+    store.set("gb-daily", ds);
+    renderDaily();
+    if (score >= 4) { setTimeout(() => { confetti(); sfx.chime(); }, 250); }
+    toast(score === 5 ? "Perfect daily! 5 out of 5." : `Daily done: ${score}/5. Come back tomorrow.`);
+  }
+
+  // ------------------------------------------------------------------ help + tabs
+  function openHelp() { $("#help").hidden = false; }
+  function closeHelp() { $("#help").hidden = true; }
+  function moveTabIndicator() {
+    const a = $(".tab.is-active"), ind = $(".tab-ind");
+    if (!a || !ind) return;
+    ind.style.width = `${a.offsetWidth}px`;
+    ind.style.transform = `translateX(${a.offsetLeft}px)`;
   }
 
   // ------------------------------------------------------------------ views + keys
   let archiveReady = false;
+  const VIEWS = ["bench", "daily", "challenge", "archive", "play"];
   function setView(v) {
-    $$(".tab").forEach((t) => { const on = t.dataset.view === v; t.classList.toggle("is-active", on); t.setAttribute("aria-selected", String(on)); });
-    $("#view-bench").hidden = v !== "bench";
-    $("#view-archive").hidden = v !== "archive";
-    $("#view-challenge").hidden = v !== "challenge";
+    const tab = v === "play" ? C.mode : v;
+    $$(".tab").forEach((t) => { const on = t.dataset.view === tab; t.classList.toggle("is-active", on); t.setAttribute("aria-selected", String(on)); });
+    for (const name of VIEWS) $(`#view-${name}`).hidden = name !== v;
     if (v === "archive" && !archiveReady) { archiveReady = true; initArchive(); }
     if (v === "challenge" && !challengeReady) { challengeReady = true; initChallenge(); }
-    store.set("gb-view", v);
+    if (v === "challenge") { $("#ch-setup").hidden = false; }
+    if (v === "daily") renderDaily();
+    if (v !== "play") store.set("gb-view", v);
+    moveTabIndicator();
+    window.scrollTo({ top: 0 });
+  }
+
+  function onTab(v) {
+    if (!$("#view-play").hidden && !C.done && C.log.filter(Boolean).length && !confirm("Leave this game? Your progress in it will be lost.")) return;
+    clearInterval(C.timer);
+    sfx.tick();
+    setView(v);
   }
 
   function wire() {
-    $$(".tab").forEach((t) => t.addEventListener("click", () => setView(t.dataset.view)));
-    $("#btn-generate").addEventListener("click", generate);
+    $$(".tab").forEach((t) => t.addEventListener("click", () => onTab(t.dataset.view)));
+    $("#btn-generate").addEventListener("click", () => { sfx.click(); generate(); });
     $("#answer-form").addEventListener("submit", submitAnswer);
     $("#btn-reveal").addEventListener("click", reveal);
+    $("#btn-hint").addEventListener("click", () => getHint("bench"));
+    $("#ch-hint").addEventListener("click", () => getHint("round"));
+    $("#ch-form").addEventListener("submit", submitRound);
+    $("#ch-quit").addEventListener("click", () => endRounds(true));
+    attachLoupe($("#ch-vp"), $("#ch-img"), $("#ch-loupe"), () => true);
     $("#btn-ask").addEventListener("click", askGemini);
     $("#btn-pack").addEventListener("click", downloadPack);
     $("#btn-link").addEventListener("click", copyLink);
-    $("#btn-next").addEventListener("click", () => generate());
+    $("#btn-next").addEventListener("click", () => { sfx.click(); generate(); });
+    $("#btn-record").addEventListener("click", openRecord);
+    $("#btn-sound").addEventListener("click", () => setSound(!SND.on));
+    $("#btn-help").addEventListener("click", openHelp);
+    $$("[data-close-help]").forEach((el) => el.addEventListener("click", closeHelp));
     $("#btn-clean").addEventListener("click", () => { setFactors(S.meta.base); toast("All knobs back to the clean baseline."); });
-    $$(".preset").forEach((b) => b.addEventListener("click", () => generate(Number(b.dataset.level))));
+    $$(".preset").forEach((b) => b.addEventListener("click", () => { sfx.click(); generate(Number(b.dataset.level)); }));
     $("#btn-seed-lock").addEventListener("click", (e) => {
       S.seedLocked = !S.seedLocked;
       e.currentTarget.setAttribute("aria-pressed", String(S.seedLocked));
@@ -1048,8 +1408,9 @@
     $("#tg-vision").addEventListener("change", (e) => {
       $("#viewport").classList.toggle("vision-on", e.target.checked);
       if (S.task) $("#task-img").src = e.target.checked ? S.task.vision : S.task.image;
+      sfx.tick();
     });
-    $("#tg-loupe").addEventListener("change", (e) => $("#viewport").classList.toggle("loupe-on", e.target.checked));
+    $("#tg-loupe").addEventListener("change", (e) => { $("#viewport").classList.toggle("loupe-on", e.target.checked); sfx.tick(); });
     $("#viewport").classList.add("loupe-on");
     attachLoupe($("#viewport"), $("#task-img"), $("#loupe"), () => $("#tg-loupe").checked);
 
@@ -1062,22 +1423,31 @@
     let st;
     $("#search").addEventListener("input", (e) => { clearTimeout(st); st = setTimeout(() => { S.archive.search = e.target.value.trim(); renderArchive(); }, 150); });
     $$("[data-close]").forEach((el) => el.addEventListener("click", closeDrawer));
-    window.addEventListener("resize", () => { if (S.lastKey && S.lastKey.answer_type === "number" && !$("#verdict").hidden) drawStrip($("#strip"), S.lastKey, S.lastYou, S.lastGem?.parsed); });
+    window.addEventListener("resize", () => {
+      moveTabIndicator();
+      if (S.lastKey && S.lastKey.answer_type === "number" && !$("#verdict").hidden) drawStrip($("#strip"), S.lastKey, S.lastYou, S.lastGem?.parsed);
+    });
+    document.fonts?.ready.then(moveTabIndicator);
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") { closeDrawer(); return; }
+      if (e.key === "Escape") { closeDrawer(); closeHelp(); return; }
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
-      if (!$("#view-challenge").hidden) {
+      const k = e.key.toLowerCase();
+      if (e.key === "?") { e.preventDefault(); $("#help").hidden ? openHelp() : closeHelp(); return; }
+      if (k === "m") { setSound(!SND.on); return; }
+      if (k === "r") { openRecord(); return; }
+      if (!$("#view-play").hidden) {
         const t = C.tasks[C.i];
         if (!t || C.done) return;
+        if (k === "h") { getHint("round"); return; }
         if (e.key === "Enter" && $("#ch-result").hidden && t.answer_type === "choice") { e.preventDefault(); submitRound(); }
         else if (/^[1-9]$/.test(e.key) && $("#ch-result").hidden && t.answer_type === "choice") { const b = $$("#ch-choices .choice")[Number(e.key) - 1]; if (b) b.click(); }
         return;
       }
       if ($("#view-bench").hidden) return;
-      const k = e.key.toLowerCase();
-      if (k === "g") { e.preventDefault(); generate(); }
+      if (k === "g") { e.preventDefault(); sfx.click(); generate(); }
+      else if (k === "h") getHint("bench");
       else if (k === "l") { const c = $("#tg-loupe"); c.checked = !c.checked; c.dispatchEvent(new Event("change")); }
       else if (k === "v") { const c = $("#tg-vision"); c.checked = !c.checked; c.dispatchEvent(new Event("change")); }
       else if (/^[1-9]$/.test(k) && S.task && S.task.answer_type === "choice" && !S.answered) {
@@ -1118,7 +1488,7 @@
       generate();
       return true;
     }
-    if (["bench", "challenge", "archive"].includes(view)) { setView(view); return true; }
+    if (["bench", "daily", "challenge", "archive"].includes(view)) { setView(view); return true; }
     return false;
   }
 
@@ -1127,13 +1497,17 @@
     try {
       S.meta = await api("/api/meta");
     } catch (e) {
-      toast("Could not reach the GaugeBench server: " + e.message, true);
+      toast(e.message, true);
       return;
     }
     buildRack();
     selectFamily(S.family);
     renderTally();
     wire();
+    const b = $("#btn-sound");                       // reflect the saved preference without a click sound
+    b.setAttribute("aria-pressed", String(SND.on));
+    b.title = SND.on ? "Sound on (M)" : "Sound off (M)";
+    $("#daily-dot").hidden = !!dailyStore().results[dateKey()];
     if (!applyUrl()) setView(store.get("gb-view", "bench"));
   }
   boot();
