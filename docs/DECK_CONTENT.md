@@ -3,12 +3,14 @@
 Paste each section into the matching slide of the **official Hack2skill template** (Resources tab). The template is mandatory, so this file is content only.
 `[[ ... ]]` marks things to fill in after the real model run.
 
+**Built deck (official template, filled in):** Google Slides copy in the team leader's Drive, titled "Larp-Maxxing | GaugeBench | Innodata Idea Submission". Update it there after the full run.
+
 ---
 
 ## Slide 1: Title / team
 - **Project:** GaugeBench, a visual task factory for industrial gauge reading
 - **Track:** Track 2, Visual Task Factory
-- **Team:** [[team name, members, college]]
+- **Team:** Larp-Maxxing (leader: Soumyadeep Roy Karmakar)
 - **One-liner:** We generate gauge photos whose answers we already know, check every answer independently, and measure where frontier AI models stop being trustworthy at reading instruments.
 
 ## Slide 2: The problem
