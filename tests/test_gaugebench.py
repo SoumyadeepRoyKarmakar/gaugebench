@@ -197,3 +197,33 @@ def test_studio_api_hides_key_until_answered(tmp_path):
         assert not wrong["score"]["correct"]
     finally:
         httpd.shutdown()
+
+
+def test_new_instrument_readers():
+    """The clock-meter, vernier and digital readers recover the drawn value from pixels,
+    and the vernier reader notices when the drawing does not match the key."""
+    from gaugebench.instruments import (cv_read_dial_meter, cv_read_digital, cv_read_vernier,
+                                        render_dial_meter, render_digital, render_vernier)
+    full = 4372.45
+    pos = [(full / 10 ** k) % 10 for k in (3, 2, 1, 0)]
+    read = cv_read_dial_meter(render_dial_meter(pos))
+    assert "".join(str(int(p)) for p in read) == "4372"
+    assert max(min(abs(a - b), 10 - abs(a - b)) for a, b in zip(read, pos)) < 0.15
+    for v in (3.4, 57.9, 120.1):
+        got, margin = cv_read_vernier(render_vernier(v))
+        assert got == pytest.approx(v) and margin > 2.0
+    assert cv_read_vernier(render_vernier(57.9))[0] != pytest.approx(57.8)
+    for text, style in (("-12.48", "led"), ("905.1", "lcd"), ("0.007", "vfd"), ("3", "lcd")):
+        assert cv_read_digital(render_digital(text, "bar", style, "×10")) == text
+
+
+def test_new_families_publish_valid_tasks(tmp_path):
+    from gaugebench.generate import generate, plan_suite
+    jobs = plan_suite(2, 0, ["dial_meter", "vernier", "digital_display"], [])
+    summary = generate(tmp_path, jobs, seed=3, log=lambda *a: None)
+    assert summary["published"] == 6
+    for line in (tmp_path / "manifest.jsonl").read_text(encoding="utf-8").splitlines():
+        t = json.loads(line)
+        rec = json.loads((tmp_path / t["image"]).with_name("task.json").read_text(encoding="utf-8"))
+        assert all(c["passed"] for c in rec["validation"])
+        assert score(t, f"ANSWER: {t['answer']}")["correct"]

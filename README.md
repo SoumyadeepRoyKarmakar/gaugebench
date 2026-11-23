@@ -28,7 +28,7 @@ results/<model>.jsonl         raw model outputs and per-task scores
 report.html                   leaderboard, capability curves, error analysis, failure gallery
 ```
 
-### Nine task families (different reasoning, not just different wording)
+### Twelve task families on five instrument geometries (different reasoning, not just different wording)
 
 | Family | What the model must do | Answer |
 |---|---|---|
@@ -41,6 +41,11 @@ report.html                   leaderboard, capability curves, error analysis, fa
 | `dual_scale` | pick the right ring on a two-scale dial (bar/psi, kPa/psi, °C/°F) — the other ring is a built-in distractor | number ± tolerance |
 | `level_reading` | read a vertical tank sight-glass (a different instrument geometry: linear, vertical, liquid surface) | number ± tolerance |
 | `panel_count` | count how many of 4–6 dials are outside their green band (counting + per-dial judgement) | exact integer |
+| `dial_meter` | read a utility **clock-dial meter**: 4–5 small dials that turn in alternating directions, applying the "take the lower number" convention across them | exact integer (kWh) |
+| `vernier` | read a **vernier caliper**: whole mm from the main scale (numbered in cm) plus tenths from the one vernier line that aligns, which is sub-division precision in its purest form | number ± 0.05 mm |
+| `digital_display` | read a **7-segment panel meter** (LCD, red LED or VFD) with ghost segments, a decimal point and sometimes a lit ×10/×100 annunciator. It is the *digital control*: does a model's trouble come from analogue reading or from the photo? | number ± ½ last digit |
+
+The three newer instruments have their own independent pixel readers: pointer angles per dial for the meter, tick-mask alignment for the vernier, and luminance at segment positions for the display. They also have their own ambiguity checks: no meter pointer sitting exactly on a number, and the vernier's aligned line resolvable after blur.
 
 ### Eleven visual difficulty factors, all recorded per task
 
@@ -119,7 +124,7 @@ python -m gaugebench evaluate runs/demo --model gemini:<model-id> --workers 1   
 
 python -m gaugebench report runs/demo        # open runs/demo/report.html
 
-python -m pytest -q                          # 15 tests incl. mutation tests of the validator
+python -m pytest -q                          # 17 tests incl. mutation tests of the validator
 
 python -m gaugebench app                     # GaugeBench Studio, the interactive web app
 ```
@@ -131,12 +136,15 @@ Evaluation runs are **resumable and cached**. Tasks already answered are never p
 `python -m gaugebench app` opens a local web app at `http://127.0.0.1:8765`. It needs no extra installs (Python standard library server, vanilla JS front end).
 
 **Bench**: the factory, live.
-- Pick one of the 9 instruments and set the 11 conditions on rotary knobs (or roll a random L1–L5 mix), then **Generate**. A new task is drawn, photographed and validated in about a second.
+- Pick one of the 12 task families and set the 11 conditions on rotary knobs (or roll a random L1–L5 mix), then **Generate**. A new task is drawn, photographed and validated in about a second.
 - Read it yourself, using the **loupe** (hover to magnify) if you like. You are scored with the same tolerance the models get, on a paper work order with a tolerance strip that shows your reading against the key.
 - **Validator vision** shows what the independent checker measured: needle pixels in orange, set points in magenta, glare in cyan.
 - The **factory floor** shows every candidate that was rejected before this task was published, and why (glare over the needle, numbers overlapping, needle on a zone edge...).
 - **Ask Gemini** sends the exact same image and question to the model (needs `GEMINI_API_KEY` in `.env`) and puts its answer on the same strip, with its reasoning.
 - The answer key and the true needle value stay on the server until you submit or reveal (enforced by a test).
+- **Task pack** downloads the image plus a JSON with the key, the factors and the full validation evidence, so any live task can join a dataset.
+
+**Challenge**: you against a model, head to head, on 5, 10 or 20 real tasks from a suite. After each answer you see the model's recorded answer and reasoning on the same image; at the end you get the final score and your time against the model's. It makes no API calls, because the model's answers come from the suite's results.
 
 **Archive**: browse any suite in `runs/` as a grid, filter by family or by right/wrong for any model, and open a task to see the image, the key, every model's answer and reasoning, and all validator checks.
 
@@ -151,8 +159,9 @@ Keyboard: `G` generate, `Enter` submit, `1`–`9` pick a choice, `L` loupe, `V` 
 | `render.py` | draws a gauge and its evidence layers (needle, tick masks, label positions) |
 | `scene.py` | panels and pairs; glare, perspective, exposure, blur, noise, applied to the masks too |
 | `validate.py` | independent pixel reader, visibility checks, margin checks |
-| `tasks.py` | the nine task families with their ambiguity checks |
+| `tasks.py` | the nine dial and sight-glass task families with their ambiguity checks |
 | `level.py` | tank level sight-glass renderer |
+| `instruments.py` | clock-dial meter, vernier caliper and digital display: renderers, pixel readers, task builders |
 | `generate.py` | sample → validate → publish or reject; deterministic seeds |
 | `models/` | Claude and Gemini adapters (official SDKs) and offline baselines |
 | `evaluate.py`, `score.py`, `report.py` | running models, scoring, and the HTML report |

@@ -46,6 +46,7 @@ FAMILY_LABELS = {
     "read_value": "Read the value", "zone_status": "Zone status", "setpoint_deviation": "Set-point deviation",
     "panel_alarm": "Panel alarm", "panel_max": "Panel max", "temporal_change": "Change over time",
     "dual_scale": "Dual scale", "level_reading": "Tank level", "panel_count": "Panel count",
+    "dial_meter": "Clock-dial meter", "vernier": "Vernier caliper", "digital_display": "Digital display",
 }
 
 
@@ -240,6 +241,45 @@ class Suites:
                                                      "latency_s", "served_by")}
         return {"task": full, "answers": answers}
 
+    def challenge(self, name: str, model: str, n: int, family: str | None, seed: int) -> dict:
+        """Pick n tasks the model has answered; return them WITHOUT answer keys."""
+        d = self.load(name)
+        rows = d["results"].get(model)
+        if not rows:
+            raise ValueError(f"{model} has no results in suite {name}")
+        pool = [t for t in d["tasks"] if t["id"] in rows and not rows[t["id"]].get("error")
+                and (not family or t["family"] == family)]
+        if not pool:
+            raise ValueError("no answered tasks match that filter")
+        rng = np.random.default_rng(seed)
+        # spread across families: round-robin over shuffled per-family queues
+        by_fam: dict[str, list] = {}
+        for t in rng.permutation(len(pool)):
+            by_fam.setdefault(pool[t]["family"], []).append(pool[t])
+        fams = list(by_fam)
+        rng.shuffle(fams)
+        picked = []
+        while len(picked) < min(n, len(pool)):
+            for f in fams:
+                if by_fam[f] and len(picked) < n:
+                    picked.append(by_fam[f].pop())
+        return {"suite": name, "model": model, "tasks": [{
+            "id": t["id"], "family": t["family"], "family_label": FAMILY_LABELS.get(t["family"], t["family"]),
+            "question": _strip_format(t["question"]), "answer_type": t["answer_type"], "choices": t["choices"],
+            "unit": t["unit"], "image": f"/suites/{name}/{t['image']}",
+        } for t in picked]}
+
+    def challenge_answer(self, name: str, model: str, tid: str, answer: str) -> dict:
+        d = self.load(name)
+        task = next((t for t in d["tasks"] if t["id"] == tid), None)
+        if task is None:
+            raise KeyError(tid)
+        s = score(task, f"ANSWER: {answer}")
+        r = d["results"].get(model, {}).get(tid, {})
+        return {"score": s, "key": key_view(task),
+                "model": {"name": model, "parsed": r.get("parsed"), "correct": bool(r.get("correct")),
+                          "latency_s": r.get("latency_s"), "text": r.get("text", "")}}
+
     @lru_cache(maxsize=2048)
     def thumb(self, name: str, tid: str) -> bytes:
         im = Image.open(self.path(name) / "tasks" / tid / "image.png").convert("RGB")
@@ -355,6 +395,14 @@ def make_handler(state: State):
                     return self._json({"key": key_view(rec["task"]), "checks": rec["checks"]})
                 if u.path == "/api/ask":
                     return self._ask(body)
+                if u.path == "/api/challenge/start":
+                    n = max(1, min(30, int(body.get("n", 10))))
+                    seed = int(body["seed"]) if str(body.get("seed", "")).isdigit() else secrets.randbits(32)
+                    return self._json(state.suites.challenge(body["suite"], body["model"], n,
+                                                             body.get("family") or None, seed))
+                if u.path == "/api/challenge/answer":
+                    return self._json(state.suites.challenge_answer(body["suite"], body["model"], body["id"],
+                                                                    str(body.get("answer", "")).strip()))
                 return self._err(404, "not found")
             except NoValidTask as e:
                 return self._json({"error": str(e), "rejected": e.rejected}, 422)

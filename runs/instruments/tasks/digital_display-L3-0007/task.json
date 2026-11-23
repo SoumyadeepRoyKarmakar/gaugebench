@@ -1,0 +1,62 @@
+{
+  "id": "digital_display-L3-0007",
+  "family": "digital_display",
+  "question": "This is a digital panel meter. What value does it show, in V? Take into account everything shown on the display. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 589100.0,
+  "answer_type": "number",
+  "tolerance": 50.0,
+  "choices": null,
+  "unit": "V",
+  "factors": {
+    "scale_kind": "linear",
+    "sweep": "270",
+    "minors_per_major": 5,
+    "label_every": 1,
+    "multiplier": "x100",
+    "face": "light",
+    "glare": 0,
+    "tilt": 0,
+    "blur": 0.0,
+    "noise": 16.0,
+    "lighting": 1.0
+  },
+  "gauges": [],
+  "meta": {
+    "display": "5891",
+    "style": "lcd",
+    "annunciator": "×100",
+    "range": [
+      -1000000.0,
+      1000000.0
+    ],
+    "suite_kind": "mixed",
+    "level": 3,
+    "sweep_factor": null,
+    "attempts": 2,
+    "generator_version": "0.1.0"
+  },
+  "seed": 162165265511335,
+  "image": "tasks/digital_display-L3-0007/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_digits",
+      "passed": true,
+      "detail": "cv='5891' key='5891'"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=133.4"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 18.0px"
+    }
+  ]
+}

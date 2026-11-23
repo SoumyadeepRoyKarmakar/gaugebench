@@ -1,0 +1,22 @@
+{
+  "generator_version": "0.1.0",
+  "seed": 21,
+  "jobs": 24,
+  "published": 24,
+  "attempts": 42,
+  "rejected_attempts": 18,
+  "rejection_reasons": {
+    "pointers_clear_of_numbers": 7,
+    "needle_not_glared": 7,
+    "pixel_reread_dials": 4,
+    "vernier_alignment_resolvable": 4,
+    "needle_contrast": 3,
+    "reject:too many digits for the display": 1
+  },
+  "seconds": 9.3,
+  "families": {
+    "dial_meter": 8,
+    "vernier": 8,
+    "digital_display": 8
+  }
+}

@@ -29,6 +29,7 @@
 
   <nav class="tabs" role="tablist" aria-label="Views">
     <button role="tab" class="tab is-active" data-view="bench" aria-selected="true">Bench</button>
+    <button role="tab" class="tab" data-view="challenge" aria-selected="false">Challenge</button>
     <button role="tab" class="tab" data-view="archive" aria-selected="false">Archive</button>
   </nav>
 
@@ -161,6 +162,10 @@
         <div class="stamp" id="stamp">PASS</div>
         <div class="readout" id="readout"></div>
         <svg class="strip" id="strip" role="img" aria-label="Tolerance strip"></svg>
+        <div class="verdict-actions">
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-pack" title="Image + task JSON with key and validation evidence">⬇ Task pack</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-next">Next task <kbd>G</kbd></button>
+        </div>
       </div>
 
       <div class="gemini" id="gemini-box" hidden>
@@ -186,6 +191,67 @@
       </ul>
     </section>
   </section>
+</main>
+
+<!-- ============================== CHALLENGE ============================== -->
+<main id="view-challenge" class="view challenge" role="tabpanel" hidden>
+  <section class="ch-setup" id="ch-setup">
+    <div class="ch-hero">
+      <div class="ch-kicker">Head to head</div>
+      <h1 class="ch-title">Can you <span class="nowrap">out-read</span><br>the machine?</h1>
+      <p class="ch-lede">Real tasks from a generated suite, scored with the benchmark's own tolerance. After each answer you see what the model said on the very same image. No API calls are made: the model's answers were recorded when the suite was evaluated.</p>
+    </div>
+    <div class="ch-form">
+      <div class="ch-field"><span class="ab-label">Suite</span><div class="seg" id="ch-suite"></div></div>
+      <div class="ch-field"><span class="ab-label">Opponent</span><select id="ch-model" class="select"></select></div>
+      <div class="ch-field"><span class="ab-label">Rounds</span>
+        <div class="seg" id="ch-n"><button data-n="5">5</button><button data-n="10" class="is-on">10</button><button data-n="20">20</button></div></div>
+      <div class="ch-field"><span class="ab-label">Instrument</span><select id="ch-family" class="select"></select></div>
+      <button class="big-button" id="ch-start"><span class="bb-cap">Start challenge</span></button>
+      <p class="ch-empty" id="ch-empty" hidden></p>
+    </div>
+  </section>
+
+  <section class="ch-play" id="ch-play" hidden>
+    <div class="scoreboard">
+      <div class="sb-side sb-you"><span class="sb-name">You</span><span class="sb-score" id="sb-you">0</span></div>
+      <div class="sb-mid">
+        <div class="sb-round" id="sb-round">Round 1 / 10</div>
+        <div class="pips" id="pips"></div>
+      </div>
+      <div class="sb-side sb-gem"><span class="sb-score" id="sb-gem">0</span><span class="sb-name" id="sb-model">Model</span></div>
+    </div>
+    <div class="ch-stage">
+      <div class="viewport has-img loupe-on" id="ch-vp">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <img id="ch-img" alt="challenge task" draggable="false">
+        <div class="loupe" id="ch-loupe" aria-hidden="true"></div>
+      </div>
+      <article class="ticket ch-ticket">
+        <div class="ticket-perf" aria-hidden="true"></div>
+        <header class="ticket-head">
+          <span class="ticket-kicker" id="ch-kicker">Round 1</span>
+          <span class="ticket-no" id="ch-clock">0:00</span>
+        </header>
+        <div class="ticket-family" id="ch-family-label"></div>
+        <p class="ticket-q" id="ch-q"></p>
+        <form class="answer" id="ch-form" autocomplete="off">
+          <div class="answer-num" id="ch-num">
+            <input id="ch-input" inputmode="decimal" aria-label="Your answer" placeholder="your reading">
+            <span class="answer-unit" id="ch-unit"></span>
+          </div>
+          <div class="answer-choices" id="ch-choices" role="radiogroup" aria-label="Choices"></div>
+          <div class="answer-actions">
+            <button type="submit" class="btn btn-ink" id="ch-submit">Lock in <kbd>↵</kbd></button>
+            <button type="button" class="btn btn-ghost" id="ch-quit">Quit</button>
+          </div>
+        </form>
+        <div class="ch-result" id="ch-result" hidden></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="ch-end" id="ch-end" hidden></section>
 </main>
 
 <!-- ============================== ARCHIVE ============================== -->

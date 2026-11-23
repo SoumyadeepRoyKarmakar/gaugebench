@@ -1,0 +1,62 @@
+{
+  "id": "digital_display-L5-0004",
+  "family": "digital_display",
+  "question": "This is a digital panel meter. What value does it show, in m³/h? Take into account everything shown on the display. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 5.0,
+  "answer_type": "number",
+  "tolerance": 0.05,
+  "choices": null,
+  "unit": "m³/h",
+  "factors": {
+    "scale_kind": "linear",
+    "sweep": "270",
+    "minors_per_major": 5,
+    "label_every": 1,
+    "multiplier": "x1",
+    "face": "light",
+    "glare": 2,
+    "tilt": 40,
+    "blur": 2.0,
+    "noise": 8.0,
+    "lighting": 0.45
+  },
+  "gauges": [],
+  "meta": {
+    "display": "5.0",
+    "style": "lcd",
+    "annunciator": "",
+    "range": [
+      -10.0,
+      10.0
+    ],
+    "suite_kind": "mixed",
+    "level": 5,
+    "sweep_factor": null,
+    "attempts": 1,
+    "generator_version": "0.1.0"
+  },
+  "seed": 59366027489233,
+  "image": "tasks/digital_display-L5-0004/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_digits",
+      "passed": true,
+      "detail": "cv='5.0' key='5.0'"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=39.8"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 23.9px"
+    }
+  ]
+}

@@ -42,6 +42,9 @@ class RandomGuess(Model):
             return {"text": f"ANSWER: {rng.choice(task['choices'])}"}
         if task["family"] == "panel_count":
             return {"text": f"ANSWER: {rng.randint(0, task['meta']['n_gauges'])}"}
+        if "range" in task.get("meta", {}):                 # meter, vernier, digital display
+            lo, hi = task["meta"]["range"]
+            return {"text": f"ANSWER: {rng.uniform(lo, hi)}"}
         g = task["gauges"][0]
         if task["family"] == "dual_scale" and task["meta"]["asked_scale"] == "secondary":
             g = {"scale": g["secondary"], "multiplier": 1.0}
@@ -67,6 +70,11 @@ class Shortcut(Model):
             return {"text": "ANSWER: 1"}
         if fam in ("setpoint_deviation", "temporal_change"):
             return {"text": "ANSWER: 0"}
+        if fam == "digital_display":                        # read the digits, ignore the ×10/×100 annunciator
+            return {"text": f"ANSWER: {task['meta']['display']}"}
+        if "range" in task.get("meta", {}):
+            lo, hi = task["meta"]["range"]
+            return {"text": f"ANSWER: {(lo + hi) / 2}"}
         g = task["gauges"][0]
         mid = (g["scale"]["vmin"] + g["scale"]["vmax"]) / 2  # ignores multiplier and non-linearity
         return {"text": f"ANSWER: {mid}"}

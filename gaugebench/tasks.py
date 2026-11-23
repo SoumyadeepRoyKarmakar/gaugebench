@@ -330,3 +330,7 @@ FAMILIES: dict[str, Callable] = {
     "level_reading": build_level_reading,
     "panel_count": build_panel_count,
 }
+
+# three more instrument geometries (utility clock meter, vernier caliper, digital panel meter)
+from .instruments import NEW_FAMILIES  # noqa: E402  (imports Task etc. from this module)
+FAMILIES.update(NEW_FAMILIES)

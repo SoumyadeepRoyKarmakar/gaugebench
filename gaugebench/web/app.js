@@ -53,6 +53,9 @@
     temporal_change: `<circle cx="10" cy="16" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="22" cy="16" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M10 16 L7 12" stroke="currentColor" stroke-width="1.6"/><path class="ac" d="M22 16 L26 13" stroke="currentColor" stroke-width="1.8"/><path d="M13 27 h6 l-2 -2 M19 27 l-2 2" fill="none" stroke="currentColor" stroke-width="1.2"/>`,
     dual_scale: `<circle cx="16" cy="16" r="11.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="16" cy="16" r="6.5" fill="none" stroke="#ff4f4f" stroke-width="1.4" stroke-dasharray="2 2"/><path class="ac" d="M16 16 L24 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`,
     level_reading: `<rect x="11" y="4" width="10" height="24" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><rect class="ac" x="13" y="13" width="6" height="13" rx="1" fill="rgba(126,166,255,.55)" stroke="currentColor" stroke-width="1"/><path d="M23 8 h3 M23 13 h2 M23 18 h3 M23 23 h2" stroke="currentColor" stroke-width="1.2"/>`,
+    dial_meter: `<circle cx="6.5" cy="16" r="4.6" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="16" cy="16" r="4.6" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="25.5" cy="16" r="4.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path class="ac" d="M6.5 16 l2.4 -2.6 M16 16 l-2.6 -2.2 M25.5 16 l1.2 3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4 9.5 a4 4 0 0 1 5 0 M18.5 9.5 a4 4 0 0 0 -5 0" fill="none" stroke="#ff4f4f" stroke-width="1"/>`,
+    vernier: `<rect x="3" y="8" width="26" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 16 v-3 M9 16 v-2 M12 16 v-2 M15 16 v-3 M18 16 v-2 M21 16 v-2 M24 16 v-3" stroke="currentColor" stroke-width="1"/><rect class="ac" x="9" y="16" width="14" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><path class="ac" d="M10 16 v3 M13 16 v2 M16 16 v3 M19 16 v2 M22 16 v3" stroke="currentColor" stroke-width="1"/>`,
+    digital_display: `<rect x="3" y="8" width="26" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path class="ac" d="M7 12 h4 M11 12 v3.5 M7 15.5 h4 M7 15.5 v3.5 M7 19 h4 M14 12 h4 M18 12 v7 M21 12 h4 M21 12 v3.5 M21 15.5 h4 M25 15.5 v3.5 M21 19 h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`,
     panel_count: `<circle cx="9" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="23" cy="9" r="5" fill="none" stroke="#ff4f4f" stroke-width="1.5"/><circle cx="9" cy="23" r="5" fill="none" stroke="#ff4f4f" stroke-width="1.5"/><circle cx="23" cy="23" r="5" fill="none" stroke="currentColor" stroke-width="1.3"/><text class="ac" x="16" y="19" font-size="8" text-anchor="middle" fill="currentColor" font-family="monospace" font-weight="700">2</text>`,
   };
 
@@ -93,6 +96,9 @@
     all_needles_clear_of_danger_boundary: "All needles clear of the red-zone edge",
     winner_clear_margin: "Highest gauge wins by a clear margin", needles_separated: "Needles far enough apart",
     change_larger_than_reading_error: "Change is bigger than reading error",
+    pixel_reread_dials: "Every dial re-read from pixels", pointers_clear_of_numbers: "No pointer sits exactly on a number",
+    pixel_reread_vernier: "Vernier re-read from tick pixels", vernier_alignment_resolvable: "Aligned line clearly resolvable",
+    pixel_reread_digits: "Segments decoded from pixels",
   };
   const checkName = (n) => CHECK_NAMES[n] || (n.startsWith("reject:") ? "Sampler: " + n.slice(7).replace(/_/g, " ")
     : n.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()));
@@ -104,6 +110,9 @@
     all_needles_clear_of_danger_boundary: "Needle on the red edge", winner_clear_margin: "No clear winner",
     needles_separated: "Needles overlap", change_larger_than_reading_error: "Change too small to read",
     pixel_reread_needle: "Pixel re-read disagrees", pixel_reread_setpoint: "Set-point re-read disagrees",
+    pointers_clear_of_numbers: "Pointer on a number", vernier_alignment_resolvable: "Alignment too subtle",
+    pixel_reread_dials: "Dial re-read disagrees", pixel_reread_vernier: "Vernier re-read disagrees",
+    pixel_reread_digits: "Segments unreadable",
   };
   const rejectShort = (n) => REJECT_SHORT[n] || checkName(n);
 
@@ -301,7 +310,7 @@
   }
 
   function showTask(t) {
-    S.task = t; S.answered = false; S.choice = null; S.lastKey = null; S.lastYou = null; S.lastGem = null;
+    S.task = t; S.answered = false; S.choice = null; S.lastKey = null; S.lastYou = null; S.lastGem = null; S.checksFull = null;
     const vp = $("#viewport");
     const img = $("#task-img");
     img.src = $("#tg-vision").checked ? t.vision : t.image;
@@ -409,7 +418,7 @@
       S.lastYou = r.score.parsed;
       bump("you", r.score.correct);
       showVerdict(r.score.correct ? "pass" : "fail", r.key, r.score);
-      if (r.checks) renderChecks(r.checks);
+      if (r.checks) { S.checksFull = r.checks; renderChecks(r.checks); }
     } catch (err) { toast(err.message, true); }
   }
 
@@ -421,7 +430,7 @@
       S.answered = true;
       S.lastKey = r.key;
       showVerdict("reveal", r.key, null);
-      if (r.checks) renderChecks(r.checks);
+      if (r.checks) { S.checksFull = r.checks; renderChecks(r.checks); }
     } catch (err) { toast(err.message, true); }
   }
 
@@ -727,13 +736,237 @@
     dr.setAttribute("aria-hidden", "true");
   }
 
+  // ------------------------------------------------------------------ task pack download
+  function download(name, href) {
+    const a = h("a", { href, download: name });
+    document.body.append(a); a.click(); a.remove();
+  }
+  function downloadPack() {
+    const t = S.task;
+    if (!t || !S.lastKey) return;
+    const base = t.id;
+    const pack = {
+      id: t.id, family: t.family, question: t.question, answer_type: t.answer_type, choices: t.choices,
+      unit: t.unit, answer: S.lastKey.answer, tolerance: S.lastKey.tolerance, factors: t.factors, seed: t.seed,
+      validation: S.checksFull || t.checks, rejected_before_publish: t.rejected.map((r) => ({ attempt: r.attempt, reasons: r.reasons })),
+      image: `${base}.png`, generator: `GaugeBench Studio ${S.meta.version}`,
+    };
+    download(`${base}.png`, t.image);
+    const url = URL.createObjectURL(new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" }));
+    setTimeout(() => { download(`${base}.json`, url); setTimeout(() => URL.revokeObjectURL(url), 2000); }, 250);
+    toast("Saved the image and task JSON.");
+  }
+
+  // ------------------------------------------------------------------ challenge
+  const C = { suite: null, model: null, n: 10, family: "", tasks: [], i: 0, you: 0, gem: 0, log: [], t0: 0, timer: null, total: 0, choice: null, done: false };
+  let challengeReady = false;
+
+  function initChallenge() {
+    const suites = S.meta.suites.filter((s) => s.models.some((m) => !BASELINES.includes(m)));
+    if (!suites.length) {
+      $("#ch-start").disabled = true;
+      $("#ch-empty").hidden = false;
+      $("#ch-empty").textContent = "No suite has model results yet. Evaluate one first, e.g. python -m gaugebench evaluate runs/sample --model gemini:gemini-3.5-flash-lite";
+      return;
+    }
+    const seg = $("#ch-suite");
+    seg.innerHTML = "";
+    const pick = suites.reduce((a, b) => (b.tasks > a.tasks ? b : a));
+    for (const s of suites) {
+      const b = h("button", { "data-suite": s.name }, s.name, h("span", { class: "seg-n" }, String(s.tasks)));
+      b.addEventListener("click", () => chooseSuite(s.name));
+      seg.append(b);
+    }
+    $$("#ch-n button").forEach((b) => b.addEventListener("click", () => {
+      C.n = Number(b.dataset.n);
+      $$("#ch-n button").forEach((x) => x.classList.toggle("is-on", x === b));
+    }));
+    $("#ch-model").addEventListener("change", (e) => (C.model = e.target.value));
+    $("#ch-family").addEventListener("change", (e) => (C.family = e.target.value));
+    $("#ch-start").addEventListener("click", startChallenge);
+    $("#ch-form").addEventListener("submit", submitRound);
+    $("#ch-quit").addEventListener("click", () => endChallenge(true));
+    attachLoupe($("#ch-vp"), $("#ch-img"), $("#ch-loupe"), () => true);
+    chooseSuite(pick.name);
+  }
+
+  async function chooseSuite(name) {
+    C.suite = name;
+    $$("#ch-suite button").forEach((b) => b.classList.toggle("is-on", b.dataset.suite === name));
+    const s = S.meta.suites.find((x) => x.name === name);
+    const real = s.models.filter((m) => !BASELINES.includes(m));
+    const sel = $("#ch-model");
+    sel.innerHTML = "";
+    for (const m of [...real, ...s.models.filter((m) => BASELINES.includes(m))]) sel.append(h("option", { value: m }, m));
+    C.model = real[0] || s.models[0];
+    sel.value = C.model;
+    try {
+      const d = await api(`/api/suite?name=${encodeURIComponent(name)}`);
+      const fams = [...new Set(d.tasks.map((t) => t.family))];
+      const fs = $("#ch-family");
+      fs.innerHTML = `<option value="">All instruments (mixed)</option>` + fams.map((f) => `<option value="${esc(f)}">${esc(d.family_labels[f] || f)}</option>`).join("");
+      C.family = "";
+    } catch (e) { toast(e.message, true); }
+  }
+
+  async function startChallenge() {
+    try {
+      const d = await api("/api/challenge/start", { suite: C.suite, model: C.model, n: C.n, family: C.family });
+      Object.assign(C, { tasks: d.tasks, i: 0, you: 0, gem: 0, log: [], total: 0, done: false });
+      $("#ch-setup").hidden = true;
+      $("#ch-end").hidden = true;
+      $("#ch-play").hidden = false;
+      $("#sb-model").textContent = C.model.replace(/^gemini-/, "Gemini ").replace(/^claude-/, "Claude ");
+      $("#sb-you").textContent = "0"; $("#sb-gem").textContent = "0";
+      renderRound();
+    } catch (e) { toast(e.message, true); }
+  }
+
+  function renderPips() {
+    const p = $("#pips");
+    p.innerHTML = "";
+    C.tasks.forEach((_, k) => {
+      const l = C.log[k];
+      p.append(h("span", { class: "pip" + (k === C.i && !C.done ? " now" : ""), title: `round ${k + 1}` },
+        h("i", { class: "y" + (l ? (l.you ? " ok" : " no") : "") }), h("i", { class: "g" + (l ? (l.gem ? " ok" : " no") : "") })));
+    });
+  }
+
+  function renderRound() {
+    const t = C.tasks[C.i];
+    C.choice = null;
+    $("#sb-round").textContent = `Round ${C.i + 1} / ${C.tasks.length}`;
+    $("#ch-kicker").textContent = `Round ${C.i + 1}`;
+    $("#ch-family-label").textContent = t.family_label;
+    $("#ch-q").textContent = t.question;
+    const img = $("#ch-img");
+    img.src = t.image;
+    const vp = $("#ch-vp");
+    vp.classList.remove("has-img"); void vp.offsetWidth; vp.classList.add("has-img");
+    $("#ch-result").hidden = true;
+    $("#ch-form").hidden = false;
+    $$("#ch-form input, #ch-form button").forEach((el) => (el.disabled = false));
+    const num = t.answer_type === "number";
+    $("#ch-num").hidden = !num;
+    const ch = $("#ch-choices");
+    ch.hidden = num;
+    ch.innerHTML = "";
+    if (num) {
+      $("#ch-input").value = "";
+      $("#ch-unit").textContent = t.unit || "";
+      setTimeout(() => $("#ch-input").focus({ preventScroll: true }), 50);
+    } else {
+      t.choices.forEach((c) => {
+        const b = h("button", { type: "button", class: "choice", role: "radio", "aria-checked": "false" }, c);
+        b.addEventListener("click", () => { C.choice = c; $$(".choice", ch).forEach((x) => x.setAttribute("aria-checked", String(x === b))); });
+        ch.append(b);
+      });
+    }
+    renderPips();
+    C.t0 = Date.now();
+    clearInterval(C.timer);
+    const tick = () => {
+      const s = Math.floor((Date.now() - C.t0) / 1000);
+      $("#ch-clock").textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    };
+    tick();
+    C.timer = setInterval(tick, 500);
+  }
+
+  async function submitRound(e) {
+    e?.preventDefault();
+    const t = C.tasks[C.i];
+    if (!t || !$("#ch-result").hidden) return;
+    const raw = t.answer_type === "number" ? $("#ch-input").value.trim().replace(",", ".") : C.choice;
+    if (raw == null || raw === "") { toast(t.answer_type === "number" ? "Type your answer first." : "Pick an option first."); return; }
+    try {
+      const r = await api("/api/challenge/answer", { suite: C.suite, model: C.model, id: t.id, answer: raw });
+      clearInterval(C.timer);
+      const secs = (Date.now() - C.t0) / 1000;
+      C.total += secs;
+      const you = r.score.correct, gem = r.model.correct;
+      C.log[C.i] = { id: t.id, family: t.family_label, you, gem, secs, modelSecs: r.model.latency_s };
+      if (you) { C.you++; bumpScore("#sb-you", C.you); }
+      if (gem) { C.gem++; bumpScore("#sb-gem", C.gem); }
+      $$("#ch-form input, #ch-form button").forEach((el) => (el.disabled = true));
+      $("#ch-form").hidden = true;
+      const num = r.key.answer_type === "number";
+      const unit = r.key.unit ? " " + r.key.unit : "";
+      const fmt = (v) => (v == null ? "no answer" : num ? fmtNum(v) + unit : v);
+      const keyTxt = num ? `${fmtNum(r.key.answer)} ± ${fmtNum(r.key.tolerance)}${unit}` : r.key.answer;
+      const call = you && !gem ? "You read it right where the model failed."
+        : !you && gem ? "The model got this one. Look again with the loupe."
+        : you && gem ? "Both correct." : "Both wrong. A hard one.";
+      const last = C.i === C.tasks.length - 1;
+      const res = $("#ch-result");
+      res.hidden = false;
+      res.innerHTML = `
+        <div class="ch-row"><span class="who">You</span><span class="val">${esc(fmt(r.score.parsed))}</span><span class="mark ${you ? "ok" : "no"}">${you ? "✓" : "✗"}</span></div>
+        <div class="ch-row"><span class="who">Model</span><span class="val">${esc(fmt(r.model.parsed))}</span><span class="mark ${gem ? "ok" : "no"}">${gem ? "✓" : "✗"}</span></div>
+        <div class="ch-row key"><span class="who">Key</span><span class="val">${esc(keyTxt)}</span><span></span></div>
+        <p class="ch-callout">${call}</p>
+        ${r.model.text ? `<details><summary>Model's reasoning</summary><pre>${esc(r.model.text)}</pre></details>` : ""}
+        <button class="btn btn-ink ch-next" id="ch-next">${last ? "See final score" : "Next round"} <kbd>↵</kbd></button>`;
+      $("#ch-next").addEventListener("click", nextRound);
+      setTimeout(() => $("#ch-next").focus({ preventScroll: true }), 30);
+      renderPips();
+    } catch (err) { toast(err.message, true); }
+  }
+
+  function bumpScore(sel, v) {
+    const el = $(sel);
+    el.textContent = String(v);
+    el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump");
+  }
+
+  function nextRound() {
+    if (C.i < C.tasks.length - 1) { C.i++; renderRound(); }
+    else endChallenge(false);
+  }
+
+  function endChallenge(quit) {
+    clearInterval(C.timer);
+    C.done = true;
+    const played = C.log.filter(Boolean);
+    if (quit && !played.length) { $("#ch-play").hidden = true; $("#ch-setup").hidden = false; return; }
+    $("#ch-play").hidden = true;
+    const end = $("#ch-end");
+    end.hidden = false;
+    const n = played.length;
+    const ms = played.map((l) => l.modelSecs).filter((x) => x != null);
+    const avgModel = ms.length ? ms.reduce((a, b) => a + b, 0) / ms.length : null;
+    const verdict = C.you > C.gem ? "You out-read the machine." : C.you < C.gem ? "The machine wins this round." : "Dead heat.";
+    const model = esc(C.model);
+    end.innerHTML = `
+      <div class="end-card">
+        <div class="end-kicker">${quit ? "Challenge ended early" : "Final score"} · ${n} round${n === 1 ? "" : "s"}</div>
+        <div class="end-score"><span class="sb-score" style="color:var(--accent)">${C.you}</span><span class="end-vs">VS</span><span class="sb-score" style="color:var(--blue)">${C.gem}</span></div>
+        <div class="end-who"><span>You</span><span>${model}</span></div>
+        <div class="end-verdict">${verdict}</div>
+        <p class="end-sub">You averaged ${(C.total / Math.max(1, n)).toFixed(1)} s per task${avgModel != null ? `; the model took ${avgModel.toFixed(1)} s` : ""}. Same images, same tolerance.</p>
+        <div class="end-actions">
+          <button class="big-button" id="end-again"><span class="bb-cap">Play again</span></button>
+          <button class="ghost-dark" id="end-setup">Change settings</button>
+        </div>
+      </div>
+      <div class="end-list">${played.map((l) => `
+        <div class="end-item"><img src="/thumb/${encodeURIComponent(C.suite)}/${encodeURIComponent(l.id)}.jpg" alt="">
+          <div><div class="ei-fam">${esc(l.family)}</div>
+          <div class="ei-res">you <span class="${l.you ? "ok" : "no"}">${l.you ? "✓" : "✗"}</span> · model <span class="${l.gem ? "ok" : "no"}">${l.gem ? "✓" : "✗"}</span></div></div></div>`).join("")}
+      </div>`;
+    $("#end-again").addEventListener("click", startChallenge);
+    $("#end-setup").addEventListener("click", () => { end.hidden = true; $("#ch-setup").hidden = false; });
+  }
+
   // ------------------------------------------------------------------ views + keys
   let archiveReady = false;
   function setView(v) {
     $$(".tab").forEach((t) => { const on = t.dataset.view === v; t.classList.toggle("is-active", on); t.setAttribute("aria-selected", String(on)); });
     $("#view-bench").hidden = v !== "bench";
     $("#view-archive").hidden = v !== "archive";
+    $("#view-challenge").hidden = v !== "challenge";
     if (v === "archive" && !archiveReady) { archiveReady = true; initArchive(); }
+    if (v === "challenge" && !challengeReady) { challengeReady = true; initChallenge(); }
     store.set("gb-view", v);
   }
 
@@ -743,6 +976,8 @@
     $("#answer-form").addEventListener("submit", submitAnswer);
     $("#btn-reveal").addEventListener("click", reveal);
     $("#btn-ask").addEventListener("click", askGemini);
+    $("#btn-pack").addEventListener("click", downloadPack);
+    $("#btn-next").addEventListener("click", () => generate());
     $("#btn-clean").addEventListener("click", () => { setFactors(S.meta.base); toast("All knobs back to the clean baseline."); });
     $$(".preset").forEach((b) => b.addEventListener("click", () => generate(Number(b.dataset.level))));
     $("#btn-seed-lock").addEventListener("click", (e) => {
@@ -774,6 +1009,13 @@
       if (e.key === "Escape") { closeDrawer(); return; }
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (!$("#view-challenge").hidden) {
+        const t = C.tasks[C.i];
+        if (!t || C.done) return;
+        if (e.key === "Enter" && $("#ch-result").hidden && t.answer_type === "choice") { e.preventDefault(); submitRound(); }
+        else if (/^[1-9]$/.test(e.key) && $("#ch-result").hidden && t.answer_type === "choice") { const b = $$("#ch-choices .choice")[Number(e.key) - 1]; if (b) b.click(); }
+        return;
+      }
       if ($("#view-bench").hidden) return;
       const k = e.key.toLowerCase();
       if (k === "g") { e.preventDefault(); generate(); }

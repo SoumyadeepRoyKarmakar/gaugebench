@@ -31,7 +31,7 @@ Paste each section into the matching slide of the **official Hack2skill template
 - **Deterministic:** the same seed gives byte-identical tasks. A fresh seed gives brand-new tasks, so the benchmark can be regenerated whenever a model may have trained on the old one (no contamination).
 - One command builds a suite of any size. The 210-task sample takes about 1.5 minutes on a laptop.
 
-## Slide 4: Meaningful variation (9 task families)
+## Slide 4: Meaningful variation (12 task families, 5 instrument geometries)
 | Family | Visual skill tested |
 |---|---|
 | Read value | precise reading on linear, √, log and negative-range scales, with printed multipliers |
@@ -43,6 +43,9 @@ Paste each section into the matching slide of the **official Hack2skill template
 | Dual scale | pick the right ring (bar/psi, °C/°F); the other ring is a distractor |
 | Tank level | vertical sight-glass, a different instrument geometry |
 | Panel count | count the dials outside their green band |
+| Clock-dial meter | utility meter with 4–5 dials turning in alternating directions; apply the "take the lower number" convention |
+| Vernier caliper | find the one aligned vernier line: sub-division precision at its purest |
+| Digital display | 7-segment LCD/LED/VFD with ghost segments and a ×10 annunciator: the digital control for the analogue tasks |
 
 Plus **11 recorded difficulty factors**: scale type, sweep, division density, label density, multiplier, face colour, glare, camera tilt, blur, noise, exposure.
 
@@ -95,7 +98,7 @@ Three independent guards, applied to **every** task before it is published:
 ```
 spec.py (factors, ranges) → render.py / level.py (dial + evidence masks)
    → scene.py (panel, glare, tilt, blur, noise; masks transformed too)
-   → tasks.py (9 families + ambiguity checks) → validate.py (pixel reader, visibility)
+   → tasks.py + instruments.py (12 families + ambiguity checks) → validate.py (pixel reader, visibility)
    → generate.py (publish / reject + log) → evaluate.py (models, cached, resumable)
    → score.py → report.html
 ```

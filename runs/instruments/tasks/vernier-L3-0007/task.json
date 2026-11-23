@@ -1,0 +1,64 @@
+{
+  "id": "vernier-L3-0007",
+  "family": "vernier",
+  "question": "This is a close-up of a vernier caliper. The main scale is in millimetres, and its numbers mark whole centimetres. The sliding vernier scale has a least count of 0.1 mm. What measurement does the caliper show, in mm? Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 2.6,
+  "answer_type": "number",
+  "tolerance": 0.05,
+  "choices": null,
+  "unit": "mm",
+  "factors": {
+    "scale_kind": "linear",
+    "sweep": "270",
+    "minors_per_major": 10,
+    "label_every": 1,
+    "multiplier": "x1",
+    "face": "light",
+    "glare": 0,
+    "tilt": 15,
+    "blur": 1.0,
+    "noise": 0.0,
+    "lighting": 1.0
+  },
+  "gauges": [],
+  "meta": {
+    "range": [
+      0,
+      150
+    ],
+    "suite_kind": "mixed",
+    "level": 3,
+    "sweep_factor": null,
+    "attempts": 2,
+    "generator_version": "0.1.0"
+  },
+  "seed": 236266675144298,
+  "image": "tasks/vernier-L3-0007/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_vernier",
+      "passed": true,
+      "detail": "cv=2.6 key=2.6 alignment margin=3.0px"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=102.6"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 28.9px"
+    },
+    {
+      "name": "vernier_alignment_resolvable",
+      "passed": true,
+      "detail": "margin 2.89 px (need 2.5)"
+    }
+  ]
+}

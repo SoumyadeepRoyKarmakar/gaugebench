@@ -23,6 +23,7 @@ FAMILY_LABELS = {
     "read_value": "Read value", "zone_status": "Zone status", "setpoint_deviation": "Set-point deviation",
     "panel_alarm": "Panel alarm", "panel_max": "Panel max (mixed ranges)", "temporal_change": "Change over time",
     "dual_scale": "Dual scale", "level_reading": "Tank level", "panel_count": "Panel count",
+    "dial_meter": "Clock-dial meter", "vernier": "Vernier caliper", "digital_display": "Digital display",
 }
 
 CSS = """

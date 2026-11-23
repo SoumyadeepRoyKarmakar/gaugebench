@@ -1,0 +1,71 @@
+{
+  "id": "dial_meter-L2-0001",
+  "family": "dial_meter",
+  "question": "This is an electricity meter with clock-style dials. Adjacent dials turn in opposite directions (see the arrows). Read the dials from left to right; when a pointer is between two numbers, take the lower number it has just passed (after 9 comes 0). What is the meter reading in kWh? Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 1386,
+  "answer_type": "number",
+  "tolerance": 0.0,
+  "choices": null,
+  "unit": "kWh",
+  "factors": {
+    "scale_kind": "linear",
+    "sweep": "270",
+    "minors_per_major": 5,
+    "label_every": 1,
+    "multiplier": "x1",
+    "face": "light",
+    "glare": 0,
+    "tilt": 30,
+    "blur": 1.0,
+    "noise": 0.0,
+    "lighting": 1.0
+  },
+  "gauges": [],
+  "meta": {
+    "n_dials": 4,
+    "positions": [
+      1.386,
+      3.863,
+      8.634,
+      6.343
+    ],
+    "range": [
+      0,
+      9999
+    ],
+    "suite_kind": "mixed",
+    "level": 2,
+    "sweep_factor": null,
+    "attempts": 5,
+    "generator_version": "0.1.0"
+  },
+  "seed": 31252616370588,
+  "image": "tasks/dial_meter-L2-0001/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_dials",
+      "passed": true,
+      "detail": "cv digits=1386 key=1386 max_err=0.04 digit"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=149.0"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 16.2px"
+    },
+    {
+      "name": "pointers_clear_of_numbers",
+      "passed": true,
+      "detail": "margin 0.137 digit (need 0.07)"
+    }
+  ]
+}
