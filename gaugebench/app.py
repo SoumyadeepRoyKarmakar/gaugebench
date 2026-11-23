@@ -49,6 +49,24 @@ FAMILY_LABELS = {
     "dial_meter": "Clock-dial meter", "vernier": "Vernier caliper", "digital_display": "Digital display",
 }
 
+PHOTO = ["glare", "tilt", "blur", "noise", "lighting"]
+ALL_FACTORS = list(FACTOR_DOMAINS)
+# which conditions each family actually uses (others are fixed by the instrument)
+APPLICABLE = {
+    **{f: ALL_FACTORS for f in ("read_value", "zone_status", "setpoint_deviation", "panel_alarm", "panel_max",
+                                "temporal_change", "panel_count")},
+    "dual_scale": ["sweep", "face", *PHOTO],
+    "level_reading": ["minors_per_major", "label_every", "face", *PHOTO],
+    "dial_meter": ["face", *PHOTO],
+    "vernier": PHOTO,
+    "digital_display": ["multiplier", "face", *PHOTO],
+}
+
+
+def applicable_factors(family: str, factors: dict) -> dict:
+    keep = APPLICABLE.get(family, ALL_FACTORS)
+    return {k: v for k, v in factors.items() if k in keep}
+
 
 # ---------------------------------------------------------------------------------------
 # Live task generation
@@ -143,7 +161,8 @@ def public_view(rec: dict) -> dict:
     return {
         "id": t["id"], "family": t["family"], "family_label": FAMILY_LABELS.get(t["family"], t["family"]),
         "question": _strip_format(t["question"]), "answer_type": t["answer_type"],
-        "choices": t["choices"], "unit": t["unit"], "factors": t["factors"], "seed": t["seed"],
+        "choices": t["choices"], "unit": t["unit"], "factors": applicable_factors(t["family"], t["factors"]),
+        "seed": t["seed"],
         "n_gauges": len(t["gauges"]) or 1,
         "image": rec["image"], "vision": rec["vision"], "checks": redact_checks(rec["checks"]),
         "rejected": rec["rejected"], "attempts": rec["attempts"], "ms": rec["ms"],
@@ -233,6 +252,7 @@ class Suites:
             raise KeyError(tid)
         full = json.loads((self.path(name) / "tasks" / tid / "task.json").read_text(encoding="utf-8"))
         full["question"] = _strip_format(full["question"])
+        full["factors"] = applicable_factors(full["family"], full.get("factors", {}))
         answers = {}
         for m, rows in d["results"].items():
             r = rows.get(tid)
@@ -356,7 +376,7 @@ def make_handler(state: State):
                     return self._json({
                         "version": __version__,
                         "families": [{"id": k, "label": FAMILY_LABELS.get(k, k)} for k in FAMILIES],
-                        "factors": FACTOR_DOMAINS, "base": BASE_FACTORS,
+                        "factors": FACTOR_DOMAINS, "base": BASE_FACTORS, "applicable": APPLICABLE,
                         "gemini": {"available": gemini_available(), "model": state.gemini_model},
                         "suites": state.suites.summary(),
                     })

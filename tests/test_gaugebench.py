@@ -227,3 +227,55 @@ def test_new_families_publish_valid_tasks(tmp_path):
         rec = json.loads((tmp_path / t["image"]).with_name("task.json").read_text(encoding="utf-8"))
         assert all(c["passed"] for c in rec["validation"])
         assert score(t, f"ANSWER: {t['answer']}")["correct"]
+
+
+def test_challenge_api_hides_key_until_answered(tmp_path):
+    """Challenge rounds come from a suite on disk: the start response must carry no
+    answer key, tolerance, gauge spec or model answer; only /answer reveals them."""
+    import json as _json
+    import threading
+    import urllib.error
+    import urllib.request
+    from http.server import ThreadingHTTPServer
+    from gaugebench.app import State, make_handler
+    from gaugebench.evaluate import evaluate
+    from gaugebench.models import get_model
+
+    suite = tmp_path / "suite"
+    generate(suite, plan_suite(1, 0, ["read_value", "panel_max", "vernier", "digital_display"], []),
+             seed=5, log=lambda *a: None)
+    evaluate(suite, get_model("near_miss"), workers=1, log=lambda *a: None)
+    manifest = {t["id"]: t for t in map(_json.loads, (suite / "manifest.jsonl").read_text(encoding="utf-8").splitlines())}
+
+    state = State(tmp_path, "unused")
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(state))
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{httpd.server_address[1]}"
+
+    def call(path, body):
+        req = urllib.request.Request(base + path, data=_json.dumps(body).encode(),
+                                     headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req) as r:
+            return _json.loads(r.read())
+
+    try:
+        d = call("/api/challenge/start", {"suite": "suite", "model": "near_miss", "n": 10, "seed": "1"})
+        assert len(d["tasks"]) == 4
+        for t in d["tasks"]:
+            assert set(t) == {"id", "family", "family_label", "question", "answer_type", "choices", "unit", "image"}
+            key = manifest[t["id"]]
+            if key["answer_type"] == "number":          # the number must not appear anywhere in the round
+                assert f"{key['answer']}" not in _json.dumps({k: v for k, v in t.items() if k not in ("id", "image")})
+        t = d["tasks"][0]
+        key = manifest[t["id"]]
+        r = call("/api/challenge/answer", {"suite": "suite", "model": "near_miss", "id": t["id"],
+                                           "answer": str(key["answer"])})
+        assert r["score"]["correct"] and r["key"]["answer"] == key["answer"]
+        assert r["model"]["correct"] is False             # near_miss is always just wrong
+        try:                                              # unknown suites are refused, not read from disk
+            call("/api/challenge/start", {"suite": "../suite", "model": "near_miss", "n": 3})
+            assert False, "path traversal accepted"
+        except urllib.error.HTTPError as e:
+            assert e.code == 404
+    finally:
+        httpd.shutdown()

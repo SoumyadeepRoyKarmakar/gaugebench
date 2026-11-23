@@ -116,12 +116,27 @@
   };
   const rejectShort = (n) => REJECT_SHORT[n] || checkName(n);
 
-  function fmtNum(v) {
+  function fmtNum(v, prec = 6) {
     if (v == null || v === "" || Number.isNaN(Number(v))) return "—";
     const n = Number(v);
-    const s = Math.abs(n) >= 1e5 || (Math.abs(n) < 1e-3 && n !== 0) ? n.toExponential(2) : String(+n.toPrecision(5));
+    const s = Math.abs(n) >= 1e9 || (Math.abs(n) < 1e-4 && n !== 0) ? n.toExponential(2) : String(+n.toPrecision(prec));
     return s.replace("-", "−");
   }
+  const fmtExact = (v) => fmtNum(v, 12);           // what someone typed: never round it away
+  function fmtTol(tu) {
+    if (tu == null || !Number.isFinite(Number(tu))) return "";
+    const x = Number(tu);
+    return x < 10 ? `${x.toFixed(1)}×` : x < 1000 ? `${Math.round(x)}×` : ">1000×";
+  }
+  const MARKER = { vernier: "Vernier lines", digital_display: "Lit segments", dial_meter: "Pointers", level_reading: "Liquid surface" };
+  function checkNameFor(n, family) {
+    const m = MARKER[family];
+    if (m && n === "needle_not_glared") return `${m} not hidden by glare`;
+    if (m && n === "needle_contrast") return `${m} stand out from the background`;
+    return checkName(n);
+  }
+  const isNarrow = () => window.innerWidth < 860;
+  const scrollOnPhone = (el) => { if (isNarrow() && el) el.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
   // ------------------------------------------------------------------ state
   const S = {
@@ -262,6 +277,13 @@
     S.family = id;
     store.set("gb-family", id);
     $$(".fam").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.family === id)));
+    const used = S.meta.applicable?.[id] || Object.keys(S.meta.factors);
+    const label = S.meta.families.find((f) => f.id === id)?.label || id;
+    for (const [name, k] of Object.entries(knobs)) {
+      const on = used.includes(name);
+      k.el.classList.toggle("is-na", !on);
+      k.el.title = on ? "" : `Not used by ${label}: this instrument fixes it`;
+    }
   }
 
   function setFactors(f) {
@@ -330,6 +352,7 @@
     renderFloor(t);
     renderChecks(t.checks);
     renderTicket(t);
+    scrollOnPhone($(".inspect"));
     const needle = $(".bd-needle");
     needle.style.transform = `rotate(${-110 + Math.random() * 220}deg)`;
   }
@@ -361,7 +384,7 @@
     checks.forEach((c, i) => {
       ul.append(h("li", { style: `animation-delay:${i * 35}ms` },
         h("span", { class: `led ${c.passed ? "pass" : "fail"}` }),
-        h("span", { class: "check-name" }, checkName(c.name)),
+        h("span", { class: "check-name" }, checkNameFor(c.name, S.task?.family)),
         h("span", { class: "check-detail" }, c.detail)));
     });
     const p = checks.filter((c) => c.passed).length;
@@ -447,6 +470,7 @@
     const avail = S.meta.gemini.available;
     $("#btn-ask").disabled = !avail;
     $("#btn-ask").title = avail ? `Send this exact image and question to ${S.meta.gemini.model}` : "Add GEMINI_API_KEY to .env and restart the app";
+    scrollOnPhone(v);
   }
 
   function renderReadout() {
@@ -455,13 +479,13 @@
     const unit = key.unit ? ` ${key.unit}` : "";
     const rows = [];
     if (S.lastYou !== null && S.lastYou !== undefined) {
-      rows.push(["You", num ? fmtNum(S.lastYou) + unit : S.lastYou, "r-you"]);
+      rows.push(["You", num ? fmtExact(S.lastYou) + unit : S.lastYou, "r-you"]);
     }
     rows.push(["Key", num ? `${fmtNum(key.answer)} ± ${fmtNum(key.tolerance)}${unit}` : key.answer, ""]);
-    if (S.lastGem) rows.push(["Gemini", S.lastGem.parsed == null ? "no answer" : (num ? fmtNum(S.lastGem.parsed) + unit : S.lastGem.parsed), "r-gem"]);
+    if (S.lastGem) rows.push(["Gemini", S.lastGem.parsed == null ? "no answer" : (num ? fmtExact(S.lastGem.parsed) + unit : S.lastGem.parsed), "r-gem"]);
     if (num && S.lastYou != null && key.tolerance) {
       const tu = Math.abs(S.lastYou - key.answer) / key.tolerance;
-      rows.push(["Your error", `${tu.toFixed(1)}× tolerance`, ""]);
+      rows.push(["Your error", `${fmtTol(tu)} tolerance`, ""]);
     }
     $("#readout").innerHTML = rows.map(([a, b, c]) => `<dt>${a}</dt><dd class="${c}">${esc(b)}</dd>`).join("");
     const strip = $("#strip");
@@ -528,7 +552,7 @@
       out.hidden = false;
       const val = r.score.parsed == null ? "no parsable answer" : r.score.parsed;
       out.innerHTML = `<div class="gem-line"><span class="gem-chip ${r.score.correct ? "pass" : "fail"}">${r.score.correct ? "✓ CORRECT" : "✗ WRONG"}</span>
-        <span>Gemini answered <b>${esc(typeof val === "number" ? fmtNum(val) : val)}</b> in ${r.seconds}s</span></div>
+        <span>Gemini answered <b>${esc(typeof val === "number" ? fmtExact(val) : val)}</b> in ${r.seconds}s</span></div>
         <details><summary>Gemini's reasoning</summary><pre>${esc(r.text)}</pre></details>`;
       renderReadout();
     } catch (e) {
@@ -580,6 +604,7 @@
 
   // ------------------------------------------------------------------ archive
   const BASELINES = ["oracle", "near_miss", "random", "shortcut"];
+  const modelLabel = (m) => (BASELINES.includes(m) ? `${m} (baseline)` : m);
 
   function initArchive() {
     const suites = S.meta.suites;
@@ -612,7 +637,7 @@
       const sel = $("#model-select");
       sel.innerHTML = models.length ? "" : `<option value="">(no results yet)</option>`;
       const real = models.filter((m) => !BASELINES.includes(m));
-      for (const m of [...real, ...models.filter((m) => BASELINES.includes(m))]) sel.append(h("option", { value: m }, m));
+      for (const m of [...real, ...models.filter((m) => BASELINES.includes(m))]) sel.append(h("option", { value: m }, modelLabel(m)));
       S.archive.model = real[0] || models[0] || null;
       if (S.archive.model) sel.value = S.archive.model;
       S.archive.family = null;
@@ -676,14 +701,15 @@
       const r = res[t.id];
       const badge = !r || r.error ? "none" : r.correct ? "pass" : "fail";
       const keyTxt = t.answer_type === "number" ? `${fmtNum(t.answer)}${t.unit ? " " + t.unit : ""}` : t.answer;
-      const ans = r && !r.error ? (t.answer_type === "number" ? fmtNum(r.parsed) : r.parsed ?? "—") : null;
+      const ans = r && !r.error ? (t.answer_type === "number" ? fmtExact(r.parsed) : r.parsed ?? "—") : null;
       const card = h("button", { class: "card", "data-id": t.id, title: t.id },
         h("img", { src: `/thumb/${encodeURIComponent(A.suite)}/${encodeURIComponent(t.id)}.jpg`, loading: "lazy", alt: "" }),
         h("span", { class: `card-badge ${badge}` }, badge === "pass" ? "✓" : badge === "fail" ? "✗" : "·"),
         h("div", { class: "card-body" },
           h("div", { class: "card-fam" }, d.family_labels[t.family] || t.family),
           h("div", { class: "card-id" }, t.id),
-          h("div", { class: "card-key", html: `key <b>${esc(keyTxt)}</b>${ans != null ? ` <span class="ck-model">· model ${esc(ans)}</span>` : ""}` })));
+          h("div", { class: "card-key", html: `key <b>${esc(keyTxt)}</b>` }),
+          h("div", { class: "card-ans", html: ans != null ? `model <span>${esc(ans)}</span>` : "model —" })));
       card.addEventListener("click", () => openDrawer(t.id));
       frag.append(card);
     }
@@ -702,8 +728,8 @@
       const unit = t.unit ? " " + t.unit : "";
       const body = $("#drawer-body");
       const rows = Object.entries(d.answers).sort(([a], [b]) => BASELINES.includes(a) - BASELINES.includes(b)).map(([m, r]) => {
-        const v = r.error ? "error" : r.parsed == null ? "—" : num ? fmtNum(r.parsed) : r.parsed;
-        const err = num && r.err_tol_units != null ? `${Number(r.err_tol_units).toFixed(1)}×` : "";
+        const v = r.error ? "error" : r.parsed == null ? "—" : num ? fmtExact(r.parsed) : r.parsed;
+        const err = num && r.err_tol_units != null ? fmtTol(r.err_tol_units) : "";
         return `<tr><td class="m">${esc(m)}${r.text && !BASELINES.includes(m) ? `<details><summary>reasoning</summary><pre>${esc(r.text)}</pre></details>` : ""}</td>
           <td>${esc(v)}</td><td class="${r.correct ? "ok" : "bad"}">${r.error ? "—" : r.correct ? "✓" : "✗"}</td><td>${err}</td></tr>`;
       }).join("");
@@ -719,7 +745,7 @@
           ${rows ? `<table class="ans-table"><thead><tr><th>Model</th><th>Answer</th><th></th><th>Error</th></tr></thead><tbody>${rows}</tbody></table>` : `<p style="color:var(--ink-3)">No model has answered this suite yet.</p>`}
         </section>
         <section class="dr-section"><h4>Validator checks</h4><ul class="check-list" style="max-height:none">${(t.validation || []).map((c) =>
-          `<li><span class="led ${c.passed ? "pass" : "fail"}"></span><span class="check-name">${esc(checkName(c.name))}</span><span class="check-detail">${esc(c.detail)}</span></li>`).join("")}</ul></section>
+          `<li><span class="led ${c.passed ? "pass" : "fail"}"></span><span class="check-name">${esc(checkNameFor(c.name, t.family))}</span><span class="check-detail">${esc(c.detail)}</span></li>`).join("")}</ul></section>
         <section class="dr-section"><h4>Factors</h4><div class="factor-chips">${Object.entries(t.factors || {}).map(([k, v]) =>
           `<span>${esc(FACTOR_LABEL[k] || k)} <b>${esc(fmtFactor(k, v))}</b></span>`).join("")}
           ${t.meta?.level ? `<span>level <b>${t.meta.level}</b></span>` : ""}${t.meta?.sweep_factor ? `<span>sweep <b>${esc(t.meta.sweep_factor)}</b></span>` : ""}
@@ -797,7 +823,7 @@
     const real = s.models.filter((m) => !BASELINES.includes(m));
     const sel = $("#ch-model");
     sel.innerHTML = "";
-    for (const m of [...real, ...s.models.filter((m) => BASELINES.includes(m))]) sel.append(h("option", { value: m }, m));
+    for (const m of [...real, ...s.models.filter((m) => BASELINES.includes(m))]) sel.append(h("option", { value: m }, modelLabel(m)));
     C.model = real[0] || s.models[0];
     sel.value = C.model;
     try {
@@ -892,7 +918,7 @@
       $("#ch-form").hidden = true;
       const num = r.key.answer_type === "number";
       const unit = r.key.unit ? " " + r.key.unit : "";
-      const fmt = (v) => (v == null ? "no answer" : num ? fmtNum(v) + unit : v);
+      const fmt = (v) => (v == null ? "no answer" : num ? fmtExact(v) + unit : v);
       const keyTxt = num ? `${fmtNum(r.key.answer)} ± ${fmtNum(r.key.tolerance)}${unit}` : r.key.answer;
       const call = you && !gem ? "You read it right where the model failed."
         : !you && gem ? "The model got this one. Look again with the loupe."
@@ -908,6 +934,7 @@
         ${r.model.text ? `<details><summary>Model's reasoning</summary><pre>${esc(r.model.text)}</pre></details>` : ""}
         <button class="btn btn-ink ch-next" id="ch-next">${last ? "See final score" : "Next round"} <kbd>↵</kbd></button>`;
       $("#ch-next").addEventListener("click", nextRound);
+      scrollOnPhone(res);
       setTimeout(() => $("#ch-next").focus({ preventScroll: true }), 30);
       renderPips();
     } catch (err) { toast(err.message, true); }

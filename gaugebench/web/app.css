@@ -132,7 +132,12 @@ kbd {
   padding: 16px 16px 18px;
   box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 20px 40px -20px rgba(0,0,0,.6);
   position: sticky; top: 78px;
+  /* never taller than the screen, so Generate is always reachable */
+  max-height: calc(100vh - 96px); overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: var(--line-2) transparent;
 }
+.rack .big-button { position: sticky; bottom: 0; z-index: 2; }
+.rack::after { content: ""; display: block; height: 6px; }
 .rack-head { display: flex; align-items: center; gap: 10px; margin: 2px 0 12px; }
 .rack-head + .families, .rack-head + .presets { margin-top: 0; }
 .rack-head h2 {
@@ -211,6 +216,8 @@ kbd {
 .k-label { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); font-stretch: 110%; font-weight: 600; }
 .k-value { font-family: var(--mono); font-size: 11.5px; font-weight: 700; color: var(--ink); min-height: 1.2em; }
 .knob.is-changed .k-value { color: var(--accent-2); }
+.knob.is-na { opacity: .28; filter: grayscale(1); }
+.knob.is-na .k-value { text-decoration: line-through; text-decoration-color: var(--ink-3); }
 
 .seed-row { display: flex; align-items: center; gap: 8px; margin: 6px 0 14px; }
 .seed-row label { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
@@ -364,7 +371,11 @@ kbd {
 .floor-ok::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--pass); box-shadow: 0 0 8px var(--pass); }
 
 /* ---------------------------------------------------------------- work order ticket */
-.order-col { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 78px; }
+.order-col {
+  display: flex; flex-direction: column; gap: 16px; position: sticky; top: 72px;
+  max-height: calc(100vh - 84px); overflow-y: auto; overscroll-behavior: contain; padding-top: 6px;
+  scrollbar-width: thin; scrollbar-color: var(--line-2) transparent;
+}
 .ticket {
   position: relative; background: var(--paper); color: var(--paper-ink);
   border-radius: 4px 4px 10px 10px; padding: 26px 22px 20px;
@@ -539,6 +550,9 @@ kbd {
 .card-id { font-family: var(--mono); font-size: 11px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card-key { font-family: var(--mono); font-size: 12px; margin-top: 3px; }
 .card-key .ck-model { color: var(--ink-3); }
+.card-ans { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-ans span { color: var(--ink-2); }
+.card-key { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card-badge {
   position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
   font-size: 13px; font-weight: 900; color: #08090a;
@@ -677,6 +691,8 @@ kbd {
   .ch-stage { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 600px) {
+  .brand-text { display: none; }
+  .tab { padding: 6px 10px; letter-spacing: .04em; }
   .sb-score { font-size: 32px; }
   .scoreboard { padding: 10px 12px; gap: 8px; }
   .sb-name { display: none; }
@@ -696,7 +712,8 @@ kbd {
 /* ---------------------------------------------------------------- responsive */
 @media (max-width: 1280px) {
   .bench { grid-template-columns: 290px minmax(0, 1fr); }
-  .order-col { grid-column: 1 / -1; position: static; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: start; }
+  .order-col { grid-column: 1 / -1; position: static; max-height: none; overflow: visible; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: start; }
+  .rack { position: static; max-height: none; overflow: visible; }
 }
 @media (max-width: 860px) {
   .topbar { grid-template-columns: minmax(0, 1fr) auto; padding: 10px 16px; gap: 10px; }
