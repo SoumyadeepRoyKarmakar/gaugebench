@@ -52,27 +52,42 @@ Three independent guards, applied to **every** task before it is published:
 3. **Ambiguity checks:** the needle is not sitting on a zone boundary, the "highest" gauge wins by a clear margin, the needles don't overlap.
 
 - **Tolerance** = half of the smallest local division, the standard rule for reading analogue instruments.
-- **Sample suite:** 309 candidates generated and 99 rejected. The top reasons were glare covering the needle (69) and needles too close to a zone boundary (23). One candidate can fail more than one check.
-- **12 automated tests**, including mutation tests: if the answer key is shifted by 3 tolerances, the validator **always** catches it.
+- **Main suite (384 tasks):** 636 candidates generated and 252 rejected (40%). The top reasons were glare covering the needle (185), printed labels overlapping (146) and needles too close to a zone boundary (80). One candidate can fail more than one check.
+- **14 automated tests**, including mutation tests: if the answer key is shifted by 3 tolerances, the validator **always** catches it.
+- **The validator caught a real flaw:** a model miss led us to a cramped dial where the printed numbers ran together. We added an overlap check, and it now rejects those dials automatically.
 
 ## Slide 6: Scoring separates right from wrong
 | Reference answerer | Score |
 |---|---|
 | Oracle (correct key) | **100%** |
 | Near-miss (just outside tolerance) | **0%** |
-| Random guess | 8.6% |
-| Shortcut heuristics (mid-scale, "always normal", furthest needle) | 8.1% |
+| Random guess | 7.0% |
+| Shortcut heuristics (mid-scale, "always normal", furthest needle) | 12.0% |
 
 - **Blind ablation:** the same questions sent **without the image** show the tasks need vision. [[blind score]]
 
 ## Slide 7: Results on frontier models
-[[Fill in after the run: leaderboard bar chart + per-family table from report.html]]
-- Overall accuracy: [[model A %]], [[model B %]]
-- Strongest skill: [[e.g. zone status]]. Weakest skill: [[e.g. log scales / dual-scale ring]]
-- **Capability curves:** accuracy as one factor gets harder (glare, tilt, scale type, …): [[1–2 key curves]]
-- **Error size:** [[x%]] of wrong numbers are near misses (1–2× tolerance) and [[y%]] are wild (>20×), meaning a misread scale or multiplier rather than imprecision.
-- **Range trap:** [[n/m]] wrong panel-max answers picked the furthest-turned needle.
-- **Wrong ring:** [[n/m]] wrong dual-scale answers were the reading of the other scale.
+*Gemini 3.5 Flash-Lite, 198 of 384 tasks answered so far (free-tier daily cap); refresh after the full run.* [[update with final numbers]]
+
+| Skill | Accuracy |
+|---|---|
+| Zone status | **100%** |
+| Panel max (mixed ranges) | 95% |
+| Panel alarm | 85% |
+| Set-point deviation | 69% |
+| Panel count | 68% |
+| Dual scale | 65% |
+| Tank level | 65% |
+| Change over time | 50% |
+| **Read the exact value** | **37%** |
+| **Overall** | **67%** |
+
+- **Headline:** the model is near-perfect at "roughly where is the needle?" but reads the exact value correctly only about a third of the time. In a plant, the exact value is the job.
+- **It snaps to tick marks:** a needle at 4.6 bar was reported as "approximately 4". 23 of 56 wrong numbers (41%) were near misses within 2× the tolerance; only 1 was wild (>20×). The errors are imprecision, not misread scales.
+- **Difficulty barely matters:** accuracy is 72% on clean dials (level 1) and 69% on the hardest mixed dials (level 5), so the main weakness is precise reading itself, not glare or tilt.
+- **Capability curves:** accuracy as one factor gets harder (glare, tilt, scale type, …): [[1–2 key curves, after full run]]
+- **Range trap:** the model avoided it. 0 of 1 wrong panel-max answers picked the furthest-turned needle.
+- **Wrong ring:** 0 of 7 wrong dual-scale answers were the other scale's reading. It finds the right ring and then misreads it.
 
 ## Slide 8: Architecture
 ```
@@ -97,5 +112,5 @@ spec.py (factors, ranges) → render.py / level.py (dial + evidence masks)
 - Next analysis: compare effort levels, and fine-tune or prompt fixes for the weakest skills.
 
 ## Slide 11: Links
-- GitHub: [[repo URL]]
+- GitHub: https://github.com/SoumyadeepRoyKarmakar/gaugebench
 - Demo video: [[URL]]
