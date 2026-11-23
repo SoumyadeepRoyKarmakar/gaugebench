@@ -1,0 +1,189 @@
+{
+  "id": "panel_max-L4-0003",
+  "family": "panel_max",
+  "question": "These 3 pressure gauges have different ranges. Which gauge shows the highest pressure in bar? Answer with its tag. Allowed options: PI-101, PI-121, PI-133. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <choice>' using one of the allowed options.",
+  "answer": "PI-101",
+  "answer_type": "choice",
+  "tolerance": null,
+  "choices": [
+    "PI-101",
+    "PI-121",
+    "PI-133"
+  ],
+  "unit": "bar",
+  "factors": {
+    "scale_kind": "linear",
+    "sweep": "180",
+    "minors_per_major": 2,
+    "label_every": 2,
+    "multiplier": "x100",
+    "face": "light",
+    "glare": 1,
+    "tilt": 30,
+    "blur": 0.0,
+    "noise": 16.0,
+    "lighting": 0.7
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 25,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 5,
+        "minors_per_major": 2,
+        "label_every": 2,
+        "tick_origin": null
+      },
+      "value": 22.725638333682177,
+      "unit": "bar",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [],
+      "setpoint": null,
+      "tag": "PI-101",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 25,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 5,
+        "minors_per_major": 2,
+        "label_every": 2,
+        "tick_origin": null
+      },
+      "value": 6.751328759540078,
+      "unit": "bar",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [],
+      "setpoint": null,
+      "tag": "PI-121",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 10,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 1,
+        "minors_per_major": 2,
+        "label_every": 2,
+        "tick_origin": null
+      },
+      "value": 6.721258440868178,
+      "unit": "bar",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [],
+      "setpoint": null,
+      "tag": "PI-133",
+      "secondary": null,
+      "secondary_unit": ""
+    }
+  ],
+  "meta": {
+    "n_gauges": 3,
+    "angle_trap": false,
+    "trap_tag": "PI-101",
+    "suite_kind": "mixed",
+    "level": 4,
+    "sweep_factor": null,
+    "attempts": 1,
+    "generator_version": "0.1.0"
+  },
+  "seed": 12982688112418,
+  "image": "tasks/panel_max-L4-0003/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=22.71 key=22.73 err=0.0166 tol=1.25"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=124.3"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 44.5px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 18.0px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=6.749 key=6.751 err=0.00275 tol=1.25"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=125.9"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 39.4px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 15.9px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=6.708 key=6.721 err=0.0128 tol=0.25"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.11 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=94.6"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 17.5px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 14.2px"
+    },
+    {
+      "name": "winner_clear_margin",
+      "passed": true,
+      "detail": "margin 16 bar (need 5)"
+    }
+  ]
+}

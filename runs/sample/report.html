@@ -1,0 +1,44 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>GaugeBench Report</title><style>
+:root{--bg:#fcfcfb;--card:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--grid:#e6e5e0;
+--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--good:#008300;--bad:#e34948;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#141413;--card:#1a1a19;--ink:#f0efec;
+--ink2:#c3c2b7;--muted:#8f8e86;--grid:#2e2e2b;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--good:#0ca30c;--bad:#e66767;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#141413;--card:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#8f8e86;--grid:#2e2e2b;
+--s1:#3987e5;--s2:#d95926;--s3:#199e70;--good:#0ca30c;--bad:#e66767;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}h1{font-size:28px;margin:0 0 4px}h2{font-size:20px;margin:40px 0 8px}
+h3{font-size:15px;margin:0 0 6px;color:var(--ink2);font-weight:600}.sub{color:var(--ink2);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--grid);border-radius:12px;padding:16px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.tile b{display:block;font-size:28px;font-variant-numeric:tabular-nums}.tile span{color:var(--ink2);font-size:13px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th,td{padding:6px 8px;border-bottom:1px solid var(--grid);text-align:right}
+th:first-child,td:first-child{text-align:left}th{color:var(--ink2);font-weight:600;font-size:13px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:4px 0 8px}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+svg text{fill:var(--ink2);font-size:11px}svg .ax{stroke:var(--grid)}.ok{color:var(--good)}.no{color:var(--bad)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.gallery img{width:100%;border-radius:8px;display:block}.gallery p{margin:6px 0 0;font-size:13px;color:var(--ink2)}
+.scroll{overflow-x:auto}code{font-size:13px}
+</style></head><body><main>
+<h1>GaugeBench report</h1>
+<p class=sub>Suite <code>sample</code> · generator v0.1.0 · seed 7</p>
+<div class=tiles>
+<div class='card tile'><b>70</b><span>tasks published</span></div>
+<div class='card tile'><b>9</b><span>task families</span></div>
+<div class='card tile'><b>30</b><span>candidates rejected by validator</span></div>
+<div class='card tile'><b>70%</b><span>candidate acceptance rate</span></div>
+<div class='card tile'><b>100%</b><span>published tasks re-read within tolerance</span></div>
+<div class='card tile'><b>0.45</b><span>worst re-read error (× tolerance)</span></div>
+</div>
+<h2>Why candidates were rejected</h2><p class=sub>Every candidate image is re-read from pixels and checked for visibility and ambiguity before it is published. Rejected candidates are regenerated with a new seed.</p>
+<div class=card><svg viewBox="0 0 640 240" width="100%" role="img"><text x="0" y="19">needle_not_glared</text><rect x="200" y="7" width="380.0" height="16" rx="4" fill="var(--s1)"><title>needle_not_glared: 14</title></rect><text x="586.0" y="19">14</text><text x="0" y="45">setpoint_contrast</text><rect x="200" y="33" width="135.7" height="16" rx="4" fill="var(--s1)"><title>setpoint_contrast: 5</title></rect><text x="341.7" y="45">5</text><text x="0" y="71">all_needles_clear_of_zone_boundaries</text><rect x="200" y="59" width="135.7" height="16" rx="4" fill="var(--s1)"><title>all_needles_clear_of_zone_boundaries: 5</title></rect><text x="341.7" y="71">5</text><text x="0" y="97">all_needles_clear_of_danger_boundary</text><rect x="200" y="85" width="81.4" height="16" rx="4" fill="var(--s1)"><title>all_needles_clear_of_danger_boundary: 3</title></rect><text x="287.4" y="97">3</text><text x="0" y="123">winner_clear_margin</text><rect x="200" y="111" width="81.4" height="16" rx="4" fill="var(--s1)"><title>winner_clear_margin: 3</title></rect><text x="287.4" y="123">3</text><text x="0" y="149">needle_contrast</text><rect x="200" y="137" width="54.3" height="16" rx="4" fill="var(--s1)"><title>needle_contrast: 2</title></rect><text x="260.3" y="149">2</text><text x="0" y="175">pixel_reread_needle</text><rect x="200" y="163" width="27.1" height="16" rx="4" fill="var(--s1)"><title>pixel_reread_needle: 1</title></rect><text x="233.1" y="175">1</text><text x="0" y="201">setpoint_not_glared</text><rect x="200" y="189" width="27.1" height="16" rx="4" fill="var(--s1)"><title>setpoint_not_glared: 1</title></rect><text x="233.1" y="201">1</text><text x="0" y="227">change_larger_than_reading_error</text><rect x="200" y="215" width="27.1" height="16" rx="4" fill="var(--s1)"><title>change_larger_than_reading_error: 1</title></rect><text x="233.1" y="227">1</text></svg></div>
+<h2>Scorer sanity checks</h2><p class=sub>Reference answerers with known behaviour. Oracle must score 100%; near-miss (just outside tolerance) must score 0%; shortcut heuristics should stay low.</p>
+<div class='card scroll'><table><tr><th>Answerer</th><th>Overall</th><th>Read value</th><th>Zone status</th><th>Set-point deviation</th><th>Panel alarm</th><th>Panel max (mixed ranges)</th><th>Change over time</th><th>Dual scale</th><th>Tank level</th><th>Panel count</th></tr>
+<tr><td>oracle</td><td><b>100%</b></td><td>100%</td><td>100%</td><td>100%</td><td>100%</td><td>100%</td><td>100%</td><td>100%</td><td>100%</td><td>100%</td></tr>
+<tr><td>near_miss</td><td><b>0%</b></td><td>0%</td><td>0%</td><td>0%</td><td>0%</td><td>0%</td><td>0%</td><td>0%</td><td>0%</td><td>0%</td></tr>
+<tr><td>random</td><td><b>7%</b></td><td>3%</td><td>75%</td><td>0%</td><td>0%</td><td>25%</td><td>0%</td><td>0%</td><td>0%</td><td>0%</td></tr>
+<tr><td>shortcut</td><td><b>10%</b></td><td>3%</td><td>50%</td><td>0%</td><td>0%</td><td>100%</td><td>0%</td><td>0%</td><td>0%</td><td>0%</td></tr>
+</table></div>
+<h2>Model results</h2><div class=card>No model runs yet. Run <code>python -m gaugebench evaluate SUITE --model claude:claude-opus-5-5</code>.</div>
+</main></body></html>

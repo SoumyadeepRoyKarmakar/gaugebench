@@ -1,0 +1,84 @@
+{
+  "id": "level_reading-L3-0002",
+  "family": "level_reading",
+  "question": "This is a tank level sight-glass with a printed scale. Reading at the top surface of the liquid, what is the level in m? Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 4.42,
+  "answer_type": "number",
+  "tolerance": 0.1,
+  "choices": null,
+  "unit": "m",
+  "factors": {
+    "scale_kind": "linear",
+    "sweep": "180",
+    "minors_per_major": 5,
+    "label_every": 1,
+    "multiplier": "x1",
+    "face": "dark",
+    "glare": 2,
+    "tilt": 0,
+    "blur": 1.0,
+    "noise": 0.0,
+    "lighting": 1.0
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 8,
+        "kind": "linear",
+        "start_angle": -135.0,
+        "sweep": 270.0,
+        "major_step": 1,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 4.416146627275653,
+      "unit": "m",
+      "multiplier": 1.0,
+      "face": "dark",
+      "zones": [],
+      "setpoint": null,
+      "tag": "",
+      "secondary": null,
+      "secondary_unit": ""
+    }
+  ],
+  "meta": {
+    "liquid": "coolant",
+    "suite_kind": "mixed",
+    "level": 3,
+    "sweep_factor": null,
+    "attempts": 2,
+    "generator_version": "0.1.0"
+  },
+  "seed": 234436620142248,
+  "image": "tasks/level_reading-L3-0002/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=4.417 key=4.416 err=0.00124 tol=0.1"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=63.7"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 11.5px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 34.0px"
+    }
+  ]
+}

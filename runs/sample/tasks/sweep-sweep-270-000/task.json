@@ -1,0 +1,83 @@
+{
+  "id": "sweep-sweep-270-000",
+  "family": "read_value",
+  "question": "This is a photo of an industrial gauge. What is the actual measured value it shows, in psi? Take into account everything printed on the dial. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 55.5,
+  "answer_type": "number",
+  "tolerance": 2.0,
+  "choices": null,
+  "unit": "psi",
+  "factors": {
+    "scale_kind": "linear",
+    "sweep": "270",
+    "minors_per_major": 5,
+    "label_every": 1,
+    "multiplier": "x1",
+    "face": "light",
+    "glare": 0,
+    "tilt": 0,
+    "blur": 0.0,
+    "noise": 0.0,
+    "lighting": 1.0
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 160,
+        "kind": "linear",
+        "start_angle": -135.0,
+        "sweep": 270.0,
+        "major_step": 20,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 55.465000629475185,
+      "unit": "psi",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [],
+      "setpoint": null,
+      "tag": "",
+      "secondary": null,
+      "secondary_unit": ""
+    }
+  ],
+  "meta": {
+    "suite_kind": "sweep",
+    "level": null,
+    "sweep_factor": "sweep",
+    "attempts": 1,
+    "generator_version": "0.1.0"
+  },
+  "seed": 46358273901227,
+  "image": "tasks/sweep-sweep-270-000/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=55.47 key=55.47 err=0.0041 tol=2"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=195.5"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 25.3px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 27.5px"
+    }
+  ]
+}

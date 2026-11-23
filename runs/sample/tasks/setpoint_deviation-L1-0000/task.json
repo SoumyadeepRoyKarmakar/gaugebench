@@ -1,0 +1,103 @@
+{
+  "id": "setpoint_deviation-L1-0000",
+  "family": "setpoint_deviation",
+  "question": "This gauge has two needles: the thin red needle marks the set point, the main needle shows the actual value. What is the actual value minus the set point, in bar? Take into account everything printed on the dial (a negative answer means below set point). Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": -4.02,
+  "answer_type": "number",
+  "tolerance": 0.2,
+  "choices": null,
+  "unit": "bar",
+  "factors": {
+    "scale_kind": "linear",
+    "sweep": "180",
+    "minors_per_major": 5,
+    "label_every": 1,
+    "multiplier": "x1",
+    "face": "light",
+    "glare": 0,
+    "tilt": 0,
+    "blur": 0.0,
+    "noise": 8.0,
+    "lighting": 0.7
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 6,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 1,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 0.7606727670781714,
+      "unit": "bar",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [],
+      "setpoint": 4.776753103429867,
+      "tag": "",
+      "secondary": null,
+      "secondary_unit": ""
+    }
+  ],
+  "meta": {
+    "suite_kind": "mixed",
+    "level": 1,
+    "sweep_factor": null,
+    "attempts": 1,
+    "generator_version": "0.1.0"
+  },
+  "seed": 65317831753151,
+  "image": "tasks/setpoint_deviation-L1-0000/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=0.7638 key=0.7607 err=0.00308 tol=0.1"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=133.7"
+    },
+    {
+      "name": "pixel_reread_setpoint",
+      "passed": true,
+      "detail": "cv=4.776 key=4.777 err=0.000814 tol=0.1"
+    },
+    {
+      "name": "setpoint_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "setpoint_contrast",
+      "passed": true,
+      "detail": "contrast=91.9"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 22.6px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 27.5px"
+    },
+    {
+      "name": "needles_separated",
+      "passed": true,
+      "detail": "margin 120deg (need 8)"
+    }
+  ]
+}

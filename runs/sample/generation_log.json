@@ -1,0 +1,31 @@
+{
+  "generator_version": "0.1.0",
+  "seed": 7,
+  "jobs": 70,
+  "published": 70,
+  "attempts": 100,
+  "rejected_attempts": 30,
+  "rejection_reasons": {
+    "needle_not_glared": 14,
+    "setpoint_contrast": 5,
+    "all_needles_clear_of_zone_boundaries": 5,
+    "all_needles_clear_of_danger_boundary": 3,
+    "winner_clear_margin": 3,
+    "needle_contrast": 2,
+    "pixel_reread_needle": 1,
+    "setpoint_not_glared": 1,
+    "change_larger_than_reading_error": 1
+  },
+  "seconds": 27.9,
+  "families": {
+    "read_value": 38,
+    "zone_status": 4,
+    "setpoint_deviation": 4,
+    "panel_alarm": 4,
+    "panel_max": 4,
+    "temporal_change": 4,
+    "dual_scale": 4,
+    "level_reading": 4,
+    "panel_count": 4
+  }
+}

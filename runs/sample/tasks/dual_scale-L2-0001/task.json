@@ -1,0 +1,95 @@
+{
+  "id": "dual_scale-L2-0001",
+  "family": "dual_scale",
+  "question": "This gauge has two printed scales (°C and °F). What is the reading in °C? Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 102.2,
+  "answer_type": "number",
+  "tolerance": 2.5,
+  "choices": null,
+  "unit": "°C",
+  "factors": {
+    "scale_kind": "offset",
+    "sweep": "180",
+    "minors_per_major": 2,
+    "label_every": 1,
+    "multiplier": "x100",
+    "face": "dark",
+    "glare": 1,
+    "tilt": 30,
+    "blur": 0.0,
+    "noise": 8.0,
+    "lighting": 1.0
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 120,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 20,
+        "minors_per_major": 4,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 102.17252574005109,
+      "unit": "°C",
+      "multiplier": 1.0,
+      "face": "dark",
+      "zones": [],
+      "setpoint": null,
+      "tag": "",
+      "secondary": {
+        "vmin": 32.0,
+        "vmax": 248.0,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 40,
+        "minors_per_major": 4,
+        "label_every": 1,
+        "tick_origin": 0.0
+      },
+      "secondary_unit": "°F"
+    }
+  ],
+  "meta": {
+    "asked_scale": "primary",
+    "other_unit": "°F",
+    "suite_kind": "mixed",
+    "level": 2,
+    "sweep_factor": null,
+    "attempts": 1,
+    "generator_version": "0.1.0"
+  },
+  "seed": 199920892354485,
+  "image": "tasks/dual_scale-L2-0001/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=102.1 key=102.2 err=0.028 tol=2.5"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=157.4"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 16.5px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.8px"
+    }
+  ]
+}

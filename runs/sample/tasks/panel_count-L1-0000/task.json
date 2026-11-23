@@ -1,0 +1,420 @@
+{
+  "id": "panel_count-L1-0000",
+  "family": "panel_count",
+  "question": "This panel has 6 gauges, each with coloured bands (green = normal, yellow = warning, red = danger). How many gauges have their needle outside the green band (in yellow or red)? Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 6,
+  "answer_type": "number",
+  "tolerance": 0.0,
+  "choices": null,
+  "unit": "",
+  "factors": {
+    "scale_kind": "offset",
+    "sweep": "180",
+    "minors_per_major": 5,
+    "label_every": 1,
+    "multiplier": "x1",
+    "face": "light",
+    "glare": 0,
+    "tilt": 15,
+    "blur": 0.0,
+    "noise": 8.0,
+    "lighting": 0.7
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": -1,
+        "vmax": 3,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 1,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 0.5319939688855015,
+      "unit": "bar",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": -1,
+          "hi": 0.0,
+          "name": "normal"
+        },
+        {
+          "lo": 0.0,
+          "hi": 1,
+          "name": "warning"
+        },
+        {
+          "lo": 1,
+          "hi": 3,
+          "name": "danger"
+        }
+      ],
+      "setpoint": null,
+      "tag": "TI-308",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": -1,
+        "vmax": 3,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 1,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 1.391770707542531,
+      "unit": "bar",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": -1,
+          "hi": 0.0,
+          "name": "normal"
+        },
+        {
+          "lo": 0.0,
+          "hi": 1,
+          "name": "warning"
+        },
+        {
+          "lo": 1,
+          "hi": 3,
+          "name": "danger"
+        }
+      ],
+      "setpoint": null,
+      "tag": "TI-319",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": -1,
+        "vmax": 0,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 0.2,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": -0.2820767920672054,
+      "unit": "bar",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": -1.0,
+          "hi": -0.4,
+          "name": "normal"
+        },
+        {
+          "lo": -0.4,
+          "hi": -0.2,
+          "name": "warning"
+        },
+        {
+          "lo": -0.2,
+          "hi": 0.0,
+          "name": "danger"
+        }
+      ],
+      "setpoint": null,
+      "tag": "TI-322",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": -30,
+        "vmax": 50,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 10,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 36.97324312698795,
+      "unit": "°C",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": -30,
+          "hi": 20,
+          "name": "normal"
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "name": "warning"
+        },
+        {
+          "lo": 30,
+          "hi": 50,
+          "name": "danger"
+        }
+      ],
+      "setpoint": null,
+      "tag": "TI-323",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": -20,
+        "vmax": 120,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 20,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 105.97907925925134,
+      "unit": "°C",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": -20,
+          "hi": 80,
+          "name": "normal"
+        },
+        {
+          "lo": 80,
+          "hi": 100,
+          "name": "warning"
+        },
+        {
+          "lo": 100,
+          "hi": 120,
+          "name": "danger"
+        }
+      ],
+      "setpoint": null,
+      "tag": "TI-324",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": -40,
+        "vmax": 60,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 20,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 23.87961109356859,
+      "unit": "°C",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": -40,
+          "hi": 0.0,
+          "name": "normal"
+        },
+        {
+          "lo": 0.0,
+          "hi": 40,
+          "name": "warning"
+        },
+        {
+          "lo": 40,
+          "hi": 60,
+          "name": "danger"
+        }
+      ],
+      "setpoint": null,
+      "tag": "TI-329",
+      "secondary": null,
+      "secondary_unit": ""
+    }
+  ],
+  "meta": {
+    "n_gauges": 6,
+    "suite_kind": "mixed",
+    "level": 1,
+    "sweep_factor": null,
+    "attempts": 5,
+    "generator_version": "0.1.0"
+  },
+  "seed": 176346893614951,
+  "image": "tasks/panel_count-L1-0000/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=0.5305 key=0.532 err=0.00148 tol=0.1"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=106.1"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 22.0px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.7px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=1.388 key=1.392 err=0.00354 tol=0.1"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=119.9"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 22.2px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 18.0px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=-0.2833 key=-0.2821 err=0.00126 tol=0.02"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=106.3"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 17.6px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.9px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=36.97 key=36.97 err=0.00598 tol=1"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=117.4"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 10.4px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 16.9px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=105.9 key=106 err=0.0467 tol=2"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=125.9"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 12.0px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.2px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=23.8 key=23.88 err=0.0805 tol=2"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=114.2"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 16.8px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.1px"
+    },
+    {
+      "name": "all_needles_clear_of_zone_boundaries",
+      "passed": true,
+      "detail": "margin 7.69deg (need 3)"
+    }
+  ]
+}

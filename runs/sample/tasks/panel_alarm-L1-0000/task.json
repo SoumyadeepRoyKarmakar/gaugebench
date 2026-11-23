@@ -1,0 +1,235 @@
+{
+  "id": "panel_alarm-L1-0000",
+  "family": "panel_alarm",
+  "question": "This control panel has 3 gauges, each with its own coloured bands (green = normal, yellow = warning, red = danger). Exactly one gauge has its needle in the red danger band. Which one? Answer with its tag. Allowed options: PI-201, PI-221, PI-231. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <choice>' using one of the allowed options.",
+  "answer": "PI-231",
+  "answer_type": "choice",
+  "tolerance": null,
+  "choices": [
+    "PI-201",
+    "PI-221",
+    "PI-231"
+  ],
+  "unit": "",
+  "factors": {
+    "scale_kind": "offset",
+    "sweep": "270",
+    "minors_per_major": 5,
+    "label_every": 1,
+    "multiplier": "x10",
+    "face": "light",
+    "glare": 1,
+    "tilt": 15,
+    "blur": 1.0,
+    "noise": 0.0,
+    "lighting": 0.7
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 40,
+        "kind": "linear",
+        "start_angle": -135.0,
+        "sweep": 270.0,
+        "major_step": 5,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 12.286046603419862,
+      "unit": "rpm",
+      "multiplier": 10.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": 0.0,
+          "hi": 10,
+          "name": "danger"
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "name": "warning"
+        },
+        {
+          "lo": 20,
+          "hi": 40,
+          "name": "normal"
+        }
+      ],
+      "setpoint": null,
+      "tag": "PI-201",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 30,
+        "kind": "linear",
+        "start_angle": -135.0,
+        "sweep": 270.0,
+        "major_step": 5,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 12.460379786562408,
+      "unit": "rpm",
+      "multiplier": 10.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": 0.0,
+          "hi": 10,
+          "name": "danger"
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "name": "warning"
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "name": "normal"
+        }
+      ],
+      "setpoint": null,
+      "tag": "PI-221",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 16,
+        "kind": "linear",
+        "start_angle": -135.0,
+        "sweep": 270.0,
+        "major_step": 2,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 13.201573261073158,
+      "unit": "psi",
+      "multiplier": 10.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": 0.0,
+          "hi": 8,
+          "name": "normal"
+        },
+        {
+          "lo": 8,
+          "hi": 12,
+          "name": "warning"
+        },
+        {
+          "lo": 12,
+          "hi": 16,
+          "name": "danger"
+        }
+      ],
+      "setpoint": null,
+      "tag": "PI-231",
+      "secondary": null,
+      "secondary_unit": ""
+    }
+  ],
+  "meta": {
+    "n_gauges": 3,
+    "suite_kind": "mixed",
+    "level": 1,
+    "sweep_factor": null,
+    "attempts": 1,
+    "generator_version": "0.1.0"
+  },
+  "seed": 102697559883130,
+  "image": "tasks/panel_alarm-L1-0000/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=12.29 key=12.29 err=0.00102 tol=0.5"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=97.3"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 15.6px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.0px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=12.45 key=12.46 err=0.015 tol=0.5"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=102.4"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 21.6px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.5px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=13.2 key=13.2 err=0.003 tol=0.2"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=88.3"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 16.2px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.6px"
+    },
+    {
+      "name": "all_needles_clear_of_danger_boundary",
+      "passed": true,
+      "detail": "margin 15.4deg (need 3)"
+    }
+  ]
+}

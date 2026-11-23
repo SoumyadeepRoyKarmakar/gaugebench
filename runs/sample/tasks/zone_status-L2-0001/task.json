@@ -1,0 +1,108 @@
+{
+  "id": "zone_status-L2-0001",
+  "family": "zone_status",
+  "question": "This gauge has coloured bands: green = normal, yellow = warning, red = danger. Which band is the needle currently pointing into? Allowed options: normal, warning, danger. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <choice>' using one of the allowed options.",
+  "answer": "warning",
+  "answer_type": "choice",
+  "tolerance": null,
+  "choices": [
+    "normal",
+    "warning",
+    "danger"
+  ],
+  "unit": "bar",
+  "factors": {
+    "scale_kind": "offset",
+    "sweep": "270",
+    "minors_per_major": 5,
+    "label_every": 1,
+    "multiplier": "x1",
+    "face": "dark",
+    "glare": 1,
+    "tilt": 30,
+    "blur": 1.0,
+    "noise": 0.0,
+    "lighting": 1.0
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": -1,
+        "vmax": 0,
+        "kind": "linear",
+        "start_angle": -135.0,
+        "sweep": 270.0,
+        "major_step": 0.2,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": -0.6168348471868675,
+      "unit": "bar",
+      "multiplier": 1.0,
+      "face": "dark",
+      "zones": [
+        {
+          "lo": -1.0,
+          "hi": -0.8,
+          "name": "normal"
+        },
+        {
+          "lo": -0.8,
+          "hi": -0.4,
+          "name": "warning"
+        },
+        {
+          "lo": -0.4,
+          "hi": 0.0,
+          "name": "danger"
+        }
+      ],
+      "setpoint": null,
+      "tag": "",
+      "secondary": null,
+      "secondary_unit": ""
+    }
+  ],
+  "meta": {
+    "suite_kind": "mixed",
+    "level": 2,
+    "sweep_factor": null,
+    "attempts": 1,
+    "generator_version": "0.1.0"
+  },
+  "seed": 161950929613838,
+  "image": "tasks/zone_status-L2-0001/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=-0.617 key=-0.6168 err=0.000195 tol=0.02"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=141.2"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 36.0px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 24.2px"
+    },
+    {
+      "name": "needle_clear_of_zone_boundary",
+      "passed": true,
+      "detail": "margin 49.5deg (need 2.5)"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "id": "read_value-L3-0002",
+  "family": "read_value",
+  "question": "This is a photo of an industrial gauge. What is the actual measured value it shows, in rpm? Take into account everything printed on the dial. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 263.0,
+  "answer_type": "number",
+  "tolerance": 5.0,
+  "choices": null,
+  "unit": "rpm",
+  "factors": {
+    "scale_kind": "offset",
+    "sweep": "90",
+    "minors_per_major": 5,
+    "label_every": 1,
+    "multiplier": "x10",
+    "face": "dark",
+    "glare": 2,
+    "tilt": 30,
+    "blur": 2.0,
+    "noise": 8.0,
+    "lighting": 1.0
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 40,
+        "kind": "linear",
+        "start_angle": -45.0,
+        "sweep": 90.0,
+        "major_step": 5,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 26.300143859311866,
+      "unit": "rpm",
+      "multiplier": 10.0,
+      "face": "dark",
+      "zones": [],
+      "setpoint": null,
+      "tag": "",
+      "secondary": null,
+      "secondary_unit": ""
+    }
+  ],
+  "meta": {
+    "suite_kind": "mixed",
+    "level": 3,
+    "sweep_factor": null,
+    "attempts": 1,
+    "generator_version": "0.1.0"
+  },
+  "seed": 248069961098199,
+  "image": "tasks/read_value-L3-0002/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=26.22 key=26.3 err=0.0795 tol=0.5"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=98.0"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 7.3px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 24.6px"
+    }
+  ]
+}

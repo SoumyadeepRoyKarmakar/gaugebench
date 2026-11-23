@@ -1,0 +1,135 @@
+{
+  "id": "temporal_change-L3-0002",
+  "family": "temporal_change",
+  "question": "The image shows the same gauge photographed at 08:00 (A) and at 10:00 (B). By how much did the reading change from A to B (B minus A), in kPa? Take into account everything printed on the dial. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": -308.0,
+  "answer_type": "number",
+  "tolerance": 10.0,
+  "choices": null,
+  "unit": "kPa",
+  "factors": {
+    "scale_kind": "linear",
+    "sweep": "270",
+    "minors_per_major": 10,
+    "label_every": 1,
+    "multiplier": "x100",
+    "face": "light",
+    "glare": 0,
+    "tilt": 15,
+    "blur": 2.0,
+    "noise": 16.0,
+    "lighting": 0.45
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 6,
+        "kind": "linear",
+        "start_angle": -135.0,
+        "sweep": 270.0,
+        "major_step": 1,
+        "minors_per_major": 10,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 5.321250346748387,
+      "unit": "kPa",
+      "multiplier": 100.0,
+      "face": "light",
+      "zones": [],
+      "setpoint": null,
+      "tag": "A  08:00",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 6,
+        "kind": "linear",
+        "start_angle": -135.0,
+        "sweep": 270.0,
+        "major_step": 1,
+        "minors_per_major": 10,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 2.2448327320700328,
+      "unit": "kPa",
+      "multiplier": 100.0,
+      "face": "light",
+      "zones": [],
+      "setpoint": null,
+      "tag": "B  10:00",
+      "secondary": null,
+      "secondary_unit": ""
+    }
+  ],
+  "meta": {
+    "suite_kind": "mixed",
+    "level": 3,
+    "sweep_factor": null,
+    "attempts": 1,
+    "generator_version": "0.1.0"
+  },
+  "seed": 157496769143777,
+  "image": "tasks/temporal_change-L3-0002/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=5.321 key=5.321 err=0.000325 tol=0.05"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=51.5"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=2.244 key=2.245 err=0.00107 tol=0.05"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=53.2"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 10.4px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.4px"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 10.9px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 18.3px"
+    },
+    {
+      "name": "change_larger_than_reading_error",
+      "passed": true,
+      "detail": "margin 308 kPa (need 20)"
+    }
+  ]
+}

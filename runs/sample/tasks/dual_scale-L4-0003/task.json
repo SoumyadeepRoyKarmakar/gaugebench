@@ -1,0 +1,95 @@
+{
+  "id": "dual_scale-L4-0003",
+  "family": "dual_scale",
+  "question": "This gauge has two printed scales (bar and psi). What is the reading in psi? Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 77.5,
+  "answer_type": "number",
+  "tolerance": 2.5,
+  "choices": null,
+  "unit": "psi",
+  "factors": {
+    "scale_kind": "linear",
+    "sweep": "180",
+    "minors_per_major": 2,
+    "label_every": 1,
+    "multiplier": "x1",
+    "face": "light",
+    "glare": 0,
+    "tilt": 30,
+    "blur": 2.0,
+    "noise": 8.0,
+    "lighting": 0.45
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 10,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 1,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 5.344415011313885,
+      "unit": "bar",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [],
+      "setpoint": null,
+      "tag": "",
+      "secondary": {
+        "vmin": 0.0,
+        "vmax": 145.038,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 20,
+        "minors_per_major": 4,
+        "label_every": 1,
+        "tick_origin": 0.0
+      },
+      "secondary_unit": "psi"
+    }
+  ],
+  "meta": {
+    "asked_scale": "secondary",
+    "other_unit": "bar",
+    "suite_kind": "mixed",
+    "level": 4,
+    "sweep_factor": null,
+    "attempts": 1,
+    "generator_version": "0.1.0"
+  },
+  "seed": 274199208446531,
+  "image": "tasks/dual_scale-L4-0003/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle_secondary",
+      "passed": true,
+      "detail": "cv=77.46 key=77.51 err=0.0522 tol=2.5"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=55.6"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 11.6px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.6px"
+    }
+  ]
+}

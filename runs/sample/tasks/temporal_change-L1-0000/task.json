@@ -1,0 +1,135 @@
+{
+  "id": "temporal_change-L1-0000",
+  "family": "temporal_change",
+  "question": "The image shows the same gauge photographed at 08:00 (A) and at 10:00 (B). By how much did the reading change from A to B (B minus A), in °C? Take into account everything printed on the dial. Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 62.0,
+  "answer_type": "number",
+  "tolerance": 4.0,
+  "choices": null,
+  "unit": "°C",
+  "factors": {
+    "scale_kind": "offset",
+    "sweep": "180",
+    "minors_per_major": 5,
+    "label_every": 1,
+    "multiplier": "x1",
+    "face": "light",
+    "glare": 0,
+    "tilt": 15,
+    "blur": 0.0,
+    "noise": 8.0,
+    "lighting": 0.7
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": -20,
+        "vmax": 120,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 20,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 21.99920159125854,
+      "unit": "°C",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [],
+      "setpoint": null,
+      "tag": "A  08:00",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": -20,
+        "vmax": 120,
+        "kind": "linear",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 20,
+        "minors_per_major": 5,
+        "label_every": 1,
+        "tick_origin": null
+      },
+      "value": 84.0106305035859,
+      "unit": "°C",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [],
+      "setpoint": null,
+      "tag": "B  10:00",
+      "secondary": null,
+      "secondary_unit": ""
+    }
+  ],
+  "meta": {
+    "suite_kind": "mixed",
+    "level": 1,
+    "sweep_factor": null,
+    "attempts": 2,
+    "generator_version": "0.1.0"
+  },
+  "seed": 103631417214413,
+  "image": "tasks/temporal_change-L1-0000/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=21.97 key=22 err=0.0243 tol=2"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=116.9"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=83.83 key=84.01 err=0.182 tol=2"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=119.4"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 12.6px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 18.0px"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 12.1px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.4px"
+    },
+    {
+      "name": "change_larger_than_reading_error",
+      "passed": true,
+      "detail": "margin 62 °C (need 8)"
+    }
+  ]
+}

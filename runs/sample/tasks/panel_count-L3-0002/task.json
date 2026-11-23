@@ -1,0 +1,294 @@
+{
+  "id": "panel_count-L3-0002",
+  "family": "panel_count",
+  "question": "This panel has 4 gauges, each with coloured bands (green = normal, yellow = warning, red = danger). How many gauges have their needle outside the green band (in yellow or red)? Respond with your reasoning if you like, then finish with a final line exactly of the form 'ANSWER: <number>' (number only, no units).",
+  "answer": 0,
+  "answer_type": "number",
+  "tolerance": 0.0,
+  "choices": null,
+  "unit": "",
+  "factors": {
+    "scale_kind": "sqrt",
+    "sweep": "180",
+    "minors_per_major": 2,
+    "label_every": 2,
+    "multiplier": "x1",
+    "face": "light",
+    "glare": 0,
+    "tilt": 15,
+    "blur": 1.0,
+    "noise": 8.0,
+    "lighting": 1.0
+  },
+  "gauges": [
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 50,
+        "kind": "sqrt",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 10,
+        "minors_per_major": 2,
+        "label_every": 2,
+        "tick_origin": null
+      },
+      "value": 0.5822178362644709,
+      "unit": "m³/h",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": 0.0,
+          "hi": 10,
+          "name": "normal"
+        },
+        {
+          "lo": 10,
+          "hi": 30,
+          "name": "warning"
+        },
+        {
+          "lo": 30,
+          "hi": 50,
+          "name": "danger"
+        }
+      ],
+      "setpoint": null,
+      "tag": "TI-104",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 100,
+        "kind": "sqrt",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 10,
+        "minors_per_major": 2,
+        "label_every": 2,
+        "tick_origin": null
+      },
+      "value": 73.64037266590816,
+      "unit": "m³/h",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": 0.0,
+          "hi": 80,
+          "name": "normal"
+        },
+        {
+          "lo": 80,
+          "hi": 90,
+          "name": "warning"
+        },
+        {
+          "lo": 90,
+          "hi": 100,
+          "name": "danger"
+        }
+      ],
+      "setpoint": null,
+      "tag": "TI-119",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 50,
+        "kind": "sqrt",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 10,
+        "minors_per_major": 2,
+        "label_every": 2,
+        "tick_origin": null
+      },
+      "value": 3.925510710352654,
+      "unit": "m³/h",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": 0.0,
+          "hi": 20,
+          "name": "normal"
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "name": "warning"
+        },
+        {
+          "lo": 30,
+          "hi": 50,
+          "name": "danger"
+        }
+      ],
+      "setpoint": null,
+      "tag": "TI-123",
+      "secondary": null,
+      "secondary_unit": ""
+    },
+    {
+      "scale": {
+        "vmin": 0,
+        "vmax": 50,
+        "kind": "sqrt",
+        "start_angle": -90.0,
+        "sweep": 180.0,
+        "major_step": 10,
+        "minors_per_major": 2,
+        "label_every": 2,
+        "tick_origin": null
+      },
+      "value": 46.98500772563497,
+      "unit": "m³/h",
+      "multiplier": 1.0,
+      "face": "light",
+      "zones": [
+        {
+          "lo": 0.0,
+          "hi": 10,
+          "name": "danger"
+        },
+        {
+          "lo": 10,
+          "hi": 20,
+          "name": "warning"
+        },
+        {
+          "lo": 20,
+          "hi": 50,
+          "name": "normal"
+        }
+      ],
+      "setpoint": null,
+      "tag": "TI-124",
+      "secondary": null,
+      "secondary_unit": ""
+    }
+  ],
+  "meta": {
+    "n_gauges": 4,
+    "suite_kind": "mixed",
+    "level": 3,
+    "sweep_factor": null,
+    "attempts": 1,
+    "generator_version": "0.1.0"
+  },
+  "seed": 17340163458721,
+  "image": "tasks/panel_count-L3-0002/image.png",
+  "validation": [
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=1.716 key=0.5822 err=1.13 tol=2.5"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=164.1"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 23.0px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.4px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=73.55 key=73.64 err=0.0897 tol=2.5"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=161.2"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 11.1px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.2px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=4.424 key=3.926 err=0.498 tol=2.5"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=167.0"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 23.9px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 18.1px"
+    },
+    {
+      "name": "pixel_reread_needle",
+      "passed": true,
+      "detail": "cv=46.96 key=46.99 err=0.0276 tol=2.5"
+    },
+    {
+      "name": "needle_not_glared",
+      "passed": true,
+      "detail": "0.00 of needle under glare"
+    },
+    {
+      "name": "needle_contrast",
+      "passed": true,
+      "detail": "contrast=156.8"
+    },
+    {
+      "name": "tick_divisions_resolvable",
+      "passed": true,
+      "detail": "min tick gap 23.6px"
+    },
+    {
+      "name": "labels_legible",
+      "passed": true,
+      "detail": "label height 17.8px"
+    },
+    {
+      "name": "all_needles_clear_of_zone_boundaries",
+      "passed": true,
+      "detail": "margin 5.51deg (need 3)"
+    }
+  ]
+}
