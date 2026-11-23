@@ -49,7 +49,8 @@ class Gemini(Model):
                 resp = self.client.models.generate_content(model=self.model, contents=contents, config=cfg)
                 break
             except errors.APIError as e:
-                if e.code in RETRY_CODES and attempt + 1 < self.max_tries:
+                daily_cap = e.code == 429 and "per day" in (e.message or "").lower()
+                if e.code in RETRY_CODES and not daily_cap and attempt + 1 < self.max_tries:
                     time.sleep(delay)       # free tier: back off and retry on rate limits / overload
                     delay = min(delay * 2, 120)
                     continue
