@@ -142,6 +142,7 @@ Evaluation runs are **resumable and cached**. Tasks already answered are never p
 - The **factory floor** shows every candidate that was rejected before this task was published, and why (glare over the needle, numbers overlapping, needle on a zone edge...).
 - **Ask Gemini** sends the exact same image and question to the model (needs `GEMINI_API_KEY` in `.env`) and puts its answer on the same strip, with its reasoning.
 - The answer key and the true needle value stay on the server until you submit or reveal (enforced by a test).
+- **Copy link** recreates exactly the task on screen (instrument, seed and conditions) for anyone running the app.
 - **Task pack** downloads the image plus a JSON with the key, the factors and the full validation evidence, so any live task can join a dataset.
 
 **Challenge**: you against a model, head to head, on 5, 10 or 20 real tasks from a suite. After each answer you see the model's recorded answer and reasoning on the same image; at the end you get the final score and your time against the model's. It makes no API calls, because the model's answers come from the suite's results.

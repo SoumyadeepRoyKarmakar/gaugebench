@@ -94,6 +94,18 @@ Three independent guards, applied to **every** task before it is published:
 - **Range trap:** the model avoided it. 0 of 1 wrong panel-max answers picked the furthest-turned needle.
 - **Wrong ring:** 0 of 7 wrong dual-scale answers were the other scale's reading. It finds the right ring and then misreads it.
 
+## Slide 7b: New instruments (in the built deck after "Example tasks")
+Images from `runs/instruments`: a clock-dial meter (key 8072 kWh), a vernier caliper (key 57.5 mm), and an LCD showing 469.9 with ×10 lit (key 4699 V).
+- Each has its own independent pixel re-reader and ambiguity checks.
+- The digital display is the control: is the models' trouble analogue reading itself, or the photo? [[add Gemini's digital vs analogue accuracy after the run]]
+
+## Slide 7c: GaugeBench Studio (in the built deck after "Features")
+Screenshot: `docs/images/studio-bench.png`.
+- **Bench:** generate any task live from 11 condition knobs. Read it with a loupe, see what the validator measured and which candidates were rejected, then ask Gemini the same question. Any task can be shared as a link.
+- **Challenge:** you against the model on real suite tasks, with the same tolerance. No API calls.
+- **Archive:** every suite, image, key, model answer, reasoning and validator check.
+- Run it: `python -m gaugebench app`
+
 ## Slide 8: Architecture
 ```
 spec.py (factors, ranges) → render.py / level.py (dial + evidence masks)
