@@ -136,8 +136,8 @@ def make_live_task(family: str, factors: dict, seed: int, level: int | None = No
             continue
         break
     else:
-        raise NoValidTask(f"The factory rejected all {MAX_ATTEMPTS} candidates with these settings, so it "
-                          "refused to publish a task. Try easier conditions (less glare or tilt).", rejected)
+        raise NoValidTask("These conditions are too harsh: every candidate was unreadable, so no task was "
+                          "published. Try less glare, tilt or blur.", rejected)
 
     task.id = f"live-{family}-{seed:x}"
     task.seed = seed
@@ -266,11 +266,11 @@ class Suites:
         d = self.load(name)
         rows = d["results"].get(model)
         if not rows:
-            raise ValueError(f"{model} has no results in suite {name}")
+            raise ValueError(f"{model} hasn't answered any tasks in this suite yet. Pick another opponent.")
         pool = [t for t in d["tasks"] if t["id"] in rows and not rows[t["id"]].get("error")
                 and (not family or t["family"] == family)]
         if not pool:
-            raise ValueError("no answered tasks match that filter")
+            raise ValueError("The opponent hasn't answered any tasks of that instrument. Pick another one.")
         rng = np.random.default_rng(seed)
         # spread across families: round-robin over shuffled per-family queues
         by_fam: dict[str, list] = {}
@@ -312,6 +312,10 @@ class Suites:
 # ---------------------------------------------------------------------------------------
 # HTTP layer
 # ---------------------------------------------------------------------------------------
+class TaskExpired(KeyError):
+    """A live task is no longer held by the server (restart, or evicted after MAX_LIVE newer tasks)."""
+
+
 class State:
     def __init__(self, suites_root: Path, gemini_model: str):
         self.suites = Suites(suites_root)
@@ -329,7 +333,7 @@ class State:
     def get(self, tid: str) -> dict:
         with self.lock:
             if tid not in self.live:
-                raise KeyError(tid)
+                raise TaskExpired(tid)
             return self.live[tid]
 
 
@@ -356,8 +360,9 @@ def make_handler(state: State):
         def _json(self, obj, code: int = 200):
             self._send(code, json.dumps(obj, ensure_ascii=False).encode(), "application/json; charset=utf-8")
 
-        def _err(self, code: int, msg: str):
-            self._json({"error": msg}, code)
+        def _err(self, code: int, msg: str, kind: str = "error", detail: str = ""):
+            """msg is for people (short, plain); detail is for developers (shown only in the console)."""
+            self._json({"error": msg, "code": kind, "detail": detail}, code)
 
         def _body(self) -> dict:
             n = int(self.headers.get("Content-Length") or 0)
@@ -392,11 +397,13 @@ def make_handler(state: State):
                 m = re.fullmatch(r"/suites/([^/]+)/(.+)", u.path)
                 if m:
                     return self._suite_file(unquote(m[1]), unquote(m[2]))
-                return self._err(404, "not found")
+                return self._err(404, "That page doesn't exist.", "not_found")
             except KeyError as e:
-                return self._err(404, f"unknown: {e}")
+                return self._err(404, "We couldn't find that task or suite. It may have been moved or regenerated.",
+                                 "not_found", f"unknown key {e}")
             except Exception as e:                           # pragma: no cover - surfaced in UI
-                return self._err(500, f"{type(e).__name__}: {e}")
+                return self._err(500, "Something went wrong on our side. Please try again.", "server",
+                                 f"{type(e).__name__}: {e}")
 
         def do_POST(self):
             u = urlparse(self.path)
@@ -423,20 +430,25 @@ def make_handler(state: State):
                 if u.path == "/api/challenge/answer":
                     return self._json(state.suites.challenge_answer(body["suite"], body["model"], body["id"],
                                                                     str(body.get("answer", "")).strip()))
-                return self._err(404, "not found")
+                return self._err(404, "That action doesn't exist.", "not_found")
             except NoValidTask as e:
-                return self._json({"error": str(e), "rejected": e.rejected}, 422)
+                return self._json({"error": str(e), "code": "no_valid_task", "rejected": e.rejected}, 422)
+            except TaskExpired as e:
+                return self._err(410, "This task has expired. Press Generate for a new one.", "task_expired",
+                                 f"live task {e} is no longer in memory (server restarted or task evicted)")
             except KeyError as e:
-                return self._err(404, f"unknown task {e} (the server may have restarted; generate a new one)")
+                return self._err(404, "We couldn't find that task or suite. It may have been moved or regenerated.",
+                                 "not_found", f"unknown key {e}")
             except ValueError as e:
-                return self._err(422, str(e))
+                return self._err(422, str(e), "invalid")
             except Exception as e:                           # pragma: no cover
-                return self._err(500, f"{type(e).__name__}: {e}")
+                return self._err(500, "Something went wrong on our side. Please try again.", "server",
+                                 f"{type(e).__name__}: {e}")
 
         def _generate(self, body: dict):
             family = body.get("family", "read_value")
             if family not in FAMILIES:
-                return self._err(400, f"unknown family {family}")
+                return self._err(400, "That instrument isn't available.", "invalid", f"unknown family {family}")
             factors = {}
             for k, v in (body.get("factors") or {}).items():
                 if k in FACTOR_DOMAINS:
@@ -460,7 +472,8 @@ def make_handler(state: State):
 
         def _ask(self, body: dict):
             if not gemini_available():
-                return self._err(400, "No Gemini API key configured. Add GEMINI_API_KEY to .env and restart.")
+                return self._err(400, "Ask Gemini isn't set up on this computer yet.", "gemini_missing",
+                                 "No GEMINI_API_KEY found. Add it to .env and restart the app.")
             rec = state.get(body["id"])
             t = rec["task"]
             img = state.tmp / f"{t['id']}.png"
@@ -471,12 +484,17 @@ def make_handler(state: State):
             t0 = time.time()
             resp = model.answer(t, str(img))
             if resp.get("error"):
-                msg = resp["error"]
-                if "per day" in msg.lower() or "quota" in msg.lower():
-                    msg = "Gemini's free-tier daily quota is used up. It resets at midnight Pacific time."
-                elif "503" in msg or "high demand" in msg.lower():
-                    msg = "Gemini is overloaded right now. Try again in a minute."
-                return self._err(503, msg)
+                raw = resp["error"]
+                low = raw.lower()
+                if "per day" in low or "quota" in low:
+                    msg, kind = "Gemini has used up today's free requests. Try again tomorrow.", "gemini_quota"
+                elif "503" in raw or "high demand" in low or "429" in raw:
+                    msg, kind = "Gemini is busy right now. Try again in a minute.", "gemini_busy"
+                elif "network" in low or "timeout" in low or "deadline" in low:
+                    msg, kind = "Couldn't reach Gemini. Check your internet connection and try again.", "gemini_network"
+                else:
+                    msg, kind = "Gemini couldn't answer this time. Please try again.", "gemini_error"
+                return self._err(503, msg, kind, raw)
             s = score(t, resp.get("text", ""))
             return self._json({"model": model.name, "text": resp.get("text", ""), "score": s,
                                "seconds": round(time.time() - t0, 1), "key": key_view(t)})

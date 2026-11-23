@@ -72,16 +72,17 @@
     <div class="knob-group-label">Camera</div>
     <div class="knobs" id="knobs-photo"></div>
 
-    <div class="seed-row">
-      <label for="seed">Seed</label>
-      <input id="seed" inputmode="numeric" placeholder="random" autocomplete="off">
-      <button class="mini-btn" id="btn-seed-lock" aria-pressed="false" title="Keep this seed for the next generation">Lock</button>
+    <div class="rack-foot">
+      <div class="seed-row">
+        <label for="seed">Seed</label>
+        <input id="seed" inputmode="numeric" placeholder="random" autocomplete="off">
+        <button class="mini-btn" id="btn-seed-lock" aria-pressed="false" title="Keep this seed for the next generation">Lock</button>
+      </div>
+      <button class="big-button" id="btn-generate">
+        <span class="bb-cap">Generate</span>
+        <span class="bb-hint">G</span>
+      </button>
     </div>
-
-    <button class="big-button" id="btn-generate">
-      <span class="bb-cap">Generate</span>
-      <span class="bb-hint">G</span>
-    </button>
   </section>
 
   <!-- Inspection window -->
@@ -92,6 +93,7 @@
         <span class="ih-id" id="task-id">no task loaded</span>
       </div>
       <div class="ih-right">
+        <button class="mini-btn" id="btn-link" title="Copy a link that recreates exactly this task" disabled>Copy link</button>
         <label class="switch" title="Magnifying loupe (L)">
           <input type="checkbox" id="tg-loupe" checked><span class="sw-track"><span class="sw-thumb"></span></span><span>Loupe</span>
         </label>
@@ -146,6 +148,7 @@
       <div class="ticket-family" id="ticket-family">Awaiting task</div>
       <p class="ticket-q" id="ticket-q">Generate a task to receive your work order.</p>
 
+      <div class="callout callout-info" id="ticket-notice" role="status" hidden></div>
       <form class="answer" id="answer-form" autocomplete="off" hidden>
         <div class="answer-num" id="answer-num">
           <input id="answer-input" inputmode="decimal" aria-label="Your reading" placeholder="your reading">

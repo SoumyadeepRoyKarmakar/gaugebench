@@ -19,14 +19,39 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   async function api(path, body) {
-    const res = await fetch(path, body === undefined ? {} : {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-    });
+    let res;
+    try {
+      res = await fetch(path, body === undefined ? {} : {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      });
+    } catch (e) {
+      console.warn("GaugeBench: request failed", path, e);
+      const err = new Error("Can't reach GaugeBench Studio. Check that the app is still running, then try again.");
+      err.data = { code: "offline" };
+      throw err;
+    }
     let data = {};
     try { data = await res.json(); } catch (_) { /* non-JSON */ }
-    if (!res.ok) { const err = new Error(data.error || `${res.status} ${res.statusText}`); err.data = data; throw err; }
+    if (!res.ok) {
+      if (data.detail) console.warn(`GaugeBench ${path} (${res.status} ${data.code}):`, data.detail);
+      const err = new Error(data.error || "Something went wrong. Please try again.");
+      err.data = data;
+      throw err;
+    }
     return data;
   }
+
+  function taskExpired() {
+    $$("#answer-form input, #answer-form button").forEach((el) => (el.disabled = true));
+    $("#btn-ask").disabled = true;
+    const n = $("#ticket-notice");
+    n.hidden = false;
+    n.innerHTML = `<span class="callout-icon" aria-hidden="true">⟳</span><div><b>This task has expired.</b>
+      It was created before the app restarted, so it can't be scored any more.
+      <button type="button" class="link-btn" id="notice-gen">Generate a new task</button></div>`;
+    $("#notice-gen").addEventListener("click", () => generate());
+  }
+  const handleErr = (e) => (e.data?.code === "task_expired" ? taskExpired() : toast(e.message, true));
 
   let toastTimer;
   function toast(msg, err = false) {
@@ -339,6 +364,7 @@
     img.alt = `${t.family_label} task image`;
     vp.classList.remove("has-img"); void vp.offsetWidth; vp.classList.add("has-img");
     $("#task-id").textContent = t.id;
+    $("#btn-link").disabled = false;
     if (S.seedLocked) $("#seed").value = t.seed;
     else { $("#seed").value = ""; $("#seed").placeholder = `random · last ${t.seed}`; }
 
@@ -399,6 +425,7 @@
     form.hidden = false;
     $$("input, button", form).forEach((el) => (el.disabled = false));
     $("#verdict").hidden = true;
+    $("#ticket-notice").hidden = true;
     $("#gemini-box").hidden = true;
     $("#gem-result").hidden = true;
     $("#gem-wait").hidden = true;
@@ -442,7 +469,7 @@
       bump("you", r.score.correct);
       showVerdict(r.score.correct ? "pass" : "fail", r.key, r.score);
       if (r.checks) { S.checksFull = r.checks; renderChecks(r.checks); }
-    } catch (err) { toast(err.message, true); }
+    } catch (err) { handleErr(err); }
   }
 
   async function reveal() {
@@ -454,7 +481,7 @@
       S.lastKey = r.key;
       showVerdict("reveal", r.key, null);
       if (r.checks) { S.checksFull = r.checks; renderChecks(r.checks); }
-    } catch (err) { toast(err.message, true); }
+    } catch (err) { handleErr(err); }
   }
 
   function showVerdict(kind, key, sc) {
@@ -556,9 +583,13 @@
         <details><summary>Gemini's reasoning</summary><pre>${esc(r.text)}</pre></details>`;
       renderReadout();
     } catch (e) {
-      out.hidden = false;
-      out.innerHTML = `<div class="gem-error">${esc(e.message)}</div>`;
       btn.hidden = false;
+      if (e.data?.code === "task_expired") { out.hidden = true; taskExpired(); return; }
+      out.hidden = false;
+      const quota = e.data?.code === "gemini_quota" || e.data?.code === "gemini_missing";
+      if (quota) btn.disabled = true;               // retrying won't help until tomorrow / until set up
+      out.innerHTML = `<div class="callout callout-err" role="alert"><span class="callout-icon" aria-hidden="true">!</span>
+        <div>${esc(e.message)}</div></div>`;
     } finally {
       clearInterval(timer);
       wait.hidden = true;
@@ -1004,6 +1035,7 @@
     $("#btn-reveal").addEventListener("click", reveal);
     $("#btn-ask").addEventListener("click", askGemini);
     $("#btn-pack").addEventListener("click", downloadPack);
+    $("#btn-link").addEventListener("click", copyLink);
     $("#btn-next").addEventListener("click", () => generate());
     $("#btn-clean").addEventListener("click", () => { setFactors(S.meta.base); toast("All knobs back to the clean baseline."); });
     $$(".preset").forEach((b) => b.addEventListener("click", () => generate(Number(b.dataset.level))));
@@ -1055,6 +1087,41 @@
     });
   }
 
+  // ------------------------------------------------------------------ shareable task links
+  function taskLink() {
+    const t = S.task;
+    const p = new URLSearchParams({ family: t.family, seed: String(t.seed) });
+    for (const [k, v] of Object.entries(t.factors)) if (String(S.meta.base[k]) !== String(v)) p.set(k, String(v));
+    return `${location.origin}/?${p}`;
+  }
+  async function copyLink() {
+    if (!S.task) return;
+    const url = taskLink();
+    try { await navigator.clipboard.writeText(url); toast("Link copied: it recreates exactly this task."); }
+    catch (_) { window.prompt("Copy this link:", url); }
+  }
+  function applyUrl() {
+    const p = new URLSearchParams(location.search);
+    const view = p.get("view");
+    const fam = p.get("family");
+    if (fam && S.meta.families.some((f) => f.id === fam)) {
+      selectFamily(fam);
+      const f = {};
+      for (const k of Object.keys(S.meta.factors)) if (p.has(k)) f[k] = p.get(k);
+      setFactors({ ...S.meta.base, ...f });
+      if (/^\d+$/.test(p.get("seed") || "")) {
+        $("#seed").value = p.get("seed");
+        S.seedLocked = true;
+        $("#btn-seed-lock").setAttribute("aria-pressed", "true");
+      }
+      setView("bench");
+      generate();
+      return true;
+    }
+    if (["bench", "challenge", "archive"].includes(view)) { setView(view); return true; }
+    return false;
+  }
+
   // ------------------------------------------------------------------ boot
   async function boot() {
     try {
@@ -1067,7 +1134,7 @@
     selectFamily(S.family);
     renderTally();
     wire();
-    setView(store.get("gb-view", "bench"));
+    if (!applyUrl()) setView(store.get("gb-view", "bench"));
   }
   boot();
 })();

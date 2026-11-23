@@ -136,8 +136,13 @@ kbd {
   max-height: calc(100vh - 96px); overflow-y: auto; overscroll-behavior: contain;
   scrollbar-width: thin; scrollbar-color: var(--line-2) transparent;
 }
-.rack .big-button { position: sticky; bottom: 0; z-index: 2; }
-.rack::after { content: ""; display: block; height: 6px; }
+/* seed + Generate stay pinned to the bottom of the rack on a solid footer */
+.rack-foot {
+  position: sticky; bottom: -18px; z-index: 2; margin: 0 -16px -18px; padding: 16px 16px 18px;
+  background: linear-gradient(180deg, rgba(20,22,25,0) 0, var(--bench) 16px);
+  border-radius: 0 0 14px 14px;
+}
+.rack-foot .seed-row { margin-top: 0; }
 .rack-head { display: flex; align-items: center; gap: 10px; margin: 2px 0 12px; }
 .rack-head + .families, .rack-head + .presets { margin-top: 0; }
 .rack-head h2 {
@@ -154,6 +159,7 @@ kbd {
 }
 .mini-btn:hover { color: var(--ink); border-color: var(--ink-3); }
 .mini-btn[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.mini-btn:disabled { opacity: .4; cursor: default; }
 
 .families { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 20px; }
 .fam .fam-new {
@@ -463,7 +469,28 @@ kbd {
 .gem-wait { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--paper-ink-2); padding: 8px 2px; }
 .gem-pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--blue-deep); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { transform: scale(1.6); opacity: .35; } }
-.gem-result { font-size: 13.5px; }
+.gem-result { font-size: 13.5px; margin-top: 12px; }
+.gem-wait { margin-top: 4px; }
+
+/* plain-language notices inside the paper ticket */
+.callout {
+  display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px;
+  font-size: 13.5px; line-height: 1.45; border: 1.5px solid; margin: 4px 0 12px;
+}
+.callout-err { background: #fbe6e3; border-color: #e7a59e; color: #6e1813; }
+.callout-info { background: #fff3e2; border-color: #ecc28b; color: #5a3507; }
+.callout-icon {
+  flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 900; font-size: 12px; color: #fff; background: currentColor; margin-top: 1px;
+}
+.callout-err .callout-icon { background: #c7261f; }
+.callout-info .callout-icon { background: #c96a08; }
+.callout b { font-weight: 700; }
+.link-btn {
+  display: block; margin-top: 6px; padding: 0; border: 0; background: none; font-weight: 700; font-size: 13.5px;
+  color: var(--accent-deep); text-decoration: underline; text-underline-offset: 3px;
+}
+.link-btn:hover { color: #8f3405; }
 .gem-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .gem-chip {
   font-family: var(--mono); font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1.5px solid currentColor;
@@ -475,7 +502,6 @@ kbd {
   white-space: pre-wrap; font-family: var(--mono); font-size: 11.5px; line-height: 1.5; background: var(--paper-2);
   border-radius: 6px; padding: 10px; margin: 6px 0 0; max-height: 220px; overflow: auto;
 }
-.gem-error { color: #a6241e; font-size: 13px; }
 
 .ticket-spec { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 18px; }
 .spec-chip {
@@ -714,6 +740,7 @@ kbd {
   .bench { grid-template-columns: 290px minmax(0, 1fr); }
   .order-col { grid-column: 1 / -1; position: static; max-height: none; overflow: visible; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: start; }
   .rack { position: static; max-height: none; overflow: visible; }
+  .rack-foot { position: static; background: none; margin: 0; padding: 0; }
 }
 @media (max-width: 860px) {
   .topbar { grid-template-columns: minmax(0, 1fr) auto; padding: 10px 16px; gap: 10px; }
