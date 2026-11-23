@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -25,7 +26,20 @@ from .spec import FACTOR_DOMAINS
 from .tasks import FAMILIES
 
 
+def _load_dotenv(path: Path = Path(".env")) -> None:
+    """Read KEY=VALUE lines from a local, git-ignored .env file into the environment
+    (variables already set in the shell win). Keeps API keys out of code and out of git."""
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
 def main(argv=None) -> int:
+    _load_dotenv()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(prog="gaugebench")

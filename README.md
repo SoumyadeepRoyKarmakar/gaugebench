@@ -112,7 +112,8 @@ python -m gaugebench all runs/demo --per-family 20 --sweep 6 --seed 7
 # evaluate a Claude model (credentials come from ANTHROPIC_API_KEY — never commit keys)
 python -m gaugebench evaluate runs/demo --model claude:claude-opus-5-5 --workers 4
 python -m gaugebench evaluate runs/demo --model claude:claude-opus-5-5 --blind --limit 60
-# evaluate a Gemini model — free API key from https://aistudio.google.com (set GEMINI_API_KEY)
+# evaluate a Gemini model — free API key from https://aistudio.google.com
+# put keys in a local .env file (git-ignored, loaded automatically):  GEMINI_API_KEY=...  ANTHROPIC_API_KEY=...
 python -m gaugebench list-models gemini      # which model ids your key can use
 python -m gaugebench evaluate runs/demo --model gemini:<model-id> --workers 1   # free tier is rate-limited
 
