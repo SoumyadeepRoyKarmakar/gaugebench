@@ -82,7 +82,7 @@ spec.py (factors, ranges) → render.py / level.py (dial + evidence masks)
    → generate.py (publish / reject + log) → evaluate.py (models, cached, resumable)
    → score.py → report.html
 ```
-- **Stack:** Python, Pillow, OpenCV, NumPy, Anthropic SDK. No GPU needed.
+- **Stack:** Python, Pillow, OpenCV, NumPy, Anthropic SDK, Google GenAI SDK. No GPU needed.
 - **Responsible resource use:** answers are cached and resumable (never pay twice), offline baselines need no API calls, and the suite size is configurable.
 
 ## Slide 9: Impact

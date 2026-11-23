@@ -119,3 +119,30 @@ def test_dual_scale_and_level_readers():
         tol = sc.reading_tolerance(g.value)
         assert check_reading(r, g.value, tol).passed
         assert not check_reading(r, g.value + 3 * tol, tol).passed
+
+
+def test_gemini_adapter_offline(monkeypatch, tmp_path):
+    """Adapter builds an image request, retries on 429, and parses the reply (no network)."""
+    from types import SimpleNamespace
+    from google.genai import errors
+    import gaugebench.models.gemini as gm
+
+    calls = []
+
+    class FakeModels:
+        def generate_content(self, model, contents, config):
+            calls.append(contents)
+            if len(calls) == 1:
+                raise errors.ClientError(429, {"error": {"code": 429, "message": "slow down", "status": "RESOURCE_EXHAUSTED"}})
+            return SimpleNamespace(text="Reading...\nANSWER: 4.2", model_version=model,
+                                   candidates=[SimpleNamespace(finish_reason="STOP")],
+                                   usage_metadata=SimpleNamespace(prompt_token_count=600, candidates_token_count=20))
+
+    monkeypatch.setattr(gm.genai, "Client", lambda: SimpleNamespace(models=FakeModels()))
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setattr(gm.time, "sleep", lambda s: None)
+    img = tmp_path / "x.png"
+    img.write_bytes(b"\x89PNG fake")
+    out = gm.Gemini("some-gemini-model").answer({"question": "Q?"}, str(img))
+    assert len(calls) == 2 and out["text"].endswith("4.2") and out["input_tokens"] == 600
+    assert score({"answer_type": "number", "answer": 4.2, "tolerance": 0.05}, out["text"])["correct"]

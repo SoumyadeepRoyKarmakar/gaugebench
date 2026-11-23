@@ -112,6 +112,10 @@ python -m gaugebench all runs/demo --per-family 20 --sweep 6 --seed 7
 # evaluate a Claude model (credentials come from ANTHROPIC_API_KEY — never commit keys)
 python -m gaugebench evaluate runs/demo --model claude:claude-opus-5-5 --workers 4
 python -m gaugebench evaluate runs/demo --model claude:claude-opus-5-5 --blind --limit 60
+# evaluate a Gemini model — free API key from https://aistudio.google.com (set GEMINI_API_KEY)
+python -m gaugebench list-models gemini      # which model ids your key can use
+python -m gaugebench evaluate runs/demo --model gemini:<model-id> --workers 1   # free tier is rate-limited
+
 python -m gaugebench report runs/demo        # open runs/demo/report.html
 
 python -m pytest -q                          # 12 tests incl. mutation tests of the validator
@@ -131,7 +135,7 @@ Evaluation runs are **resumable and cached**. Tasks already answered are never p
 | `tasks.py` | the nine task families with their ambiguity checks |
 | `level.py` | tank level sight-glass renderer |
 | `generate.py` | sample → validate → publish or reject; deterministic seeds |
-| `models/` | Claude adapter (official SDK) and offline baselines |
+| `models/` | Claude and Gemini adapters (official SDKs) and offline baselines |
 | `evaluate.py`, `score.py`, `report.py` | running models, scoring, and the HTML report |
 
 ## Limitations (honest statement)

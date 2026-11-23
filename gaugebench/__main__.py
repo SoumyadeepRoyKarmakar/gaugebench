@@ -4,6 +4,8 @@
     python -m gaugebench evaluate  runs/demo --model oracle
     python -m gaugebench evaluate  runs/demo --model claude:claude-opus-5-5 --workers 4
     python -m gaugebench evaluate  runs/demo --model claude:claude-opus-5-5 --blind --limit 60
+    python -m gaugebench evaluate  runs/demo --model gemini:<model-id> --workers 1   (free tier)
+    python -m gaugebench list-models gemini
     python -m gaugebench report    runs/demo
     python -m gaugebench all       runs/demo --per-family 20 --sweep 6   (generate + baselines + report)
 """
@@ -42,8 +44,9 @@ def main(argv=None) -> int:
 
     e = sub.add_parser("evaluate", help="run a model on a suite")
     e.add_argument("suite", type=Path)
-    e.add_argument("--model", required=True, help=f"{' | '.join(BASELINES)} | claude:<model-id>")
-    e.add_argument("--effort", default=None, help="Claude effort: low|medium|high|xhigh|max")
+    e.add_argument("--model", required=True, help=f"{' | '.join(BASELINES)} | claude:<model-id> | gemini:<model-id>")
+    e.add_argument("--effort", default=None,
+                   help="Claude effort low|medium|high|xhigh|max (default medium); Gemini thinking level, optional")
     e.add_argument("--blind", action="store_true", help="ablation: send the question without the image")
     e.add_argument("--workers", type=int, default=4)
     e.add_argument("--limit", type=int)
@@ -52,11 +55,18 @@ def main(argv=None) -> int:
     r = sub.add_parser("report", help="build report.html")
     r.add_argument("suite", type=Path)
 
+    lm = sub.add_parser("list-models", help="list model ids your API key can use")
+    lm.add_argument("provider", choices=["gemini"])
+
     a = sub.add_parser("all", help="generate + offline baselines + report (no API calls)")
     a.add_argument("suite", type=Path)
     gen_args(a)
 
     args = p.parse_args(argv)
+    if args.cmd == "list-models":
+        from .models.gemini import list_models
+        print("\n".join(list_models()))
+        return 0
     if args.cmd in ("generate", "all"):
         jobs = plan_suite(args.per_family, args.sweep, args.families, args.sweep_factors)
         print(f"generating {len(jobs)} tasks -> {args.suite}")
