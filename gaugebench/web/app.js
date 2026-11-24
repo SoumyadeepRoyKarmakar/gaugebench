@@ -677,9 +677,13 @@
     S.archive.suite = name;
     store.set("gb-suite", name);
     $$("#suite-seg button").forEach((b) => b.classList.toggle("is-on", b.dataset.suite === name));
-    $("#cards").innerHTML = "";
+    // placeholder cards while a big suite loads (a cold hosted server can take a few seconds)
+    $("#cards").innerHTML = Array.from({ length: 12 }, () => `<div class="card card-skel" aria-hidden="true"><div></div><p></p><p></p></div>`).join("");
+    $("#cards").setAttribute("aria-busy", "true");
     try {
       const d = await api(`/api/suite?name=${encodeURIComponent(name)}`);
+      if (S.archive.suite !== name) return;          // the user already picked another suite
+      $("#cards").removeAttribute("aria-busy");
       S.archive.data = d;
       const models = Object.keys(d.results);
       const sel = $("#model-select");
@@ -690,7 +694,11 @@
       if (S.archive.model) sel.value = S.archive.model;
       S.archive.family = null;
       renderArchive();
-    } catch (e) { toast(e.message, true); }
+    } catch (e) {
+      $("#cards").removeAttribute("aria-busy");
+      $("#cards").innerHTML = "";
+      toast(e.message, true);
+    }
   }
 
   function filtered(ignoreOutcome = false) {

@@ -104,7 +104,7 @@ Screenshot: `docs/images/studio-bench.png`.
 - **Bench:** generate any task live from 11 condition knobs. Read it with a loupe, see what the validator measured and which candidates were rejected, then ask Gemini the same question. Any task can be shared as a link.
 - **Challenge + Daily:** go head to head with the model on real suite tasks (no API calls), or play the Daily: five gauges, the same for everyone, L1 to L5, with a shareable result and day streaks.
 - **Archive, hints and rank:** browse every suite and answer. Hints teach how to read each instrument without giving the value away, and your record ranks you from Trainee to Metrologist.
-- Run it: `python -m gaugebench app`, or open the hosted site (Gemini key kept server-side, usage capped)
+- Live: https://gaugebench-studio.onrender.com (Gemini key kept server-side, usage capped), or run `python -m gaugebench app`
 
 ## Slide 8: Architecture
 ```
@@ -130,4 +130,5 @@ spec.py (factors, ranges) → render.py / level.py (dial + evidence masks)
 
 ## Slide 11: Links
 - GitHub: https://github.com/SoumyadeepRoyKarmakar/gaugebench
+- Live demo: https://gaugebench-studio.onrender.com
 - Demo video: [[URL]]

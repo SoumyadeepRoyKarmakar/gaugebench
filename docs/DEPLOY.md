@@ -1,5 +1,7 @@
 # Deploying GaugeBench Studio
 
+Live instance: **https://gaugebench-studio.onrender.com**
+
 GaugeBench Studio is one small Python web server plus a static front end. It runs in a container on any host. The instructions below use **Render** (free tier, deploys straight from GitHub). The same image also works on Railway, Fly.io, Google Cloud Run and Hugging Face Spaces (Docker).
 
 ## How the Gemini API key is kept safe

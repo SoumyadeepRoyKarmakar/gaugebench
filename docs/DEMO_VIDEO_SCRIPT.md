@@ -1,6 +1,6 @@
 # Demo video script (target 3 minutes)
 
-The demo is built around **GaugeBench Studio**, because judges remember what they see working. Record it on the hosted site (see [DEPLOY.md](DEPLOY.md)) or locally with `python -m gaugebench app`. The flow is the same.
+The demo is built around **GaugeBench Studio**, because judges remember what they see working. Record it on the hosted site, https://gaugebench-studio.onrender.com (see [DEPLOY.md](DEPLOY.md)), or locally with `python -m gaugebench app`. The flow is the same.
 
 **Before recording:**
 - **Hosted:** open the site a minute early so a sleeping free-tier server is awake.

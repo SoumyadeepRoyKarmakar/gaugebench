@@ -870,6 +870,14 @@ kbd {
 .card img { background: linear-gradient(100deg, #101114 30%, #1b1e22 50%, #101114 70%) 0 0 / 300% 100%; animation: shimmer 1.4s linear infinite; }
 .card img.loaded { animation: none; background: #08090a; }
 @keyframes shimmer { to { background-position: -300% 0; } }
+.card-skel { pointer-events: none; }
+.card-skel > div, .card-skel > p {
+  background: linear-gradient(100deg, #101114 30%, #1b1e22 50%, #101114 70%) 0 0 / 300% 100%; animation: shimmer 1.4s linear infinite;
+}
+.card-skel > div { aspect-ratio: 1; }
+.card-skel > p { height: 9px; margin: 12px 12px 0; border-radius: 4px; width: 55%; }
+.card-skel > p + p { width: 80%; margin-bottom: 14px; }
+@media (prefers-reduced-motion: reduce) { .card-skel > div, .card-skel > p { animation: none; } }
 
 /* toast with icon */
 .toast { display: flex; align-items: center; gap: 10px; }

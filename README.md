@@ -2,6 +2,8 @@
 
 **Innodata AI Hackathon, Track 2 (Visual Task Factory)**
 
+**Live demo: [gaugebench-studio.onrender.com](https://gaugebench-studio.onrender.com)** (GaugeBench Studio: generate and read gauges, play the Daily, challenge Gemini, browse every result). On the free plan the first visit after a quiet spell takes about a minute to wake the server.
+
 GaugeBench generates synthetic photos of analogue industrial gauges, writes questions about them, and stores answer keys that are known exactly and checked independently of the model under test. It then measures how well multimodal AI models actually *read* instruments.
 
 ## Why this problem matters
