@@ -6,6 +6,11 @@
 #
 #   docker build -t gaugebench .
 #   docker run -p 8765:8765 -e GEMINI_API_KEY=... gaugebench
+#
+# The same image runs the tests and the whole pipeline (see "Run everything in Docker"
+# in the README):
+#   docker run --rm gaugebench python -m pytest -v -p no:cacheprovider
+#   docker run --rm -v "$PWD/out:/app/out" gaugebench python -m gaugebench all out/demo
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -25,6 +30,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY gaugebench ./gaugebench
+COPY tests ./tests
 COPY runs ./runs
 
 # Large suites live outside git, as GitHub release assets, and are baked into the image at

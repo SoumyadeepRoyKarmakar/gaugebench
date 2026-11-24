@@ -8,7 +8,6 @@
 **/*.pyc
 scratch
 docs
-tests
 # keep only the suites that are in the repository
 runs/*
 !runs/sample

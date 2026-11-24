@@ -1,0 +1,30 @@
+cachedir: .pytest_cache
+rootdir: C:\Users\KIIT\Downloads\Innodata AI Hackathon\gauge-bench
+plugins: anyio-4.10.0
+collecting ... collected 23 items
+
+tests/test_gaugebench.py::test_scale_roundtrip[linear-0-10] PASSED       [  4%]
+tests/test_gaugebench.py::test_scale_roundtrip[linear--40-60] PASSED     [  8%]
+tests/test_gaugebench.py::test_scale_roundtrip[sqrt-0-100] PASSED        [ 13%]
+tests/test_gaugebench.py::test_scale_roundtrip[log-1-1000] PASSED        [ 17%]
+tests/test_gaugebench.py::test_ticks_sorted_and_ends_labeled PASSED      [ 21%]
+tests/test_gaugebench.py::test_independent_reader_accuracy PASSED        [ 26%]
+tests/test_gaugebench.py::test_validator_rejects_corrupted_key PASSED    [ 30%]
+tests/test_gaugebench.py::test_generation_is_deterministic PASSED        [ 34%]
+tests/test_gaugebench.py::test_every_published_task_passed_all_checks PASSED [ 39%]
+tests/test_gaugebench.py::test_parsers PASSED                            [ 43%]
+tests/test_gaugebench.py::test_scoring_separates_right_from_near_miss PASSED [ 47%]
+tests/test_gaugebench.py::test_dual_scale_and_level_readers PASSED       [ 52%]
+tests/test_gaugebench.py::test_gemini_adapter_offline PASSED             [ 56%]
+tests/test_gaugebench.py::test_label_overlap_detected PASSED             [ 60%]
+tests/test_gaugebench.py::test_studio_api_hides_key_until_answered PASSED [ 65%]
+tests/test_gaugebench.py::test_new_instrument_readers PASSED             [ 69%]
+tests/test_gaugebench.py::test_new_families_publish_valid_tasks PASSED   [ 73%]
+tests/test_gaugebench.py::test_challenge_api_hides_key_until_answered PASSED [ 78%]
+tests/test_gaugebench.py::test_hints_never_contain_the_answer PASSED     [ 82%]
+tests/test_gaugebench.py::test_public_mode_protects_key_and_quota PASSED [ 86%]
+tests/test_gaugebench.py::test_fetch_suite_unpacks_and_refuses_unsafe_zips PASSED [ 91%]
+tests/test_gaugebench.py::test_inspection_round_publishes_valid_tasks_and_scores_partial_credit PASSED [ 95%]
+tests/test_gaugebench.py::test_evaluate_limit_keeps_earlier_answers PASSED [100%]
+
+======================== 23 passed in 61.53s (0:01:01) ========================

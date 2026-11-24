@@ -57,6 +57,8 @@ docker run -p 8765:8765 -e GEMINI_API_KEY=your-key gaugebench
 
 Hosts set `PORT` themselves, and the server listens on it automatically. Give the key through the host's secrets or environment settings, never as a build argument.
 
+The same image also runs the tests and the batch pipeline (`docker run --rm gaugebench python -m pytest -v -p no:cacheprovider`, `... python -m gaugebench all out/demo`); see "Run everything in Docker" in the [README](../README.md#run-everything-in-docker).
+
 Without Docker (for example on a VM):
 
 ```powershell

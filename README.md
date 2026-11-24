@@ -6,7 +6,7 @@
 
 Innodata AI Hackathon · Track 2: Visual Task Factory
 
-[**▶ Try the live demo**](https://gaugebench-studio.onrender.com) · [How it works](#how-it-works) · [Results](#results) · [Run it yourself](#run-it-yourself)
+[**▶ Try the live demo**](https://gaugebench-studio.onrender.com) · [How it works](#how-it-works) · [Results](#results) · [Run it yourself](#run-it-yourself) · [Technical design](docs/TECHNICAL.md) · [Validation evidence](docs/VALIDATION.md)
 
 ![GaugeBench Studio: a clock-dial meter generated live, with its validator checks and the work order](docs/images/studio-bench.png)
 
@@ -173,8 +173,32 @@ python -m gaugebench evaluate runs/demo --model gemini:gemini-3.5-flash-lite --b
 python -m gaugebench report runs/demo   # writes runs/demo/report.html
 python -m gaugebench app                # opens GaugeBench Studio
 python -m gaugebench all runs/rounds --families inspection_round --per-family 20 --sweep 0   # inspection rounds
-python -m pytest -q                     # 22 tests, including mutation tests of the validator
+python -m pytest -q                     # 23 tests, including mutation tests of the validator
 ```
+
+### Run everything in Docker
+
+The Studio image also contains the tests and the full pipeline, so nothing needs installing except Docker:
+
+```bash
+docker build -t gaugebench .
+
+# the 23 tests (log of a passing run: docs/validation/pytest.log)
+docker run --rm gaugebench python -m pytest -v -p no:cacheprovider
+
+# the pipeline end to end, written to ./out on your machine
+# (on Linux add --user "$(id -u):$(id -g)" so the files are yours)
+docker run --rm -v "$PWD/out:/app/out" gaugebench python -m gaugebench all out/demo --per-family 4 --sweep 0
+docker run --rm -v "$PWD/out:/app/out" -e GEMINI_API_KEY=your-key gaugebench   python -m gaugebench evaluate out/demo --model gemini:gemini-3.5-flash-lite --limit 10
+docker run --rm -v "$PWD/out:/app/out" gaugebench python -m gaugebench report out/demo   # out/demo/report.html
+
+# the Studio
+docker run --rm -p 8765:8765 -e GEMINI_API_KEY=your-key gaugebench
+```
+
+On Windows PowerShell, write `${PWD}` instead of `$PWD`.
+
+**Evidence and design:** [docs/VALIDATION.md](docs/VALIDATION.md) has the test log, generation and rejection metrics, the scorer sanity matrix, failure cases and every fix made along the way. [docs/TECHNICAL.md](docs/TECHNICAL.md) explains the design decisions, assumptions, reused components, model choices and how tasks vary.
 
 Evaluations are **cached and resumable**: a task that has been answered is never paid for twice. To add another model provider, write a small `Model` subclass in `gaugebench/models/`.
 
