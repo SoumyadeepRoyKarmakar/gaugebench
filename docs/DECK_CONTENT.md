@@ -64,7 +64,7 @@ Three independent guards, applied to **every** task before it is published:
 
 - **Tolerance** = half of the smallest local division, the standard rule for reading analogue instruments.
 - **Main suite (384 tasks):** 636 candidates generated and 252 rejected (40%). The top reasons were glare covering the needle (185), printed labels overlapping (146) and needles too close to a zone boundary (80). One candidate can fail more than one check.
-- **21 automated tests**, including mutation tests: if the answer key is shifted by 3 tolerances, the validator **always** catches it.
+- **23 automated tests**, including mutation tests: if the answer key is shifted by 3 tolerances, the validator **always** catches it.
 - **The validator caught a real flaw:** a model miss led us to a cramped dial where the printed numbers ran together. We added an overlap check, and it now rejects those dials automatically.
 
 ## Slide 8c: Inspection rounds (in the built deck before "Results")
@@ -102,6 +102,14 @@ Image: `docs/images/readme-round.png` (a contact sheet of 5 camera photos, each 
 - **Capability curves (6 tasks per setting, a signal rather than a precise curve):** tick density matters most, 83% with 2 small divisions between labels vs 17% with 10; camera tilt drops it from 50% (none) to 17% (15° or more).
 - **Range trap:** the model avoided it. 0 of 1 wrong panel-max answers picked the furthest-turned needle.
 - **Wrong ring:** 0 of 7 wrong dual-scale answers were the other scale's reading. It finds the right ring and then misreads it.
+
+## Slide 7a: What we found (in the built deck after "Results")
+Four stat tiles and a takeaway:
+- **36%** exact readings right, yet 100% on colour zones: coarse judgement is solved, the exact value is not.
+- **44%** of wrong numbers are near misses (within 2× the tolerance; 1 of 175 wild): it snaps to the nearest tick.
+- **62% vs 0%** digital display vs vernier: it reads digits, not analogue sub-divisions.
+- **0 / 20** perfect inspection rounds: 32% of readings right, 16 of 31 alarms caught, 4 false alarms.
+- **Takeaway:** today's model can triage a control panel, but cannot be trusted to log exact readings or run a round unattended. GaugeBench shows exactly where that line is, and regenerates fresh tests for every new model.
 
 ## Slide 7b: New instruments (in the built deck after "Example tasks")
 Images from `runs/instruments`: a clock-dial meter (key 8072 kWh), a vernier caliper (key 57.5 mm), and an LCD showing 469.9 with ×10 lit (key 4699 V).
