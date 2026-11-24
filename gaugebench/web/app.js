@@ -1110,8 +1110,10 @@
       if (f) f.setAttribute("stroke-dashoffset", String(C2 * 0.75 * (1 - frac)));
       if (nd) nd.style.transform = `rotate(${-135 + 270 * frac}deg)`;
     }));
-    $("#rec-reset")?.addEventListener("click", () => {
-      if (!confirm("Reset all your progress (record, rank, scores and Daily streak)? This can't be undone. Export it first if you want a copy.")) return;
+    $("#rec-reset")?.addEventListener("click", async () => {
+      const yes = await dialog({ title: "Reset all your progress?", danger: true, ok: "Reset everything", cancel: "Keep it",
+        body: "This clears your record, rank, scores and Daily streak in this browser. It can't be undone, so export it first if you want a copy." });
+      if (!yes) return;
       for (const k of PROGRESS_KEYS) { try { localStorage.removeItem(k); } catch (_) { /* storage off */ } }
       S.tally = { you: [0, 0], gem: [0, 0] };
       renderTally(); renderDaily?.(); $("#daily-dot").hidden = false; openRecord();
@@ -1119,6 +1121,43 @@
     });
     $("#rec-export")?.addEventListener("click", exportProgress);
     $("#rec-import")?.addEventListener("change", (e) => importProgress(e.target.files?.[0]));
+  }
+
+  // ------------------------------------------------------------------ in-app dialog (instead of browser popups)
+  let dlgResolve = null, dlgFocus = null;
+  function dialog({ title, body = "", ok = "OK", cancel = "Cancel", danger = false, text = null }) {
+    return new Promise((resolve) => {
+      if (dlgResolve) dlgResolve(false);
+      dlgResolve = resolve;
+      dlgFocus = document.activeElement;
+      $("#dlg-title").textContent = title;
+      $("#dlg-body").textContent = body;
+      $("#dlg-body").hidden = !body;
+      const ta = $("#dlg-text");
+      ta.hidden = text == null;
+      if (text != null) ta.value = text;
+      const okb = $("#dlg-ok"), cb = $("#dlg-cancel");
+      okb.textContent = ok;
+      okb.classList.toggle("is-danger", danger);
+      cb.textContent = cancel || "";
+      cb.hidden = !cancel;
+      $("#dlg").hidden = false;
+      setTimeout(() => { if (text != null) { ta.focus(); ta.select(); } else (danger ? cb : okb).focus(); }, 20);
+    });
+  }
+  function closeDialog(value) {
+    if ($("#dlg").hidden) return;
+    $("#dlg").hidden = true;
+    const r = dlgResolve; dlgResolve = null;
+    if (r) r(value);
+    dlgFocus?.focus?.({ preventScroll: true });
+  }
+  async function copyText(text, done) {
+    try { await navigator.clipboard.writeText(text); toast(done); return; } catch (_) { /* fall back to a copy box */ }
+    const go = await dialog({ title: "Copy this", body: "Your browser blocked automatic copying. The text is selected below.", text, ok: "Copy", cancel: "Close" });
+    if (!go) return;
+    const ta = $("#dlg-text"); ta.select();
+    try { document.execCommand("copy"); toast(done); } catch (_) { toast("Press Ctrl+C (or ⌘C) to copy.", true); }
   }
 
   // ------------------------------------------------------------------ progress (local storage only)
@@ -1137,7 +1176,9 @@
     try {
       const data = JSON.parse(await file.text());
       if (data?.app !== "gaugebench" || !Array.isArray(data["gb-history"] ?? [])) throw new Error("not a GaugeBench progress file");
-      if (!confirm("Replace your progress in this browser with the imported file?")) return;
+      const yes = await dialog({ title: "Import this progress?", ok: "Replace my progress", cancel: "Cancel",
+        body: `This replaces the progress in this browser with the file (${(data["gb-history"] || []).length} readings).` });
+      if (!yes) return;
       for (const k of PROGRESS_KEYS) if (data[k] != null) store.set(k, data[k]);
       S.tally = store.get("gb-tally", { you: [0, 0], gem: [0, 0] });
       renderTally(); $("#daily-dot").hidden = !!dailyStore().results[dateKey()]; openRecord();
@@ -1148,21 +1189,73 @@
   }
 
   // ------------------------------------------------------------------ onboarding
-  function aiNote() {
-    const ms = aiModels(), names = ms.map((m) => m.label).join(", ");
-    if (!ms.length) return S.meta.public ? "Ask AI is turned off on this server. Everything else works."
-      : "No AI model is set up yet. Add GEMINI_API_KEY or ANTHROPIC_API_KEY to the .env file and restart to enable Ask AI.";
-    if (S.meta.public) return `“Ask the AI” uses ${names} through this server. Only the task image and its question are sent `
-      + "to the model provider; the API key stays on the server and use is capped per visitor and per day. Want another model "
-      + "or your own key? Run GaugeBench on your computer (python -m gaugebench app) and set it in a .env file.";
-    return `Models on this computer: ${names}. Change them in the .env file (GEMINI_API_KEY, ANTHROPIC_API_KEY, `
-      + "ASK_MODELS) and restart. Only the task image and its question are sent to the model provider.";
+  const OB_FEATURES = [
+    ["read_value", "Bench", "Pick an instrument, turn the condition knobs and read a freshly generated, verified task."],
+    ["inspection_round", "Inspection round", "A whole job: log every gauge across several cameras and catch the ones in the red."],
+    ["daily", "Daily", "Five gauges a day, the same for everyone, from easy to brutal. One shot each."],
+    ["challenge", "Challenge", "Go head to head with a model on real benchmark tasks, same image, same tolerance."],
+    ["archive", "Archive", "Every task and every model answer, with answer keys and validation evidence."],
+    ["hints", "Hints and rank", "Learn how each instrument is read and climb from Trainee to Metrologist."],
+  ];
+  const OB_ICONS = {
+    daily: `<rect x="5" y="7" width="22" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 12 h22 M11 4 v5 M21 4 v5" stroke="currentColor" stroke-width="1.6"/><rect class="ac" x="15" y="17" width="6" height="6" rx="1" fill="currentColor"/>`,
+    challenge: `<circle cx="10" cy="16" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle class="ac" cx="22" cy="16" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M14 9 l4 14" stroke="currentColor" stroke-width="1.4"/>`,
+    archive: `<rect x="4" y="5" width="10" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="18" y="5" width="10" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="18" width="10" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><rect class="ac" x="18" y="18" width="10" height="9" rx="1.5" fill="currentColor" stroke="currentColor" stroke-width="1.5"/>`,
+    hints: `<path d="M16 4 a8 8 0 0 1 5 14 v3 h-10 v-3 a8 8 0 0 1 5 -14 z" fill="none" stroke="currentColor" stroke-width="1.6"/><path class="ac" d="M12 25 h8 M13 28 h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`,
+  };
+  function obGauge() {
+    let ticks = "";
+    for (let i = 0; i <= 30; i++) {
+      const a = (-135 + i * 9) * Math.PI / 180, major = i % 5 === 0;
+      const r1 = major ? 70 : 75, r2 = 82;
+      ticks += `<line x1="${100 + r1 * Math.sin(a)}" y1="${100 - r1 * Math.cos(a)}" x2="${100 + r2 * Math.sin(a)}" y2="${100 - r2 * Math.cos(a)}" stroke-width="${major ? 3 : 1.4}"/>`;
+    }
+    const arc = (a0, a1, r) => {
+      const p = (a) => `${100 + r * Math.sin(a * Math.PI / 180)} ${100 - r * Math.cos(a * Math.PI / 180)}`;
+      return `M ${p(a0)} A ${r} ${r} 0 0 1 ${p(a1)}`;
+    };
+    return `<svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="96" class="g-rim"/><circle cx="100" cy="100" r="88" class="g-face"/>
+      <path d="${arc(-135, 45, 86)}" class="g-band g-ok"/><path d="${arc(45, 95, 86)}" class="g-band g-warn"/><path d="${arc(95, 135, 86)}" class="g-band g-bad"/>
+      <g class="g-ticks">${ticks}</g><text x="100" y="140" class="g-unit">bar</text>
+      <g class="g-needle"><path d="M100 100 L97 108 L100 28 L103 108 Z"/></g><circle cx="100" cy="100" r="8" class="g-hub"/></svg>`;
+  }
+  const OB_STEPS = 3;
+  let obStep = 0;
+  function obGo(i) {
+    obStep = Math.max(0, Math.min(OB_STEPS - 1, i));
+    $$(".ob-step").forEach((s) => { const on = Number(s.dataset.step) === obStep; s.hidden = !on; s.classList.toggle("is-active", on); });
+    $$(".ob-dot").forEach((d) => { const on = Number(d.dataset.go) === obStep; d.classList.toggle("is-active", on); d.setAttribute("aria-selected", String(on)); });
+    $(".onboard-card").setAttribute("aria-labelledby", `ob-title-${obStep}`);
+    $("#ob-back").hidden = obStep === 0;
+    $("#ob-skip").hidden = obStep === OB_STEPS - 1;
+    $("#ob-next").textContent = obStep === OB_STEPS - 1 ? "Start reading" : "Next";
+  }
+  function obFill() {
+    $("#ob-gauge").innerHTML = obGauge();
+    $("#ob-features").innerHTML = OB_FEATURES.map(([icon, title, text]) => `<div class="ob-feat">
+      <svg viewBox="0 0 32 32" aria-hidden="true">${FAMILY_ICONS[icon] || OB_ICONS[icon] || ""}</svg>
+      <div><b>${esc(title)}</b><span>${esc(text)}</span></div></div>`).join("");
+    const ms = aiModels();
+    $("#ob-models").innerHTML = ms.length
+      ? `<span class="ob-models-label">${S.meta.public ? "On this site" : "On this computer"}</span>` + ms.map((m) => `<span class="ob-chip"><i></i>${esc(m.label)}</span>`).join("")
+      : `<span class="ob-chip is-off"><i></i>Ask AI is off</span>`;
+    const local = !S.meta.public;
+    $("#ob-ai").textContent = !ms.length
+      ? (local ? "No AI model is set up on this computer yet. Add a key to the .env file (below) and restart to enable the Ask button."
+               : "Ask AI is turned off on this site. Everything else works.")
+      : local ? "This copy runs on your computer, so you choose the models. When you press Ask, only the task image and its question are sent to the model provider."
+      : `When you press Ask, this site sends only the task image and its question to ${ms.map((m) => m.label).join(" or ")}. The API key stays on the server and use is capped per visitor and per day. Visitors can't switch to other models or enter their own key on this site.`;
+    $("#ob-local-title").textContent = local ? "Change or add models" : "Want a different model, or your own API key?";
+    $("#ob-local-intro").textContent = local ? "Edit the .env file next to the app, then restart it:"
+      : "That only works on a copy of GaugeBench running on your own computer. It takes about five minutes:";
+    $$("#ob-local-steps [data-remote]").forEach((li) => { li.hidden = local; });
   }
   function openOnboard() {
-    $("#ob-ai").textContent = aiNote();
+    obFill();
+    obGo(0);
     $("#onboard").hidden = false;
     document.body.classList.add("is-onboarding");
-    setTimeout(() => $("#ob-start").focus(), 30);
+    setTimeout(() => $("#ob-next").focus({ preventScroll: true }), 30);
   }
   function closeOnboard() {
     if ($("#onboard").hidden) return;
@@ -1475,8 +1568,7 @@
     $("#daily-dot").hidden = !!res;
     if (res) {
       $("#dly-copy").addEventListener("click", async () => {
-        try { await navigator.clipboard.writeText(shareText(res, n)); toast("Result copied. Paste it anywhere."); }
-        catch (_) { window.prompt("Copy your result:", shareText(res, n)); }
+        await copyText(shareText(res, n), "Result copied. Paste it anywhere.");
       });
       clearInterval(dailyTimer);
       const tick = () => {
@@ -1557,8 +1649,12 @@
     window.scrollTo({ top: 0 });
   }
 
-  function onTab(v) {
-    if (!$("#view-play").hidden && !C.done && C.log.filter(Boolean).length && !confirm("Leave this game? Your progress in it will be lost.")) return;
+  async function onTab(v) {
+    if (!$("#view-play").hidden && !C.done && C.log.filter(Boolean).length) {
+      const leave = await dialog({ title: "Leave this game?", body: "Your answers in this game will be lost.",
+        ok: "Leave game", cancel: "Keep playing", danger: true });
+      if (!leave) return;
+    }
     clearInterval(C.timer);
     sfx.tick();
     setView(v);
@@ -1583,8 +1679,14 @@
     $("#btn-help").addEventListener("click", openHelp);
     $$("[data-close-help]").forEach((el) => el.addEventListener("click", closeHelp));
     $$("[data-close-onboard]").forEach((el) => el.addEventListener("click", closeOnboard));
-    $("#ob-start").addEventListener("click", closeOnboard);
+    $("#ob-next").addEventListener("click", () => (obStep === OB_STEPS - 1 ? closeOnboard() : obGo(obStep + 1)));
+    $("#ob-back").addEventListener("click", () => obGo(obStep - 1));
+    $("#ob-skip").addEventListener("click", closeOnboard);
+    $$(".ob-dot").forEach((d) => d.addEventListener("click", () => obGo(Number(d.dataset.go))));
     $(".onboard-scrim").addEventListener("click", closeOnboard);
+    $("#dlg-ok").addEventListener("click", () => closeDialog(true));
+    $("#dlg-cancel").addEventListener("click", () => closeDialog(false));
+    $(".dlg-scrim").addEventListener("click", () => closeDialog(false));
     $("#btn-tour").addEventListener("click", () => { closeHelp(); openOnboard(); });
     $("#btn-clean").addEventListener("click", () => { setFactors(S.meta.base); toast("All knobs back to the clean baseline."); });
     $$(".preset").forEach((b) => b.addEventListener("click", () => { sfx.click(); generate(Number(b.dataset.level)); }));
@@ -1619,8 +1721,16 @@
     document.fonts?.ready.then(moveTabIndicator);
 
     document.addEventListener("keydown", (e) => {
+      if (!$("#dlg").hidden) {                             // an open dialog takes all keys
+        if (e.key === "Escape") { e.preventDefault(); closeDialog(false); }
+        return;
+      }
       if (e.key === "Escape") { closeOnboard(); closeDrawer(); closeHelp(); return; }
-      if (!$("#onboard").hidden) return;                  // the welcome tour is modal
+      if (!$("#onboard").hidden) {                         // the welcome tour is modal
+        if (e.key === "ArrowRight") obGo(obStep + 1);
+        else if (e.key === "ArrowLeft") obGo(obStep - 1);
+        return;
+      }
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
       const k = e.key.toLowerCase();
@@ -1657,8 +1767,7 @@
   async function copyLink() {
     if (!S.task) return;
     const url = taskLink();
-    try { await navigator.clipboard.writeText(url); toast("Link copied: it recreates exactly this task."); }
-    catch (_) { window.prompt("Copy this link:", url); }
+    await copyText(url, "Link copied: it recreates exactly this task.");
   }
   function applyUrl() {
     const p = new URLSearchParams(location.search);

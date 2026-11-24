@@ -363,29 +363,76 @@
 
 <div class="modal onboard" id="onboard" hidden>
   <div class="modal-scrim onboard-scrim"></div>
-  <div class="onboard-card" role="dialog" aria-modal="true" aria-labelledby="ob-title">
-    <button class="icon-btn ob-close" data-close-onboard aria-label="Close">✕</button>
-    <div class="ob-kicker">Welcome to</div>
-    <h2 class="ob-title" id="ob-title">GaugeBench <span>Studio</span></h2>
-    <p class="ob-lead">Factories want AI to read their gauges from camera photos. Can it? Read them yourself,
-      then see how the machine does on exactly the same image.</p>
-    <div class="ob-grid">
-      <div class="ob-feat"><b>Bench</b><span>Pick an instrument, turn the condition knobs, generate a verified task, read it, get scored.</span></div>
-      <div class="ob-feat"><b>Inspection round</b><span>A whole job: log every gauge across several cameras and catch the ones in the red.</span></div>
-      <div class="ob-feat"><b>Daily</b><span>Five gauges a day, the same for everyone, from easy to brutal. One shot each.</span></div>
-      <div class="ob-feat"><b>Challenge</b><span>Go head to head with a model on real benchmark tasks.</span></div>
-      <div class="ob-feat"><b>Archive</b><span>Every task and every model answer, with keys and validation evidence.</span></div>
-      <div class="ob-feat"><b>Hints and rank</b><span>Learn how to read each instrument and climb from Trainee to Metrologist.</span></div>
-    </div>
-    <div class="ob-notes">
-      <section><h3>AI models</h3><p id="ob-ai"></p></section>
-      <section><h3>Your data</h3><p>No account, no cookies, no tracking. Your progress (record, rank and Daily streak) is
-        saved only in this browser. Export it, move it to another device, or reset it any time in
-        <b>Your record</b> (click your score, top right).</p></section>
-    </div>
-    <div class="ob-actions">
-      <button class="btn btn-accent" id="ob-start" type="button">Start reading</button>
-      <span class="ob-hint">Press <kbd>?</kbd> any time for shortcuts and this tour.</span>
+  <div class="onboard-card" role="dialog" aria-modal="true" aria-labelledby="ob-title-0">
+    <button class="icon-btn ob-close" data-close-onboard aria-label="Close the tour">✕</button>
+
+    <section class="ob-step is-active" data-step="0" aria-labelledby="ob-title-0">
+      <div class="ob-hero">
+        <div class="ob-gauge" id="ob-gauge" aria-hidden="true"></div>
+        <div>
+          <div class="ob-kicker">Welcome to</div>
+          <h2 class="ob-title" id="ob-title-0">GaugeBench <span>Studio</span></h2>
+          <p class="ob-lead">Factories want AI to read their gauges from camera photos. Can it? Read them yourself,
+            then see how a model does on exactly the same image.</p>
+        </div>
+      </div>
+      <div class="ob-grid" id="ob-features"></div>
+    </section>
+
+    <section class="ob-step" data-step="1" aria-labelledby="ob-title-1" hidden>
+      <div class="ob-kicker">Step 2 of 3 · AI models</div>
+      <h2 class="ob-h" id="ob-title-1">Which AI reads the gauge?</h2>
+      <div class="ob-models" id="ob-models"></div>
+      <p class="ob-p" id="ob-ai"></p>
+      <div class="ob-callout">
+        <h3 id="ob-local-title">Want a different model, or your own API key?</h3>
+        <p class="ob-p" id="ob-local-intro">That only works on a copy of GaugeBench running on your own computer. It takes five minutes:</p>
+        <ol class="ob-steps-list" id="ob-local-steps">
+          <li data-remote><b>Get the code</b><code>git clone https://github.com/SoumyadeepRoyKarmakar/gaugebench</code></li>
+          <li data-remote><b>Install</b><code>pip install -r requirements.txt</code></li>
+          <li><b>Put your keys in a file named <span class="ob-mono">.env</span></b><code>GEMINI_API_KEY=your-key<br>ANTHROPIC_API_KEY=your-key</code></li>
+          <li><b>Choose the models (optional)</b><code>ASK_MODELS=gemini:gemini-3.5-flash,claude:claude-opus-5-5</code></li>
+          <li><b>Start it</b><code>python -m gaugebench app</code></li>
+        </ol>
+        <a class="ob-link" href="https://github.com/SoumyadeepRoyKarmakar/gaugebench#use-a-different-ai-model" target="_blank" rel="noopener">Full guide on GitHub ↗</a>
+      </div>
+    </section>
+
+    <section class="ob-step" data-step="2" aria-labelledby="ob-title-2" hidden>
+      <div class="ob-kicker">Step 3 of 3 · Your data</div>
+      <h2 class="ob-h" id="ob-title-2">Your progress stays with you</h2>
+      <ul class="ob-checks">
+        <li><span class="ob-tick" aria-hidden="true">✓</span><div><b>No account, no cookies, no tracking</b><span>There is nothing to sign up for, and no tracker runs on this page.</span></div></li>
+        <li><span class="ob-tick" aria-hidden="true">✓</span><div><b>Saved only in this browser</b><span>Your record, rank and Daily streak live in this browser's local storage and are never sent to the server.</span></div></li>
+        <li><span class="ob-tick" aria-hidden="true">✓</span><div><b>You're in control</b><span>Click your score (top right) to export your progress, import it on another device, or reset it.</span></div></li>
+        <li><span class="ob-tick ob-tick-info" aria-hidden="true">i</span><div><b>What leaves your device</b><span>Only when you press <em>Ask</em>: the task image and its question go to the AI model. Nothing about you is included.</span></div></li>
+      </ul>
+    </section>
+
+    <footer class="ob-foot">
+      <div class="ob-dots" role="tablist" aria-label="Tour steps">
+        <button class="ob-dot is-active" data-go="0" aria-label="Step 1: Welcome"></button>
+        <button class="ob-dot" data-go="1" aria-label="Step 2: AI models"></button>
+        <button class="ob-dot" data-go="2" aria-label="Step 3: Your data"></button>
+      </div>
+      <div class="ob-nav">
+        <button class="btn btn-ghost-dark" id="ob-back" type="button" hidden>Back</button>
+        <button class="ob-skip" id="ob-skip" type="button">Skip tour</button>
+        <button class="btn btn-accent" id="ob-next" type="button">Next</button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<div class="modal dlg" id="dlg" hidden>
+  <div class="modal-scrim dlg-scrim"></div>
+  <div class="dlg-card" role="alertdialog" aria-modal="true" aria-labelledby="dlg-title" aria-describedby="dlg-body">
+    <h2 class="dlg-title" id="dlg-title"></h2>
+    <p class="dlg-body" id="dlg-body"></p>
+    <textarea class="dlg-text" id="dlg-text" readonly rows="4" hidden></textarea>
+    <div class="dlg-actions">
+      <button class="btn btn-ghost-dark" id="dlg-cancel" type="button">Cancel</button>
+      <button class="btn btn-accent" id="dlg-ok" type="button">OK</button>
     </div>
   </div>
 </div>

@@ -11,6 +11,7 @@ The demo is built around **GaugeBench Studio**, because judges remember what the
 - **Don't play today's Daily before recording** if you want to show the one-shot play; otherwise show your finished result tiles.
 - Turn the sound on (speaker button in the header). The knob clicks and the stamp make the video feel alive.
 - Record with OBS or the Xbox Game Bar (Win+G).
+- The welcome tour appears on a browser's first visit. Close it before recording (or record it as a 5-second intro: it shows the features, the AI model and the data policy at a glance).
 
 | Time | Show on screen | Say (roughly) |
 |---|---|---|

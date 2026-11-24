@@ -148,9 +148,9 @@ The Bench also plays **inspection rounds**: one row per camera on the work order
 
 Also: **hints** that teach how to read each instrument without revealing the value, a **rank** from Trainee to Metrologist, and keyboard shortcuts (`G` generate, `H` hint, `L` loupe, `V` validator vision, `?` all shortcuts).
 
-**Ask an AI model.** After you answer, ask a model to read the same image. The button names the model it will use ("Ask Gemini 3.5 Flash-Lite to read it"), and a picker appears when the server offers more than one. Visitors can only choose from the models the server owner has enabled: on the hosted site that is Gemini 3.5 Flash-Lite; on your own computer it is every model you have a key for in `.env` (Gemini, Claude), or exactly the list in `ASK_MODELS` (e.g. `ASK_MODELS=gemini:gemini-3.5-flash-lite,claude:claude-opus-5-5`).
+**Ask an AI model.** After you answer, ask a model to read the same image. The button names the model it will use ("Ask Gemini 3.5 Flash-Lite to read it"), and a picker appears when the server offers more than one. Visitors can only choose from the models the server owner has enabled: on the hosted site that is Gemini 3.5 Flash-Lite; on your own computer it is every model you have a key for in `.env`, or exactly the list in `ASK_MODELS`. See [Use a different AI model](#use-a-different-ai-model).
 
-**Your data stays with you.** No account, no cookies, no tracking. Progress (record, rank, Daily streak) is kept in your browser's local storage, which is never sent to the server. *Your record* lets you export it, import it on another device, or reset it. First-time visitors get a short welcome tour that says all of this; it can be reopened from the `?` panel.
+**Your data stays with you.** No account, no cookies, no tracking. Progress (record, rank, Daily streak) is kept in your browser's local storage, which is never sent to the server. *Your record* lets you export it, import it on another device, or reset it. First-time visitors get a three-step welcome tour (features, which AI model is used and how to change it, and how their data is handled); it can be reopened from the `?` panel.
 
 **Secure by design.** The answer key stays on the server until you answer. On the hosted site the Gemini API key lives only on the server, never in the browser, and usage is capped per visitor and per day. See [docs/DEPLOY.md](docs/DEPLOY.md).
 
@@ -174,6 +174,26 @@ python -m pytest -q                     # 22 tests, including mutation tests of 
 ```
 
 Evaluations are **cached and resumable**: a task that has been answered is never paid for twice. To add another model provider, write a small `Model` subclass in `gaugebench/models/`.
+
+### Use a different AI model
+
+The **Ask** button in the Studio uses only the models the server has enabled. On the [hosted demo](https://gaugebench-studio.onrender.com) that is Gemini 3.5 Flash-Lite, and visitors cannot change it or enter their own key. To use another model, or your own API key, run GaugeBench on your own computer:
+
+1. **Get the code:** `git clone https://github.com/SoumyadeepRoyKarmakar/gaugebench && cd gaugebench`
+2. **Install:** `pip install -r requirements.txt`
+3. **Add your keys** to a file named `.env` in that folder (it is git-ignored and never leaves your computer):
+   ```
+   GEMINI_API_KEY=your-gemini-key        # free key: https://aistudio.google.com
+   ANTHROPIC_API_KEY=your-anthropic-key  # optional, for Claude
+   ```
+4. **Choose the models (optional).** Without this, you get one model per key (Gemini 3.5 Flash-Lite and Claude Opus 5.5). To pick exactly which models appear in the Studio's picker:
+   ```
+   ASK_MODELS=gemini:gemini-3.5-flash,gemini:gemini-3.5-flash-lite,claude:claude-opus-5-5
+   ```
+   Each entry is `provider:model-id`; `python -m gaugebench list-models gemini` shows the Gemini ids your key can use.
+5. **Start it:** `python -m gaugebench app`. With more than one model, a **Model** picker appears above the Ask button, and the button names the model it will use.
+
+Restart the app after editing `.env`. When you press Ask, only the task image and its question are sent to the model provider. To host your own public copy with your own models, set the same variables in your host's dashboard (see [docs/DEPLOY.md](docs/DEPLOY.md)).
 
 <details>
 <summary><b>What a suite contains on disk</b></summary>
