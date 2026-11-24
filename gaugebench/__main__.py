@@ -39,6 +39,38 @@ def _load_dotenv(path: Path = Path(".env")) -> None:
             os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 
+def fetch_suite(src: str, dest: Path) -> list[str]:
+    """Unpack a zipped suite (URL or local file) into dest. Refuses entries that would
+    land outside dest, and anything that isn't a suite file."""
+    import io
+    import shutil
+    import urllib.request
+    import zipfile
+
+    if src.startswith(("http://", "https://")):
+        with urllib.request.urlopen(src, timeout=300) as r:
+            data = io.BytesIO(r.read())
+    else:
+        data = open(src, "rb")
+    dest = dest.resolve()
+    names = set()
+    with data, zipfile.ZipFile(data) as z:
+        for info in z.infolist():
+            if info.is_dir():
+                continue
+            target = (dest / info.filename).resolve()
+            if not target.is_relative_to(dest) or target.suffix not in (".png", ".json", ".jsonl", ".html"):
+                raise SystemExit(f"refusing suspicious zip entry: {info.filename}")
+            names.add(Path(info.filename).parts[0])
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with z.open(info) as fsrc, open(target, "wb") as fdst:
+                shutil.copyfileobj(fsrc, fdst)
+    for n in names:
+        if not (dest / n / "manifest.jsonl").exists():
+            raise SystemExit(f"{src}: '{n}' is not a suite (no manifest.jsonl)")
+    return sorted(names)
+
+
 def main(argv=None) -> int:
     _load_dotenv()
     if hasattr(sys.stdout, "reconfigure"):
@@ -70,6 +102,10 @@ def main(argv=None) -> int:
     r = sub.add_parser("report", help="build report.html")
     r.add_argument("suite", type=Path)
 
+    fs = sub.add_parser("fetch-suite", help="download / unpack suite zips (e.g. from a GitHub release) into runs/")
+    fs.add_argument("sources", nargs="+", help="https:// URLs or local .zip files, each holding <suite>/manifest.jsonl ...")
+    fs.add_argument("--dest", type=Path, default=Path("runs"))
+
     lm = sub.add_parser("list-models", help="list model ids your API key can use")
     lm.add_argument("provider", choices=["gemini"])
 
@@ -94,6 +130,10 @@ def main(argv=None) -> int:
         from .app import DEFAULT_GEMINI, serve
         serve(args.port, args.suites, not (args.no_browser or args.public), args.gemini_model or DEFAULT_GEMINI,
               args.host, args.public)
+        return 0
+    if args.cmd == "fetch-suite":
+        for src in args.sources:
+            print(f"{src} -> {', '.join(fetch_suite(src, args.dest))}")
         return 0
     if args.cmd == "list-models":
         from .models.gemini import list_models

@@ -161,7 +161,7 @@ Keyboard: `G` generate, `Enter` submit, `1`–`9` pick a choice, `H` hint, `L` l
 
 ### Putting it online
 
-The repository is ready to host as a public site (`Dockerfile`, `render.yaml`). **The Gemini API key stays on the server**: it is set as a secret in the host's dashboard, read only by the Python backend, and never sent to the browser or stored in the image or the repository. Public mode (`GAUGEBENCH_PUBLIC=1`) also caps Ask Gemini per visitor and per day, ignores any model a visitor tries to choose, caches answers so a task is never paid for twice, limits generation work and request size, hides developer error details, and sends strict security headers (all enforced by a test). Step-by-step instructions: [docs/DEPLOY.md](docs/DEPLOY.md).
+The repository is ready to host as a public site (`Dockerfile`, `render.yaml`). **The Gemini API key stays on the server**: it is set as a secret in the host's dashboard, read only by the Python backend, and never sent to the browser or stored in the image or the repository. Public mode (`GAUGEBENCH_PUBLIC=1`) also caps Ask Gemini per visitor and per day, ignores any model a visitor tries to choose, caches answers so a task is never paid for twice, limits generation work and request size, hides developer error details, and sends strict security headers (all enforced by a test). The large `v2` suite (171 MB of images) is kept out of git as an asset of the repository's `data` release and baked into the image at build time, so the hosted Archive and Challenge have the full results. Step-by-step instructions: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Code map
 

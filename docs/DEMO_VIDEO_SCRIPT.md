@@ -4,7 +4,7 @@ The demo is built around **GaugeBench Studio**, because judges remember what the
 
 **Before recording:**
 - **Hosted:** open the site a minute early so a sleeping free-tier server is awake.
-- **Local:** run `python -m gaugebench app`. The Archive's biggest suite (`v2`) is only on your computer, so record the Archive part locally.
+- **Local:** run `python -m gaugebench app`. Both versions have the full `v2` suite in the Archive (the hosted one downloads it from the repository's `data` release when it is built).
 - Make the browser full screen at 1080p (F11). Zoom the page to about 110% if the text looks small.
 - Do one practice generation so everything is warm. Pick a seed you like and note it, so you can get the same task again with **Lock** (or **Copy link**).
 - Check that **Ask Gemini** works once. Each new task you ask about uses one request; asking about the same task again is free.
@@ -21,7 +21,7 @@ The demo is built around **GaugeBench Studio**, because judges remember what the
 | 1:15–1:35 | **Ask Gemini** → its marker lands on the strip; open its reasoning | "Now the same image and question go to Gemini. Its answer lands on the same strip, with its reasoning. It snapped to the nearest tick: close, but outside tolerance." (If it gets it right, say so. Honesty plays well.) |
 | 1:35–1:55 | **Daily** tab: press Start, play one or two gauges quickly (or show finished tiles), point at the streak and countdown | "There's a Daily too: five gauges a day, the same for everyone, from a clean dial to a brutal one. One shot each, and you get a row of tiles to share, like a word game for instrument technicians." |
 | 1:55–2:10 | **Challenge** tab: start a 5-round challenge, play two rounds quickly (scoreboard and pips update), show the final score; then click your score in the header to open **Your record** (rank dial, per-instrument bars) | "Or go head to head with the model on real benchmark tasks: same images, same tolerance, and its recorded answers, so no API calls. Everything you play builds your record and your rank, from Trainee up to Metrologist." |
-| 2:10–2:30 | **Archive** tab (local, `v2` suite): gemini-3.5-flash-lite selected, family chips show accuracy; filter **Wrong**, open one task in the drawer | "Across the whole suite, Gemini is perfect at judging which colour zone a needle is in, but reads the exact value right only about a third of the time. Every wrong answer is here with the image, the key and the model's reasoning." |
+| 2:10–2:30 | **Archive** tab (`v2` suite): gemini-3.5-flash-lite selected, family chips show accuracy; filter **Wrong**, open one task in the drawer | "Across the whole suite, Gemini is perfect at judging which colour zone a needle is in, but reads the exact value right only about a third of the time. Every wrong answer is here with the image, the key and the model's reasoning." |
 | 2:30–2:42 | **Open full report** from the Archive: the scorer sanity table | "And the scoring is proven fair: an answerer with the key scores 100%, one just outside tolerance scores 0%, and random guessing about 7%." |
 | 2:42–3:00 | The hosted site's address bar, then the architecture slide or README | "It's live on the web, with the API key kept on the server and usage capped. Everything is reproducible from a seed, cached so we never pay twice, and extendable to new instruments. GaugeBench shows exactly where AI can be trusted to read instruments, and where it can't. Thank you." |
 

@@ -67,4 +67,20 @@ Put a reverse proxy with HTTPS (Caddy, nginx) in front of it. Behind a proxy, pe
 
 - **Bench, Daily and hints:** work fully (tasks are generated live on the server).
 - **Ask Gemini:** works while the key is set and within the limits.
-- **Archive and Challenge:** use the suites committed in `runs/` (`sample` with recorded Gemini answers, and `instruments`). The large `runs/v2` suite (171 MB of images) is kept out of git, so it isn't on the hosted site. To include more suites, commit them under `runs/` and un-ignore them in `.gitignore`.
+- **Archive and Challenge:** show the suites in the repository (`sample`, `instruments`) **plus the full `v2` suite** (384 tasks with Gemini's answers).
+
+### Where the v2 suite lives
+
+`runs/v2` is 171 MB of images, too big for the git history. It is published as an asset of the repository's [`data` release](https://github.com/SoumyadeepRoyKarmakar/gaugebench/releases/tag/data) (`v2.zip`). During the Docker build, the Dockerfile downloads that zip and unpacks it into `runs/`. The site then serves it like any local suite, with no extra hosting and no cost.
+
+To refresh it after a new evaluation run (for example once Gemini has answered all 384 tasks):
+
+```powershell
+python -c "import zipfile,pathlib; z=zipfile.ZipFile('v2.zip','w'); [z.write(p, p.relative_to('runs').as_posix()) for p in pathlib.Path('runs/v2').rglob('*') if p.is_file()]; z.close()"
+gh release upload data v2.zip --clobber
+```
+
+Then press **Manual Deploy → Deploy latest commit** in Render, so the image is rebuilt with the new zip.
+
+- **Other suites:** pass a different zip at build time with `--build-arg SUITE_ZIP=<url>`.
+- **Local copy:** `python -m gaugebench fetch-suite <url or zip>` unpacks any suite zip into `runs/`. It refuses zips containing anything other than suite files.

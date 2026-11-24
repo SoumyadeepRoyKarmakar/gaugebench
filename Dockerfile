@@ -27,6 +27,13 @@ RUN pip install -r requirements.txt
 COPY gaugebench ./gaugebench
 COPY runs ./runs
 
+# Large suites live outside git, as GitHub release assets, and are baked into the image at
+# build time (ADD re-checks the URL on every build, so a re-uploaded zip is picked up).
+# Point SUITE_ZIP at another zip (or a copy of this one) to change what the Archive shows.
+ARG SUITE_ZIP=https://github.com/SoumyadeepRoyKarmakar/gaugebench/releases/download/data/v2.zip
+ADD ${SUITE_ZIP} /tmp/suite.zip
+RUN python -m gaugebench fetch-suite /tmp/suite.zip --dest runs && rm /tmp/suite.zip
+
 # run as an unprivileged user
 RUN useradd --create-home --uid 10001 studio && chown -R studio /app
 USER studio

@@ -368,3 +368,23 @@ def test_public_mode_protects_key_and_quota(tmp_path, monkeypatch):
         assert call("/healthz")[0] == 200
     finally:
         httpd.shutdown()
+
+
+def test_fetch_suite_unpacks_and_refuses_unsafe_zips(tmp_path):
+    """Hosted suites arrive as zips: a real suite unpacks, while entries escaping the
+    destination or non-suite files are refused."""
+    import zipfile
+    from gaugebench.__main__ import fetch_suite
+    good = tmp_path / "good.zip"
+    with zipfile.ZipFile(good, "w") as z:
+        z.writestr("demo/manifest.jsonl", "{}\n")
+        z.writestr("demo/tasks/t1/image.png", b"png")
+    assert fetch_suite(str(good), tmp_path / "runs") == ["demo"]
+    assert (tmp_path / "runs/demo/tasks/t1/image.png").read_bytes() == b"png"
+    for name in ("../evil/manifest.jsonl", "demo/run.py"):
+        bad = tmp_path / "bad.zip"
+        with zipfile.ZipFile(bad, "w") as z:
+            z.writestr(name, "x")
+        with pytest.raises(SystemExit):
+            fetch_suite(str(bad), tmp_path / "runs2")
+    assert not (tmp_path / "evil").exists()
