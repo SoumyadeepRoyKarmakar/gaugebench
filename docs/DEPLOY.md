@@ -22,7 +22,7 @@ Public mode (`GAUGEBENCH_PUBLIC=1`, already set in the Dockerfile) also keeps th
 | Ask Gemini calls for the whole site, per day (UTC) | 150 | `GEMINI_DAILY_LIMIT` |
 | Ask Gemini calls per visitor, per hour | 10 | `GEMINI_PER_IP_HOUR` |
 | Same task asked twice | answered from cache, not paid again | |
-| Visitors choosing another (pricier) model | ignored; always `GEMINI_MODEL` | `GEMINI_MODEL` |
+| Which models visitors can ask | only the server's list: `GEMINI_MODEL` by default (plus Claude if `ANTHROPIC_API_KEY` is set); any other model is refused | `ASK_MODELS`, e.g. `gemini:gemini-3.5-flash-lite,gemini:gemini-3.5-flash` |
 | Task generations per visitor, per minute | 40 | `GENERATE_PER_IP_MIN` |
 | Generations running at once (CPU) | 2 | `GENERATE_CONCURRENCY` |
 | Live tasks kept in memory | 120 (about 70 MB at most) | `MAX_LIVE_TASKS` |
@@ -45,6 +45,8 @@ Notes:
 - **Free tier sleep.** A free Render service sleeps after 15 minutes without visitors. The next visit wakes it in about 30–60 seconds, so open the site a minute before a demo.
 - **Lost state on restart.** A restart clears live tasks and today's Gemini counter. Players' Daily results, streaks and ranks are stored in their own browsers, so they are kept.
 - **Changing or removing the key.** Edit it in the service's **Environment** tab. Delete it there to turn Ask Gemini off (the rest of the app keeps working).
+
+Visitors never enter API keys on the hosted site, and their progress is kept only in their own browser (local storage, no cookies); the welcome tour tells them both.
 
 ## Any other Docker host
 

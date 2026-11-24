@@ -43,7 +43,7 @@
         <span class="streak" id="streak" hidden></span>
       </span>
       <span class="tally-item">
-        <span class="led led-blue" data-led="gem"></span><span class="tally-label">Gemini</span>
+        <span class="led led-blue" data-led="gem"></span><span class="tally-label">AI</span>
         <span class="tally-num" id="tally-gem">00/00</span>
       </span>
       <span class="rank-chip" id="rank-chip">Trainee</span>
@@ -185,11 +185,15 @@
       </div>
 
       <div class="gemini" id="gemini-box" hidden>
+        <label class="ask-model" id="ask-model-wrap" hidden>
+          <span>Model</span>
+          <select id="ask-model" aria-label="AI model to ask"></select>
+        </label>
         <button class="btn btn-blue" id="btn-ask">
-          <span class="gem-glyph" aria-hidden="true">✦</span> Ask Gemini to read it
+          <span class="gem-glyph" aria-hidden="true">✦</span> <span id="ask-label">Ask the AI to read it</span>
         </button>
         <div class="gem-wait" id="gem-wait" hidden>
-          <span class="gem-pulse"></span><span id="gem-wait-text">Gemini is reading the gauge…</span>
+          <span class="gem-pulse"></span><span id="gem-wait-text">The AI is reading the gauge…</span>
         </div>
         <div class="gem-result" id="gem-result" hidden></div>
       </div>
@@ -353,6 +357,36 @@
       <dt><kbd>?</kbd></dt><dd>This panel</dd>
       <dt><kbd>Esc</kbd></dt><dd>Close panels</dd>
     </dl>
+    <button class="btn btn-ghost-dark help-tour" id="btn-tour" type="button">Show the welcome tour</button>
+  </div>
+</div>
+
+<div class="modal onboard" id="onboard" hidden>
+  <div class="modal-scrim onboard-scrim"></div>
+  <div class="onboard-card" role="dialog" aria-modal="true" aria-labelledby="ob-title">
+    <button class="icon-btn ob-close" data-close-onboard aria-label="Close">✕</button>
+    <div class="ob-kicker">Welcome to</div>
+    <h2 class="ob-title" id="ob-title">GaugeBench <span>Studio</span></h2>
+    <p class="ob-lead">Factories want AI to read their gauges from camera photos. Can it? Read them yourself,
+      then see how the machine does on exactly the same image.</p>
+    <div class="ob-grid">
+      <div class="ob-feat"><b>Bench</b><span>Pick an instrument, turn the condition knobs, generate a verified task, read it, get scored.</span></div>
+      <div class="ob-feat"><b>Inspection round</b><span>A whole job: log every gauge across several cameras and catch the ones in the red.</span></div>
+      <div class="ob-feat"><b>Daily</b><span>Five gauges a day, the same for everyone, from easy to brutal. One shot each.</span></div>
+      <div class="ob-feat"><b>Challenge</b><span>Go head to head with a model on real benchmark tasks.</span></div>
+      <div class="ob-feat"><b>Archive</b><span>Every task and every model answer, with keys and validation evidence.</span></div>
+      <div class="ob-feat"><b>Hints and rank</b><span>Learn how to read each instrument and climb from Trainee to Metrologist.</span></div>
+    </div>
+    <div class="ob-notes">
+      <section><h3>AI models</h3><p id="ob-ai"></p></section>
+      <section><h3>Your data</h3><p>No account, no cookies, no tracking. Your progress (record, rank and Daily streak) is
+        saved only in this browser. Export it, move it to another device, or reset it any time in
+        <b>Your record</b> (click your score, top right).</p></section>
+    </div>
+    <div class="ob-actions">
+      <button class="btn btn-accent" id="ob-start" type="button">Start reading</button>
+      <span class="ob-hint">Press <kbd>?</kbd> any time for shortcuts and this tour.</span>
+    </div>
   </div>
 </div>
 

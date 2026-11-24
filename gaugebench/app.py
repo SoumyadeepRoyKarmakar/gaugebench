@@ -475,6 +475,8 @@ class State:
     def __init__(self, suites_root: Path, gemini_model: str, public: bool = False):
         self.suites = Suites(suites_root)
         self.gemini_model = gemini_model
+        self.models = ask_models(gemini_model)
+        self.model_by_id = {m["id"]: m for m in self.models}
         self.public = public
         self.limits = Limits(public)
         self.live: OrderedDict[str, dict] = OrderedDict()
@@ -497,6 +499,43 @@ class State:
 
 def gemini_available() -> bool:
     return bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"))
+
+
+def claude_available() -> bool:
+    return bool(os.environ.get("ANTHROPIC_API_KEY"))
+
+
+PROVIDER_KEY = {"gemini": gemini_available, "claude": claude_available}
+DEFAULT_CLAUDE = "claude-opus-5-5"
+
+
+def model_label(provider: str, model: str) -> str:
+    """'gemini-3.5-flash-lite' -> 'Gemini 3.5 Flash-Lite', 'claude-opus-5-5' -> 'Claude Opus 5.5'."""
+    words = model.split("-")
+    out = []
+    for w in words:
+        if out and w.isdigit() and out[-1][-1].isdigit():
+            out[-1] += f".{w}"                                 # claude-opus-5-5 -> Opus 5.5
+        elif w == "lite" and out:
+            out[-1] += "-Lite"
+        else:
+            out.append(w.capitalize() if not w[0].isdigit() else w)
+    return " ".join(out)
+
+
+def ask_models(default_gemini: str) -> list[dict]:
+    """Models the Ask button may use: those the server owner listed in ASK_MODELS
+    (e.g. "gemini:gemini-3.5-flash-lite,claude:claude-sonnet-5-5"), or by default one
+    model per provider whose API key is set. Visitors can only choose from this list."""
+    env = os.environ.get("ASK_MODELS", "").strip()
+    ids = [x.strip() for x in env.split(",") if x.strip()] if env else (
+        [f"gemini:{default_gemini}"] * gemini_available() + [f"claude:{DEFAULT_CLAUDE}"] * claude_available())
+    out = []
+    for mid in ids:
+        provider, _, model = mid.partition(":")
+        if provider in PROVIDER_KEY and model and PROVIDER_KEY[provider]() and mid not in [m["id"] for m in out]:
+            out.append({"id": mid, "provider": provider, "model": model, "label": model_label(provider, model)})
+    return out
 
 
 def make_handler(state: State):
@@ -582,8 +621,8 @@ def make_handler(state: State):
                         "version": __version__,
                         "families": [{"id": k, "label": FAMILY_LABELS.get(k, k)} for k in FAMILIES],
                         "factors": FACTOR_DOMAINS, "base": BASE_FACTORS, "applicable": APPLICABLE,
-                        "gemini": {"available": gemini_available(), "model": state.gemini_model,
-                                   "left_today": state.limits.gemini_left()},
+                        "ai": {"models": state.models, "default": state.models[0]["id"] if state.models else None,
+                               "left_today": state.limits.gemini_left()},
                         "public": state.public,
                         "suites": state.suites.summary(),
                     })
@@ -694,29 +733,39 @@ def make_handler(state: State):
             return self._json({"score": s, "key": key_view(t), "checks": rec["checks"]})
 
         def _ask(self, body: dict):
-            if not gemini_available():
-                msg = ("Ask Gemini is turned off on this server." if state.public
-                       else "Ask Gemini isn't set up on this computer yet.")
-                return self._err(400, msg, "gemini_missing", "No GEMINI_API_KEY found. Add it to .env and restart.")
+            if not state.models:
+                msg = ("Ask AI is turned off on this server." if state.public
+                       else "No AI model is set up on this computer yet.")
+                return self._err(400, msg, "ai_missing", "No GEMINI_API_KEY / ANTHROPIC_API_KEY found. Add one to .env.")
+            mid = body.get("model") or state.models[0]["id"]
+            m = state.model_by_id.get(mid)
+            if m is None:                                  # only the server owner's allowlist, never a visitor's pick
+                return self._err(400, "That model isn't available on this server.", "model_unavailable",
+                                 f"model {mid!r} not in ASK_MODELS")
+            label = m["label"]
             rec = state.get(body["id"])
             t = rec["task"]
+            cache_key = (t["id"], mid)
             with state.lock:
-                cached = state.asked.get(t["id"])
+                cached = state.asked.get(cache_key)
             if cached:                                       # the same task never costs a second request
                 return self._json(cached)
             lim = state.limits
-            if not lim.allow("gemini", self._ip(), lim.gemini_per_ip_hour, 3600):
-                return self._err(429, "You've asked Gemini a lot in the last hour. Read a few yourself and try "
-                                      "again later.", "gemini_rate_limited")
+            if not lim.allow("ai", self._ip(), lim.gemini_per_ip_hour, 3600):
+                return self._err(429, "You've asked the AI a lot in the last hour. Read a few yourself and try "
+                                      "again later.", "ai_rate_limited")
             if not lim.take_gemini():
-                return self._err(503, "Ask Gemini has reached today's limit on this server. Try again tomorrow.",
-                                 "gemini_quota")
-            # always the server's own model: visitors can't pick a different (pricier) one
-            from .models.gemini import Gemini
+                return self._err(503, "Ask AI has reached today's limit on this server. Try again tomorrow.",
+                                 "ai_quota")
             img = state.tmp / f"{secrets.token_hex(8)}.png"
             img.write_bytes(base64.b64decode(rec["image"].split(",", 1)[1]))
             try:
-                model = Gemini(state.gemini_model, max_tries=2)
+                if m["provider"] == "gemini":
+                    from .models.gemini import Gemini
+                    model = Gemini(m["model"], max_tries=2)
+                else:
+                    from .models.claude import Claude
+                    model = Claude(m["model"], effort="low", fallbacks=False)
                 t0 = time.time()
                 resp = model.answer(t, str(img))
             except BaseException:
@@ -728,20 +777,21 @@ def make_handler(state: State):
                 lim.give_back_gemini()
                 raw = resp["error"]
                 low = raw.lower()
-                if "per day" in low or "quota" in low:
-                    msg, kind = "Gemini has used up today's free requests. Try again tomorrow.", "gemini_quota"
-                elif "503" in raw or "high demand" in low or "429" in raw:
-                    msg, kind = "Gemini is busy right now. Try again in a minute.", "gemini_busy"
-                elif "network" in low or "timeout" in low or "deadline" in low:
-                    msg, kind = "Couldn't reach Gemini. Check your internet connection and try again.", "gemini_network"
+                if "per day" in low or "quota" in low or "credit" in low:
+                    msg, kind = f"{label} has used up its requests for today. Try again tomorrow.", "ai_quota"
+                elif any(x in raw for x in ("503", "529", "429")) or "high demand" in low or "overloaded" in low \
+                        or "rate_limited" in low:
+                    msg, kind = f"{label} is busy right now. Try again in a minute.", "ai_busy"
+                elif "network" in low or "timeout" in low or "deadline" in low or "connection" in low:
+                    msg, kind = f"Couldn't reach {label}. Check your internet connection and try again.", "ai_network"
                 else:
-                    msg, kind = "Gemini couldn't answer this time. Please try again.", "gemini_error"
+                    msg, kind = f"{label} couldn't answer this time. Please try again.", "ai_error"
                 return self._err(503, msg, kind, raw)
             s = score(t, resp.get("text", ""))
-            out = {"model": model.name, "text": resp.get("text", ""), "score": s,
+            out = {"model": mid, "label": label, "text": resp.get("text", ""), "score": s,
                    "seconds": round(time.time() - t0, 1), "key": key_view(t)}
             with state.lock:
-                state.asked[t["id"]] = out
+                state.asked[cache_key] = out
                 while len(state.asked) > state.limits.max_live:
                     state.asked.popitem(last=False)
             return self._json(out)
@@ -776,8 +826,8 @@ def serve(port: int = 8765, suites_root: Path = Path("runs"), open_browser: bool
     url = f"http://{'127.0.0.1' if host in ('0.0.0.0', '') else host}:{port}/"
     lim = state.limits
     print(f"GaugeBench Studio running at {url}  (Ctrl+C to stop)", flush=True)
-    print(f"  mode: {'public' if public else 'local'} | Ask Gemini: "
-          f"{'on (' + gemini_model + ')' if gemini_available() else 'off (no GEMINI_API_KEY)'} | suites: "
+    print(f"  mode: {'public' if public else 'local'} | Ask AI: "
+          f"{', '.join(m['label'] for m in state.models) or 'off (no API key)'} | suites: "
           f"{', '.join(state.suites.names()) or 'none'}", flush=True)
     if public:
         print(f"  limits: Gemini {lim.gemini_daily or 'unlimited'}/day, {lim.gemini_per_ip_hour}/visitor/hour; "

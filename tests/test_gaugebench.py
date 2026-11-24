@@ -316,6 +316,8 @@ def test_public_mode_protects_key_and_quota(tmp_path, monkeypatch):
     secret = "AIza-test-secret-value-0000"
     monkeypatch.setenv("GEMINI_API_KEY", secret)
     monkeypatch.setenv("GEMINI_DAILY_LIMIT", "3")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ASK_MODELS", raising=False)
     monkeypatch.setenv("GEMINI_PER_IP_HOUR", "2")
     calls = []
 
@@ -351,16 +353,20 @@ def test_public_mode_protects_key_and_quota(tmp_path, monkeypatch):
         assert headers["X-Content-Type-Options"] == "nosniff"
         ids = [_json.loads(call("/api/generate", {"family": "read_value", "seed": str(s)})[1])["id"]
                for s in (1, 2, 3, 4)]
-        code, body, _ = call("/api/ask", {"id": ids[0], "model": "gemini-ultra-expensive"})
+        code, body, _ = call("/api/ask", {"id": ids[0], "model": "gemini:gemini-ultra-expensive"})
+        assert code == 400 and _json.loads(body)["code"] == "model_unavailable"   # not on the server's list
+        assert calls == []
+        assert [m["id"] for m in _json.loads(call("/api/meta")[1])["ai"]["models"]] == ["gemini:server-model"]
+        code, body, _ = call("/api/ask", {"id": ids[0], "model": "gemini:server-model"})
         assert code == 200 and _json.loads(body)["score"]["correct"] and secret not in body
-        assert calls == ["server-model"]                         # the visitor's model choice is ignored
+        assert calls == ["server-model"]
         assert call("/api/ask", {"id": ids[0]})[0] == 200 and len(calls) == 1   # cached, not paid twice
         assert call("/api/ask", {"id": ids[1]})[0] == 200
         code, body, _ = call("/api/ask", {"id": ids[2]})        # 3rd paid call from this visitor this hour
-        assert code == 429 and _json.loads(body)["code"] == "gemini_rate_limited"
+        assert code == 429 and _json.loads(body)["code"] == "ai_rate_limited"
         assert call("/api/ask", {"id": ids[2]}, ip="2.2.2.2")[0] == 200       # daily total now 3
         code, body, _ = call("/api/ask", {"id": ids[3]}, ip="3.3.3.3")
-        assert code == 503 and _json.loads(body)["code"] == "gemini_quota" and len(calls) == 3
+        assert code == 503 and _json.loads(body)["code"] == "ai_quota" and len(calls) == 3
         code, body, _ = call("/api/answer", {"id": "live-nope"})
         assert code == 410 and _json.loads(body)["detail"] == ""   # no developer details in public mode
         code, _, _ = call("/api/generate", {"pad": "x" * 40_000})

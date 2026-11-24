@@ -85,6 +85,29 @@
     panel_count: `<circle cx="9" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="23" cy="9" r="5" fill="none" stroke="#ff4f4f" stroke-width="1.5"/><circle cx="9" cy="23" r="5" fill="none" stroke="#ff4f4f" stroke-width="1.5"/><circle cx="23" cy="23" r="5" fill="none" stroke="currentColor" stroke-width="1.3"/><text class="ac" x="16" y="19" font-size="8" text-anchor="middle" fill="currentColor" font-family="monospace" font-weight="700">2</text>`,
   };
 
+  // ------------------------------------------------------------------ AI models (server allowlist)
+  const aiModels = () => S.meta?.ai?.models || [];
+  const aiModel = () => aiModels().find((m) => m.id === S.model) || aiModels()[0] || null;
+  const aiShort = () => (aiModel()?.label || "AI").split(" ")[0];          // "Gemini", "Claude"
+  function setupModels() {
+    const ms = aiModels();
+    const saved = store.get("gb-model", null);
+    S.model = ms.some((m) => m.id === saved) ? saved : S.meta.ai?.default || null;
+    const sel = $("#ask-model");
+    sel.innerHTML = ms.map((m) => `<option value="${esc(m.id)}">${esc(m.label)}</option>`).join("");
+    if (S.model) sel.value = S.model;
+    $("#ask-model-wrap").hidden = ms.length < 2;
+    sel.onchange = () => { S.model = sel.value; store.set("gb-model", S.model); updateAskButton(); };
+    updateAskButton();
+  }
+  function updateAskButton() {
+    const m = aiModel();
+    $("#ask-label").textContent = m ? `Ask ${m.label} to read it` : "Ask an AI model to read it";
+    $("#btn-ask").disabled = !m;
+    $("#btn-ask").title = m ? `Send this exact image and question to ${m.label}`
+      : S.meta.public ? "Ask AI is turned off on this server" : "Add GEMINI_API_KEY or ANTHROPIC_API_KEY to .env and restart the app";
+  }
+
   // inspection rounds: the answer is a set of readings plus a list of alarms
   const roundKeyText = (a) => `${Object.keys(a.readings).length} readings · alarms: ${a.alarms.length ? a.alarms.join(", ") : "none"}`;
   function keyText(t, withTol = false) {
@@ -301,6 +324,22 @@
       b.addEventListener("click", () => selectFamily(f.id));
       fams.append(b);
     }
+    const SHOWN = 6, n = S.meta.families.length;
+    $$(".fam", fams).forEach((b, i) => b.classList.toggle("is-extra", i >= SHOWN));
+    fams.classList.add("is-collapsed");
+    let more = $("#fam-more");
+    if (!more) {
+      more = h("button", { type: "button", class: "fam-more", id: "fam-more", "aria-controls": "families", "aria-expanded": "false" });
+      fams.after(more);
+      more.addEventListener("click", () => {
+        const open = fams.classList.toggle("is-collapsed") === false;
+        more.setAttribute("aria-expanded", String(open));
+        more.innerHTML = open ? "Show fewer <span aria-hidden=\"true\">▴</span>" : `View all ${n} instruments <span aria-hidden="true">▾</span>`;
+        sfx.click();
+      });
+    }
+    more.hidden = n <= SHOWN;
+    more.innerHTML = `View all ${n} instruments <span aria-hidden="true">▾</span>`;
     if (!S.meta.families.some((f) => f.id === S.family)) S.family = "read_value";
     const saved = store.get("gb-factors", {});
     for (const [name, dom] of Object.entries(S.meta.factors)) {
@@ -378,7 +417,7 @@
   }
 
   function showTask(t) {
-    S.lastRound = null;
+    S.lastRound = null; S.gemLabel = null;
     S.task = t; S.answered = false; S.choice = null; S.lastKey = null; S.lastYou = null; S.lastGem = null; S.checksFull = null;
     const vp = $("#viewport");
     const img = $("#task-img");
@@ -542,10 +581,7 @@
     if (kind === "pass") sfx.pass(); else if (kind === "fail") sfx.fail();
     renderReadout();
     $("#gemini-box").hidden = false;
-    const avail = S.meta.gemini.available;
-    $("#btn-ask").disabled = !avail;
-    $("#btn-ask").title = avail ? `Send this exact image and question to ${S.meta.gemini.model}`
-      : S.meta.public ? "Ask Gemini is turned off on this server" : "Add GEMINI_API_KEY to .env and restart the app";
+    updateAskButton();
     scrollOnPhone(v);
   }
 
@@ -571,8 +607,8 @@
     const summary = (who, r) => r ? `<p class="rr-sum"><b>${who}:</b> ${r.readings_correct}/${r.readings_total} readings right · `
       + `${r.alarms_caught.length}/${key.answer.alarms.length} alarms caught`
       + (r.false_alarms.length ? ` · ${r.false_alarms.length} false alarm${r.false_alarms.length > 1 ? "s" : ""}` : "") + "</p>" : "";
-    $("#readout").innerHTML = `<table class="rr-table"><thead><tr><th>Gauge</th>${you ? "<th>You</th>" : ""}<th>Key</th>${gem ? "<th>Gemini</th>" : ""}</tr></thead>`
-      + `<tbody>${rows}</tbody></table>${summary("You", you)}${summary("Gemini", gem)}`;
+    $("#readout").innerHTML = `<table class="rr-table"><thead><tr><th>Gauge</th>${you ? "<th>You</th>" : ""}<th>Key</th>${gem ? `<th>${esc(S.gemLabel || aiShort())}</th>` : ""}</tr></thead>`
+      + `<tbody>${rows}</tbody></table>${summary("You", you)}${summary(S.gemLabel || aiShort(), gem)}`;
     $("#readout").classList.add("is-round");
     $("#strip").style.display = "none";
   }
@@ -589,7 +625,7 @@
     }
     rows.push(["Key", num ? `${fmtNum(key.answer)} ± ${fmtNum(key.tolerance)}${unit}` : key.answer, ""]);
     if (S.hinted && S.lastYou != null) rows.push(["Assist", "hint used", ""]);
-    if (S.lastGem) rows.push(["Gemini", S.lastGem.parsed == null ? "no answer" : (num ? fmtExact(S.lastGem.parsed) + unit : S.lastGem.parsed), "r-gem"]);
+    if (S.lastGem) rows.push([S.gemLabel || aiShort(), S.lastGem.parsed == null ? "no answer" : (num ? fmtExact(S.lastGem.parsed) + unit : S.lastGem.parsed), "r-gem"]);
     if (num && S.lastYou != null && key.tolerance) {
       const tu = Math.abs(S.lastYou - key.answer) / key.tolerance;
       rows.push(["Your error", `${fmtTol(tu)} tolerance`, ""]);
@@ -636,8 +672,8 @@
       ${ticks}
       <line class="s-key" x1="${x(k)}" x2="${x(k)}" y1="${y - 12}" y2="${y + 12}"/>
       ${mark(you, "#c94a08", "YOU", true)}
-      ${mark(gem, "#3d63c9", "GEMINI", false)}`;
-    svg.setAttribute("aria-label", `Key ${fmtNum(k)} plus or minus ${fmtNum(tol)}` + (you != null ? `, you ${fmtNum(you)}` : "") + (gem != null ? `, Gemini ${fmtNum(gem)}` : ""));
+      ${mark(gem, "#3d63c9", (S.gemLabel || aiShort()).toUpperCase(), false)}`;
+    svg.setAttribute("aria-label", `Key ${fmtNum(k)} plus or minus ${fmtNum(tol)}` + (you != null ? `, you ${fmtNum(you)}` : "") + (gem != null ? `, ${S.gemLabel || aiShort()} ${fmtNum(gem)}` : ""));
   }
 
   // ------------------------------------------------------------------ Gemini
@@ -649,24 +685,26 @@
     const wait = $("#gem-wait");
     wait.hidden = false;
     const t0 = Date.now();
-    const timer = setInterval(() => { $("#gem-wait-text").textContent = `${S.meta.gemini.model} is reading the gauge… ${Math.round((Date.now() - t0) / 1000)}s`; }, 500);
+    const m = aiModel();
+    const timer = setInterval(() => { $("#gem-wait-text").textContent = `${m?.label || "The AI"} is reading the gauge… ${Math.round((Date.now() - t0) / 1000)}s`; }, 500);
     const out = $("#gem-result");
     try {
-      const r = await api("/api/ask", { id: t.id });
+      const r = await api("/api/ask", { id: t.id, model: m?.id });
       S.lastGem = r.score;
+      S.gemLabel = (r.label || m?.label || "AI").split(" ")[0];
       if (!S.lastKey) S.lastKey = r.key;
       bump("gem", r.score.correct);
       out.hidden = false;
       const val = r.score.parsed == null ? "no parsable answer" : r.score.parsed;
       out.innerHTML = `<div class="gem-line"><span class="gem-chip ${r.score.correct ? "pass" : "fail"}">${r.score.correct ? "✓ CORRECT" : "✗ WRONG"}</span>
-        <span>Gemini answered <b>${esc(typeof val === "number" ? fmtExact(val) : val)}</b> in ${r.seconds}s</span></div>
-        <details><summary>Gemini's reasoning</summary><pre>${esc(r.text)}</pre></details>`;
+        <span>${esc(r.label || "The model")} answered <b>${esc(typeof val === "number" ? fmtExact(val) : val)}</b> in ${r.seconds}s</span></div>
+        <details><summary>${esc(r.label || "The model")}'s reasoning</summary><pre>${esc(r.text)}</pre></details>`;
       renderReadout();
     } catch (e) {
       btn.hidden = false;
       if (e.data?.code === "task_expired") { out.hidden = true; taskExpired(); return; }
       out.hidden = false;
-      const quota = ["gemini_quota", "gemini_missing", "gemini_rate_limited"].includes(e.data?.code);
+      const quota = ["ai_quota", "ai_missing", "ai_rate_limited", "model_unavailable"].includes(e.data?.code);
       if (quota) btn.disabled = true;               // retrying won't help until tomorrow / until set up
       out.innerHTML = `<div class="callout callout-err" role="alert"><span class="callout-icon" aria-hidden="true">!</span>
         <div>${esc(e.message)}</div></div>`;
@@ -1055,7 +1093,16 @@
         `<div class="fam-bar"><span>${esc(label(f))}</span><span class="fb-track"><span style="width:${(100 * c) / t}%"></span></span><span class="fb-n">${c}/${t}</span></div>`).join("")}</div></section>
       ${wrongNum.length ? `<section class="dr-section"><h4>When you miss a number</h4><p class="rec-next">${near} of ${wrongNum.length} were near misses (within 2× the tolerance)${wild ? ` and ${wild} were way off (over 20×, usually a missed multiplier or the wrong scale)` : ""}. ${near >= wrongNum.length / 2 ? "Like the models, you snap to the nearest tick. Try the loupe." : "Check the multiplier and which ring you're reading."}</p></section>` : ""}
       <section class="dr-section"><h4>Last ${Math.min(40, n)} readings</h4><div class="recent">${hist.slice(-40).map((e) => `<i class="${e.c ? (e.h ? "hint" : "ok") : "no"}" title="${esc(label(e.f))}"></i>`).join("")}</div></section>
-      <button class="ghost-dark rec-reset" id="rec-reset">Reset my record</button>`;
+`;
+    body.insertAdjacentHTML("beforeend", `
+      <section class="dr-section rec-data"><h4>Your progress</h4>
+        <p class="rec-next">Saved only in this browser: no account, no cookies. Move it to another device with export and import.</p>
+        <div class="rec-actions">
+          <button class="ghost-dark" id="rec-export" type="button">Export progress</button>
+          <label class="ghost-dark rec-import">Import progress<input type="file" id="rec-import" accept="application/json,.json" hidden></label>
+          <button class="ghost-dark rec-reset" id="rec-reset" type="button">Reset my progress</button>
+        </div>
+      </section>`);
     const dr = $("#record");
     dr.classList.add("is-open"); dr.setAttribute("aria-hidden", "false");
     requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -1064,9 +1111,64 @@
       if (nd) nd.style.transform = `rotate(${-135 + 270 * frac}deg)`;
     }));
     $("#rec-reset")?.addEventListener("click", () => {
-      if (!confirm("Reset your whole record? This can't be undone.")) return;
-      store.set("gb-history", []); renderTally(); openRecord();
+      if (!confirm("Reset all your progress (record, rank, scores and Daily streak)? This can't be undone. Export it first if you want a copy.")) return;
+      for (const k of PROGRESS_KEYS) { try { localStorage.removeItem(k); } catch (_) { /* storage off */ } }
+      S.tally = { you: [0, 0], gem: [0, 0] };
+      renderTally(); renderDaily?.(); $("#daily-dot").hidden = false; openRecord();
+      toast("Progress reset. A fresh start.");
     });
+    $("#rec-export")?.addEventListener("click", exportProgress);
+    $("#rec-import")?.addEventListener("change", (e) => importProgress(e.target.files?.[0]));
+  }
+
+  // ------------------------------------------------------------------ progress (local storage only)
+  const PROGRESS_KEYS = ["gb-history", "gb-tally", "gb-daily"];
+  function exportProgress() {
+    const data = { app: "gaugebench", version: 1, exported: new Date().toISOString() };
+    for (const k of PROGRESS_KEYS) data[k] = store.get(k, null);
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+    const a = h("a", { href: url, download: `gaugebench-progress-${dateKey()}.json` });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("Progress exported.");
+  }
+  async function importProgress(file) {
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      if (data?.app !== "gaugebench" || !Array.isArray(data["gb-history"] ?? [])) throw new Error("not a GaugeBench progress file");
+      if (!confirm("Replace your progress in this browser with the imported file?")) return;
+      for (const k of PROGRESS_KEYS) if (data[k] != null) store.set(k, data[k]);
+      S.tally = store.get("gb-tally", { you: [0, 0], gem: [0, 0] });
+      renderTally(); $("#daily-dot").hidden = !!dailyStore().results[dateKey()]; openRecord();
+      toast("Progress imported.");
+    } catch (err) {
+      toast("That file isn't a GaugeBench progress file.", true);
+    }
+  }
+
+  // ------------------------------------------------------------------ onboarding
+  function aiNote() {
+    const ms = aiModels(), names = ms.map((m) => m.label).join(", ");
+    if (!ms.length) return S.meta.public ? "Ask AI is turned off on this server. Everything else works."
+      : "No AI model is set up yet. Add GEMINI_API_KEY or ANTHROPIC_API_KEY to the .env file and restart to enable Ask AI.";
+    if (S.meta.public) return `“Ask the AI” uses ${names} through this server. Only the task image and its question are sent `
+      + "to the model provider; the API key stays on the server and use is capped per visitor and per day. Want another model "
+      + "or your own key? Run GaugeBench on your computer (python -m gaugebench app) and set it in a .env file.";
+    return `Models on this computer: ${names}. Change them in the .env file (GEMINI_API_KEY, ANTHROPIC_API_KEY, `
+      + "ASK_MODELS) and restart. Only the task image and its question are sent to the model provider.";
+  }
+  function openOnboard() {
+    $("#ob-ai").textContent = aiNote();
+    $("#onboard").hidden = false;
+    document.body.classList.add("is-onboarding");
+    setTimeout(() => $("#ob-start").focus(), 30);
+  }
+  function closeOnboard() {
+    if ($("#onboard").hidden) return;
+    $("#onboard").hidden = true;
+    document.body.classList.remove("is-onboarding");
+    store.set("gb-onboarded", 1);
   }
 
   // ------------------------------------------------------------------ hints
@@ -1480,6 +1582,10 @@
     $("#btn-sound").addEventListener("click", () => setSound(!SND.on));
     $("#btn-help").addEventListener("click", openHelp);
     $$("[data-close-help]").forEach((el) => el.addEventListener("click", closeHelp));
+    $$("[data-close-onboard]").forEach((el) => el.addEventListener("click", closeOnboard));
+    $("#ob-start").addEventListener("click", closeOnboard);
+    $(".onboard-scrim").addEventListener("click", closeOnboard);
+    $("#btn-tour").addEventListener("click", () => { closeHelp(); openOnboard(); });
     $("#btn-clean").addEventListener("click", () => { setFactors(S.meta.base); toast("All knobs back to the clean baseline."); });
     $$(".preset").forEach((b) => b.addEventListener("click", () => { sfx.click(); generate(Number(b.dataset.level)); }));
     $("#btn-seed-lock").addEventListener("click", (e) => {
@@ -1513,7 +1619,8 @@
     document.fonts?.ready.then(moveTabIndicator);
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") { closeDrawer(); closeHelp(); return; }
+      if (e.key === "Escape") { closeOnboard(); closeDrawer(); closeHelp(); return; }
+      if (!$("#onboard").hidden) return;                  // the welcome tour is modal
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
       const k = e.key.toLowerCase();
@@ -1587,11 +1694,13 @@
     selectFamily(S.family);
     renderTally();
     wire();
+    setupModels();
     const b = $("#btn-sound");                       // reflect the saved preference without a click sound
     b.setAttribute("aria-pressed", String(SND.on));
     b.title = SND.on ? "Sound on (M)" : "Sound off (M)";
     $("#daily-dot").hidden = !!dailyStore().results[dateKey()];
     if (!applyUrl()) setView(store.get("gb-view", "bench"));
+    if (!store.get("gb-onboarded", 0)) setTimeout(openOnboard, 350);
   }
   boot();
 })();

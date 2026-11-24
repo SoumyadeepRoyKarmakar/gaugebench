@@ -148,6 +148,10 @@ The Bench also plays **inspection rounds**: one row per camera on the work order
 
 Also: **hints** that teach how to read each instrument without revealing the value, a **rank** from Trainee to Metrologist, and keyboard shortcuts (`G` generate, `H` hint, `L` loupe, `V` validator vision, `?` all shortcuts).
 
+**Ask an AI model.** After you answer, ask a model to read the same image. The button names the model it will use ("Ask Gemini 3.5 Flash-Lite to read it"), and a picker appears when the server offers more than one. Visitors can only choose from the models the server owner has enabled: on the hosted site that is Gemini 3.5 Flash-Lite; on your own computer it is every model you have a key for in `.env` (Gemini, Claude), or exactly the list in `ASK_MODELS` (e.g. `ASK_MODELS=gemini:gemini-3.5-flash-lite,claude:claude-opus-5-5`).
+
+**Your data stays with you.** No account, no cookies, no tracking. Progress (record, rank, Daily streak) is kept in your browser's local storage, which is never sent to the server. *Your record* lets you export it, import it on another device, or reset it. First-time visitors get a short welcome tour that says all of this; it can be reopened from the `?` panel.
+
 **Secure by design.** The answer key stays on the server until you answer. On the hosted site the Gemini API key lives only on the server, never in the browser, and usage is capped per visitor and per day. See [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Run it yourself
