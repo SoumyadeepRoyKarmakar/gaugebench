@@ -67,6 +67,9 @@ Three independent guards, applied to **every** task before it is published:
 - **21 automated tests**, including mutation tests: if the answer key is shifted by 3 tolerances, the validator **always** catches it.
 - **The validator caught a real flaw:** a model miss led us to a cramped dial where the printed numbers ran together. We added an overlap check, and it now rejects those dials automatically.
 
+## Slide 8c: Inspection rounds (in the built deck before "Results")
+Image: `docs/images/readme-round.png` (a contact sheet of 5 camera photos, each a different instrument). Side panel: the job (log every reading, flag every gauge in the red), every photo verified (re-shot if it fails), scored like a supervisor (a round passes only if everything is right), baselines: knows the key 100%, one reading off 0%, random 0% with 21 false alarms, never-alarm 0 of 31 caught. [[add Gemini's inspection-round result after the run]]
+
 ## Slide 6: Scoring separates right from wrong
 | Reference answerer | Score |
 |---|---|
