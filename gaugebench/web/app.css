@@ -942,16 +942,19 @@ kbd {
 
 /* ---- inspection round: one row per camera, then a gauge-by-gauge readout ---- */
 .answer-round { display: grid; gap: 6px; margin-bottom: 4px; }
-.rr-head, .rr-row { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr) auto; gap: 8px; align-items: center; }
-.rr-head { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--paper-ink-2); padding: 0 2px; }
-.rr-cam { font-family: var(--mono); font-size: 12.5px; color: var(--paper-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rr-cam b { color: var(--accent-deep); }
-.rr-field { display: flex; align-items: center; border: 1.5px solid var(--paper-ink); border-radius: 6px; background: #fff; padding: 0 8px; min-width: 0; }
+.rr-head, .rr-row { display: grid; grid-template-columns: 76px minmax(0, 1fr) 66px; gap: 8px; align-items: center; }
+.rr-head { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--paper-ink-2); padding: 0 2px 2px; }
+.rr-head span:last-child { text-align: center; }
+.rr-cam { display: grid; line-height: 1.15; font-family: var(--mono); min-width: 0; }
+.rr-cam b { font-size: 10px; letter-spacing: .08em; color: var(--accent-deep); }
+.rr-cam span { font-size: 13px; font-weight: 700; color: var(--paper-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rr-field { display: flex; align-items: center; gap: 6px; height: 38px; border: 1.5px solid var(--paper-ink); border-radius: 7px; background: #fff; padding: 0 4px 0 10px; min-width: 0; }
 .rr-field:focus-within { border-color: var(--accent-deep); box-shadow: 2px 2px 0 var(--accent-deep); }
-.rr-in { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: 700 15px var(--mono); color: var(--paper-ink); padding: 7px 0; }
-.rr-unit { font: 600 11px var(--mono); color: var(--paper-ink-2); margin-left: 6px; white-space: nowrap; }
-.rr-alarm { font: 700 10.5px var(--mono); letter-spacing: .06em; border: 1.5px solid var(--paper-line); background: transparent; color: var(--paper-ink-2);
-  border-radius: 6px; padding: 7px 9px; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+.rr-in { flex: 1; min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; font: 700 15px var(--mono); color: var(--paper-ink); padding: 0; }
+.rr-in::placeholder { font-weight: 400; font-size: 13px; color: #b3ad9f; }
+.rr-unit { flex: none; font: 700 10.5px var(--mono); color: var(--paper-ink-2); background: var(--paper-2); border-radius: 4px; padding: 3px 6px; white-space: nowrap; }
+.rr-alarm { height: 38px; width: 100%; font: 700 10.5px var(--mono); letter-spacing: .06em; border: 1.5px solid var(--paper-line); background: transparent; color: var(--paper-ink-2);
+  border-radius: 7px; padding: 0; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
 .rr-alarm:hover { border-color: var(--fail); color: var(--fail); }
 .rr-alarm[aria-pressed="true"] { background: var(--fail); border-color: var(--fail); color: #fff; }
 .rr-alarm:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
@@ -968,7 +971,7 @@ kbd {
 .rr-flag.ok { color: #1c7a43; }
 .rr-flag.bad { color: #c12d2d; }
 .rr-sum { margin: 8px 0 0; font-size: 12.5px; color: var(--paper-ink); }
-@media (max-width: 600px) { .rr-head, .rr-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto; } .rr-cam { font-size: 11.5px; } }
+@media (max-width: 600px) { .rr-head, .rr-row { grid-template-columns: 70px minmax(0, 1fr) 60px; } }
 
 /* ---- model picker above the Ask button ---- */
 .ask-model { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--paper-ink-2); }

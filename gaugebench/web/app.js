@@ -504,13 +504,13 @@
     rf.innerHTML = "";
     $("#btn-submit").firstChild.textContent = isRound ? "Submit round " : "Submit reading ";
     if (isRound) {
-      rf.append(h("div", { class: "rr-head" }, h("span", {}, "Gauge"), h("span", {}, "Reading"), h("span", {}, "In the red?")));
+      rf.append(h("div", { class: "rr-head" }, h("span", {}, "Gauge"), h("span", {}, "Reading"), h("span", { title: "Flag gauges whose needle is in the red band" }, "Red?")));
       (t.cameras || []).forEach((c, i) => {
         const alarm = h("button", { type: "button", class: "rr-alarm", "aria-pressed": "false", title: "Flag this gauge as an alarm (needle in the red band)" }, "ALARM");
         alarm.addEventListener("click", () => { alarm.setAttribute("aria-pressed", String(alarm.getAttribute("aria-pressed") !== "true")); sfx.click(); });
         rf.append(h("div", { class: "rr-row", "data-tag": c.tag },
-          h("span", { class: "rr-cam" }, h("b", {}, `CAM ${i + 1}`), ` ${c.tag}`),
-          h("span", { class: "rr-field" }, h("input", { class: "rr-in", inputmode: "decimal", "aria-label": `Reading for ${c.tag}`, placeholder: "reading" }),
+          h("span", { class: "rr-cam" }, h("b", {}, `CAM ${i + 1}`), h("span", {}, c.tag)),
+          h("span", { class: "rr-field" }, h("input", { class: "rr-in", inputmode: "decimal", "aria-label": `Reading for ${c.tag}`, placeholder: "value" }),
             h("span", { class: "rr-unit" }, c.unit || "")),
           alarm));
       });
