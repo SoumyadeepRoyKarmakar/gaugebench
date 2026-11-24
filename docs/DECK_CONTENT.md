@@ -49,6 +49,12 @@ Paste each section into the matching slide of the **official Hack2skill template
 
 Plus **11 recorded difficulty factors**: scale type, sweep, division density, label density, multiplier, face colour, glare, camera tilt, blur, noise, exposure.
 
+## Slide 4b: Task gallery (in the built deck after "New instruments")
+Image: `docs/images/readme-gallery.png` (one real task per family, with its answer key). Side panel groups the families: single dial, panels, over time, new instruments.
+
+## Slide 8b: Every answer is proven readable (in the built deck after "Process flow")
+Images: `docs/images/readme-validator.png` (the photo, what the validator measured, a rejected candidate) and `docs/images/readme-conditions.png` (one gauge under eight conditions). Side panel: pixel re-read, visibility, ambiguity; 40% of candidates rejected.
+
 ## Slide 5: How we know the answers are right (validity)
 Three independent guards, applied to **every** task before it is published:
 
