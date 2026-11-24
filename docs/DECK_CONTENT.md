@@ -58,7 +58,7 @@ Three independent guards, applied to **every** task before it is published:
 
 - **Tolerance** = half of the smallest local division, the standard rule for reading analogue instruments.
 - **Main suite (384 tasks):** 636 candidates generated and 252 rejected (40%). The top reasons were glare covering the needle (185), printed labels overlapping (146) and needles too close to a zone boundary (80). One candidate can fail more than one check.
-- **20 automated tests**, including mutation tests: if the answer key is shifted by 3 tolerances, the validator **always** catches it.
+- **21 automated tests**, including mutation tests: if the answer key is shifted by 3 tolerances, the validator **always** catches it.
 - **The validator caught a real flaw:** a model miss led us to a cramped dial where the printed numbers ran together. We added an overlap check, and it now rejects those dials automatically.
 
 ## Slide 6: Scoring separates right from wrong

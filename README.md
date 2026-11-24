@@ -126,7 +126,7 @@ python -m gaugebench evaluate runs/demo --model gemini:<model-id> --workers 1   
 
 python -m gaugebench report runs/demo        # open runs/demo/report.html
 
-python -m pytest -q                          # 20 tests incl. mutation tests of the validator
+python -m pytest -q                          # 21 tests incl. mutation tests of the validator
 
 python -m gaugebench app                     # GaugeBench Studio, the interactive web app
 ```
