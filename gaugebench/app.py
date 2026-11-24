@@ -9,6 +9,11 @@
 
 Standard library HTTP server only; the answer key of a live task never leaves the
 server until you submit (or reveal) an answer.
+
+Hosting it publicly (see docs/DEPLOY.md): set GAUGEBENCH_PUBLIC=1. The Gemini API key is
+read from the server's environment and is only ever used server-side; public mode adds
+per-visitor and daily limits on Gemini calls, caps on generation work and request size,
+hides developer error details, and sends strict security headers.
 """
 from __future__ import annotations
 
@@ -22,6 +27,7 @@ import tempfile
 import threading
 import time
 import webbrowser
+from collections import defaultdict, deque
 from collections import OrderedDict
 from functools import lru_cache
 from http import HTTPStatus
@@ -39,7 +45,8 @@ from .tasks import FAMILIES, Reject
 
 WEB = Path(__file__).parent / "web"
 MAX_ATTEMPTS = 25
-MAX_LIVE = 300                      # live tasks kept in memory
+MAX_LIVE = 300                      # live tasks kept in memory (local default)
+MAX_BODY = 32 * 1024                # largest JSON request body accepted
 DEFAULT_GEMINI = "gemini-3.5-flash-lite"
 
 FAMILY_LABELS = {
@@ -151,7 +158,6 @@ def make_live_task(family: str, factors: dict, seed: int, level: int | None = No
         "rejected": rejected,
         "attempts": attempt + 1,
         "ms": round((time.time() - t0) * 1000),
-        "png": scene.image,
     }
 
 
@@ -373,22 +379,102 @@ class Suites:
 # ---------------------------------------------------------------------------------------
 # HTTP layer
 # ---------------------------------------------------------------------------------------
+class BadRequest(ValueError):
+    def __init__(self, msg: str, status: int = 400):
+        super().__init__(msg)
+        self.status = status
+
+
+CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+       "font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; "
+       "frame-ancestors 'self'; base-uri 'none'; form-action 'self'; object-src 'none'")
+
+
 class TaskExpired(KeyError):
     """A live task is no longer held by the server (restart, or evicted after MAX_LIVE newer tasks)."""
 
 
+def _env_int(name: str, default: int) -> int:
+    try:
+        return int(os.environ.get(name, default))
+    except ValueError:
+        return default
+
+
+class Limits:
+    """Usage limits. Locally everything is unlimited; in public mode they protect the
+    server's Gemini quota (and bill) and its CPU/memory from any one visitor."""
+
+    def __init__(self, public: bool):
+        self.public = public
+        self.gemini_daily = _env_int("GEMINI_DAILY_LIMIT", 150 if public else 0)       # 0 = unlimited
+        self.gemini_per_ip_hour = _env_int("GEMINI_PER_IP_HOUR", 10 if public else 0)
+        self.generate_per_ip_min = _env_int("GENERATE_PER_IP_MIN", 40 if public else 0)
+        self.max_live = _env_int("MAX_LIVE_TASKS", 120 if public else MAX_LIVE)
+        self.gen_slots = threading.BoundedSemaphore(max(1, _env_int("GENERATE_CONCURRENCY", 2 if public else 8)))
+        self._lock = threading.Lock()
+        self._hits: dict[tuple, deque] = defaultdict(deque)
+        self._day = ""
+        self._gemini_today = 0
+
+    def _today(self) -> None:
+        day = time.strftime("%Y-%m-%d", time.gmtime())
+        if day != self._day:
+            self._day, self._gemini_today = day, 0
+
+    def allow(self, kind: str, ip: str, limit: int, window_s: float) -> bool:
+        """Sliding-window rate limit per (kind, visitor)."""
+        if not limit:
+            return True
+        now = time.monotonic()
+        with self._lock:
+            q = self._hits[(kind, ip)]
+            while q and now - q[0] > window_s:
+                q.popleft()
+            if len(q) >= limit:
+                return False
+            q.append(now)
+            if len(self._hits) > 50_000:                # forget idle visitors
+                for k in [k for k, v in self._hits.items() if not v or now - v[-1] > 3600]:
+                    del self._hits[k]
+            return True
+
+    def gemini_left(self) -> int | None:
+        if not self.gemini_daily:
+            return None
+        with self._lock:
+            self._today()
+            return max(0, self.gemini_daily - self._gemini_today)
+
+    def take_gemini(self) -> bool:
+        with self._lock:
+            self._today()
+            if self.gemini_daily and self._gemini_today >= self.gemini_daily:
+                return False
+            self._gemini_today += 1
+            return True
+
+    def give_back_gemini(self) -> None:
+        """A call that failed before Gemini answered doesn't count against the day."""
+        with self._lock:
+            self._gemini_today = max(0, self._gemini_today - 1)
+
+
 class State:
-    def __init__(self, suites_root: Path, gemini_model: str):
+    def __init__(self, suites_root: Path, gemini_model: str, public: bool = False):
         self.suites = Suites(suites_root)
         self.gemini_model = gemini_model
+        self.public = public
+        self.limits = Limits(public)
         self.live: OrderedDict[str, dict] = OrderedDict()
+        self.asked: OrderedDict[str, dict] = OrderedDict()   # Gemini answers, so a task is never paid for twice
         self.lock = threading.Lock()
         self.tmp = Path(tempfile.mkdtemp(prefix="gaugebench-"))
 
     def remember(self, rec: dict) -> None:
         with self.lock:
             self.live[rec["task"]["id"]] = rec
-            while len(self.live) > MAX_LIVE:
+            while len(self.live) > self.limits.max_live:
                 self.live.popitem(last=False)
 
     def get(self, tid: str) -> dict:
@@ -415,19 +501,59 @@ def make_handler(state: State):
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "max-age=3600" if cache else "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Referrer-Policy", "same-origin")
+            self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+            self.send_header("Content-Security-Policy", CSP)
+            if state.public:
+                self.send_header("Strict-Transport-Security", "max-age=31536000")
             self.end_headers()
-            self.wfile.write(body)
+            if self.command != "HEAD":
+                self.wfile.write(body)
+
+        def _ip(self) -> str:
+            """The visitor's address. Behind a hosting proxy the socket peer is the proxy,
+            so use the address the proxy reports."""
+            if state.public:
+                for h in ("CF-Connecting-IP", "True-Client-IP", "X-Real-IP"):
+                    if self.headers.get(h):
+                        return self.headers[h].strip()
+                fwd = self.headers.get("X-Forwarded-For")
+                if fwd:
+                    return fwd.split(",")[0].strip()
+            return self.client_address[0]
 
         def _json(self, obj, code: int = 200):
             self._send(code, json.dumps(obj, ensure_ascii=False).encode(), "application/json; charset=utf-8")
 
         def _err(self, code: int, msg: str, kind: str = "error", detail: str = ""):
-            """msg is for people (short, plain); detail is for developers (shown only in the console)."""
+            """msg is for people (short, plain); detail is for developers (shown only in the
+            browser console locally; a public server logs it and never sends it)."""
+            if state.public:
+                if detail:
+                    print(f"[{kind}] {urlparse(self.path).path}: {detail}", flush=True)
+                detail = ""
             self._json({"error": msg, "code": kind, "detail": detail}, code)
 
         def _body(self) -> dict:
-            n = int(self.headers.get("Content-Length") or 0)
-            return json.loads(self.rfile.read(n) or b"{}") if n else {}
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                raise BadRequest("That request wasn't understood.")
+            if n > MAX_BODY:
+                raise BadRequest("That request is too large.", 413)
+            if n <= 0:
+                return {}
+            try:
+                body = json.loads(self.rfile.read(n))
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                raise BadRequest("That request wasn't understood.")
+            if not isinstance(body, dict):
+                raise BadRequest("That request wasn't understood.")
+            return body
+
+        def do_HEAD(self):
+            return self.do_GET()
 
         # -- routes -----------------------------------------------------------------
         def do_GET(self):
@@ -436,6 +562,8 @@ def make_handler(state: State):
             try:
                 if u.path in ("/", "/index.html"):
                     return self._static("index.html")
+                if u.path == "/healthz":
+                    return self._json({"ok": True, "version": __version__})
                 if u.path.startswith("/static/"):
                     return self._static(u.path[len("/static/"):])
                 if u.path == "/api/meta":
@@ -443,7 +571,9 @@ def make_handler(state: State):
                         "version": __version__,
                         "families": [{"id": k, "label": FAMILY_LABELS.get(k, k)} for k in FAMILIES],
                         "factors": FACTOR_DOMAINS, "base": BASE_FACTORS, "applicable": APPLICABLE,
-                        "gemini": {"available": gemini_available(), "model": state.gemini_model},
+                        "gemini": {"available": gemini_available(), "model": state.gemini_model,
+                                   "left_today": state.limits.gemini_left()},
+                        "public": state.public,
                         "suites": state.suites.summary(),
                     })
                 if u.path == "/api/suite":
@@ -501,6 +631,8 @@ def make_handler(state: State):
                     return self._json(state.suites.challenge_answer(body["suite"], body["model"], body["id"],
                                                                     str(body.get("answer", "")).strip()))
                 return self._err(404, "That action doesn't exist.", "not_found")
+            except BadRequest as e:
+                return self._err(e.status, str(e), "bad_request")
             except NoValidTask as e:
                 return self._json({"error": str(e), "code": "no_valid_task", "rejected": e.rejected}, 422)
             except TaskExpired as e:
@@ -527,9 +659,19 @@ def make_handler(state: State):
                     if match:
                         factors[k] = match[0]
             seed = int(body["seed"]) if str(body.get("seed", "")).isdigit() else secrets.randbits(40)
+            seed %= 2 ** 63
             level = body.get("level")
             level = max(1, min(5, int(level))) if str(level or "").isdigit() else None
-            rec = make_live_task(family, {**BASE_FACTORS, **factors}, seed, level)
+            lim = state.limits
+            if not lim.allow("generate", self._ip(), lim.generate_per_ip_min, 60):
+                return self._err(429, "You're generating tasks very quickly. Take a breath and try again in a minute.",
+                                 "rate_limited")
+            if not lim.gen_slots.acquire(timeout=20):
+                return self._err(503, "The bench is busy with other visitors. Try again in a few seconds.", "busy")
+            try:
+                rec = make_live_task(family, {**BASE_FACTORS, **factors}, seed, level)
+            finally:
+                lim.gen_slots.release()
             state.remember(rec)
             return self._json(public_view(rec))
 
@@ -542,18 +684,37 @@ def make_handler(state: State):
 
         def _ask(self, body: dict):
             if not gemini_available():
-                return self._err(400, "Ask Gemini isn't set up on this computer yet.", "gemini_missing",
-                                 "No GEMINI_API_KEY found. Add it to .env and restart the app.")
+                msg = ("Ask Gemini is turned off on this server." if state.public
+                       else "Ask Gemini isn't set up on this computer yet.")
+                return self._err(400, msg, "gemini_missing", "No GEMINI_API_KEY found. Add it to .env and restart.")
             rec = state.get(body["id"])
             t = rec["task"]
-            img = state.tmp / f"{t['id']}.png"
-            if not img.exists():
-                Image.fromarray(rec["png"]).save(img)
+            with state.lock:
+                cached = state.asked.get(t["id"])
+            if cached:                                       # the same task never costs a second request
+                return self._json(cached)
+            lim = state.limits
+            if not lim.allow("gemini", self._ip(), lim.gemini_per_ip_hour, 3600):
+                return self._err(429, "You've asked Gemini a lot in the last hour. Read a few yourself and try "
+                                      "again later.", "gemini_rate_limited")
+            if not lim.take_gemini():
+                return self._err(503, "Ask Gemini has reached today's limit on this server. Try again tomorrow.",
+                                 "gemini_quota")
+            # always the server's own model: visitors can't pick a different (pricier) one
             from .models.gemini import Gemini
-            model = Gemini(body.get("model") or state.gemini_model, max_tries=2)
-            t0 = time.time()
-            resp = model.answer(t, str(img))
+            img = state.tmp / f"{secrets.token_hex(8)}.png"
+            img.write_bytes(base64.b64decode(rec["image"].split(",", 1)[1]))
+            try:
+                model = Gemini(state.gemini_model, max_tries=2)
+                t0 = time.time()
+                resp = model.answer(t, str(img))
+            except BaseException:
+                lim.give_back_gemini()
+                raise
+            finally:
+                img.unlink(missing_ok=True)
             if resp.get("error"):
+                lim.give_back_gemini()
                 raw = resp["error"]
                 low = raw.lower()
                 if "per day" in low or "quota" in low:
@@ -566,12 +727,17 @@ def make_handler(state: State):
                     msg, kind = "Gemini couldn't answer this time. Please try again.", "gemini_error"
                 return self._err(503, msg, kind, raw)
             s = score(t, resp.get("text", ""))
-            return self._json({"model": model.name, "text": resp.get("text", ""), "score": s,
-                               "seconds": round(time.time() - t0, 1), "key": key_view(t)})
+            out = {"model": model.name, "text": resp.get("text", ""), "score": s,
+                   "seconds": round(time.time() - t0, 1), "key": key_view(t)}
+            with state.lock:
+                state.asked[t["id"]] = out
+                while len(state.asked) > state.limits.max_live:
+                    state.asked.popitem(last=False)
+            return self._json(out)
 
         def _static(self, rel: str):
             p = (WEB / rel).resolve()
-            if not str(p).startswith(str(WEB.resolve())) or not p.is_file():
+            if not p.is_relative_to(WEB.resolve()) or not p.is_file():
                 return self._err(404, "not found")
             ctype = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
                      ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml"}.get(p.suffix,
@@ -581,21 +747,30 @@ def make_handler(state: State):
         def _suite_file(self, name: str, rel: str):
             base = state.suites.path(name).resolve()
             p = (base / rel).resolve()
-            if not str(p).startswith(str(base)) or not p.is_file() or p.suffix not in (".png", ".html", ".json"):
+            # images and the report only: task.json holds the answer key (Challenge rounds use these images)
+            if not p.is_relative_to(base) or not p.is_file() or not (p.suffix == ".png" or p.name == "report.html"):
                 return self._err(404, "not found")
-            ctype = {".png": "image/png", ".html": "text/html; charset=utf-8",
-                     ".json": "application/json"}[p.suffix]
+            ctype = {".png": "image/png", ".html": "text/html; charset=utf-8"}[p.suffix]
             return self._send(200, p.read_bytes(), ctype, cache=p.suffix == ".png")
 
     return Handler
 
 
 def serve(port: int = 8765, suites_root: Path = Path("runs"), open_browser: bool = True,
-          gemini_model: str = DEFAULT_GEMINI, host: str = "127.0.0.1") -> None:
-    state = State(suites_root, gemini_model)
+          gemini_model: str = DEFAULT_GEMINI, host: str = "127.0.0.1", public: bool = False) -> None:
+    state = State(suites_root, gemini_model, public)
+    ThreadingHTTPServer.daemon_threads = True
+    ThreadingHTTPServer.request_queue_size = 64
     httpd = ThreadingHTTPServer((host, port), make_handler(state))
-    url = f"http://{host}:{port}/"
-    print(f"GaugeBench Studio running at {url}  (Ctrl+C to stop)")
+    url = f"http://{'127.0.0.1' if host in ('0.0.0.0', '') else host}:{port}/"
+    lim = state.limits
+    print(f"GaugeBench Studio running at {url}  (Ctrl+C to stop)", flush=True)
+    print(f"  mode: {'public' if public else 'local'} | Ask Gemini: "
+          f"{'on (' + gemini_model + ')' if gemini_available() else 'off (no GEMINI_API_KEY)'} | suites: "
+          f"{', '.join(state.suites.names()) or 'none'}", flush=True)
+    if public:
+        print(f"  limits: Gemini {lim.gemini_daily or 'unlimited'}/day, {lim.gemini_per_ip_hour}/visitor/hour; "
+              f"generate {lim.generate_per_ip_min}/visitor/min", flush=True)
     if open_browser:
         threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     try:

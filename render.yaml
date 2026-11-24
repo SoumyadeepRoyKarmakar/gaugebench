@@ -1,0 +1,21 @@
+# One-click deploy on Render (https://render.com): New > Blueprint > pick this repository.
+# Render asks for GEMINI_API_KEY when you create the service; it is stored as a secret in
+# Render, injected into the server's environment, and never committed or sent to browsers.
+services:
+  - type: web
+    name: gaugebench-studio
+    runtime: docker
+    plan: free
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false            # secret: entered in the Render dashboard, not stored here
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: GAUGEBENCH_PUBLIC
+        value: "1"
+      - key: GEMINI_DAILY_LIMIT  # total Ask Gemini calls per day for the whole site
+        value: "150"
+      - key: GEMINI_PER_IP_HOUR  # per visitor
+        value: "10"

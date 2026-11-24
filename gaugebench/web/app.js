@@ -501,7 +501,8 @@
     $("#gemini-box").hidden = false;
     const avail = S.meta.gemini.available;
     $("#btn-ask").disabled = !avail;
-    $("#btn-ask").title = avail ? `Send this exact image and question to ${S.meta.gemini.model}` : "Add GEMINI_API_KEY to .env and restart the app";
+    $("#btn-ask").title = avail ? `Send this exact image and question to ${S.meta.gemini.model}`
+      : S.meta.public ? "Ask Gemini is turned off on this server" : "Add GEMINI_API_KEY to .env and restart the app";
     scrollOnPhone(v);
   }
 
@@ -592,7 +593,7 @@
       btn.hidden = false;
       if (e.data?.code === "task_expired") { out.hidden = true; taskExpired(); return; }
       out.hidden = false;
-      const quota = e.data?.code === "gemini_quota" || e.data?.code === "gemini_missing";
+      const quota = ["gemini_quota", "gemini_missing", "gemini_rate_limited"].includes(e.data?.code);
       if (quota) btn.disabled = true;               // retrying won't help until tomorrow / until set up
       out.innerHTML = `<div class="callout callout-err" role="alert"><span class="callout-icon" aria-hidden="true">!</span>
         <div>${esc(e.message)}</div></div>`;
@@ -1014,7 +1015,8 @@
     if (!suites.length) {
       $("#ch-start").disabled = true;
       $("#ch-empty").hidden = false;
-      $("#ch-empty").textContent = "No suite has model results yet. Evaluate one first, e.g. python -m gaugebench evaluate runs/sample --model gemini:gemini-3.5-flash-lite";
+      $("#ch-empty").textContent = S.meta.public ? "No recorded model answers are available on this server yet."
+        : "No suite has model results yet. Evaluate one first, e.g. python -m gaugebench evaluate runs/sample --model gemini:gemini-3.5-flash-lite";
       return;
     }
     const seg = $("#ch-suite");

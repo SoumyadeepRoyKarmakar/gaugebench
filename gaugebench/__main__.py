@@ -78,15 +78,22 @@ def main(argv=None) -> int:
     gen_args(a)
 
     ap = sub.add_parser("app", help="open GaugeBench Studio, the interactive web app")
-    ap.add_argument("--port", type=int, default=8765)
+    public_env = os.environ.get("GAUGEBENCH_PUBLIC", "").lower() in ("1", "true", "yes")
+    ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8765)),
+                    help="port to listen on (default: $PORT or 8765)")
+    ap.add_argument("--host", default=os.environ.get("HOST", "0.0.0.0" if public_env else "127.0.0.1"),
+                    help="address to bind (use 0.0.0.0 inside a container)")
+    ap.add_argument("--public", action="store_true", default=public_env,
+                    help="hosting for other people: usage limits, no error details (or GAUGEBENCH_PUBLIC=1)")
     ap.add_argument("--suites", type=Path, default=Path("runs"), help="folder holding generated suites")
-    ap.add_argument("--gemini-model", default=None, help="model id for the Ask Gemini button")
+    ap.add_argument("--gemini-model", default=os.environ.get("GEMINI_MODEL"), help="model id for the Ask Gemini button")
     ap.add_argument("--no-browser", action="store_true")
 
     args = p.parse_args(argv)
     if args.cmd == "app":
         from .app import DEFAULT_GEMINI, serve
-        serve(args.port, args.suites, not args.no_browser, args.gemini_model or DEFAULT_GEMINI)
+        serve(args.port, args.suites, not (args.no_browser or args.public), args.gemini_model or DEFAULT_GEMINI,
+              args.host, args.public)
         return 0
     if args.cmd == "list-models":
         from .models.gemini import list_models

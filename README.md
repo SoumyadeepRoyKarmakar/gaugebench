@@ -124,7 +124,7 @@ python -m gaugebench evaluate runs/demo --model gemini:<model-id> --workers 1   
 
 python -m gaugebench report runs/demo        # open runs/demo/report.html
 
-python -m pytest -q                          # 19 tests incl. mutation tests of the validator
+python -m pytest -q                          # 20 tests incl. mutation tests of the validator
 
 python -m gaugebench app                     # GaugeBench Studio, the interactive web app
 ```
@@ -158,6 +158,10 @@ Evaluation runs are **resumable and cached**. Tasks already answered are never p
 Small touches: synthesised mechanical sounds (knob clicks, the stamp, pass/fail chimes; `M` to mute), confetti on wins, and a shortcuts panel (`?`).
 
 Keyboard: `G` generate, `Enter` submit, `1`–`9` pick a choice, `H` hint, `L` loupe, `V` validator vision, `M` sound, `R` your record, `?` shortcuts, `Esc` close.
+
+### Putting it online
+
+The repository is ready to host as a public site (`Dockerfile`, `render.yaml`). **The Gemini API key stays on the server**: it is set as a secret in the host's dashboard, read only by the Python backend, and never sent to the browser or stored in the image or the repository. Public mode (`GAUGEBENCH_PUBLIC=1`) also caps Ask Gemini per visitor and per day, ignores any model a visitor tries to choose, caches answers so a task is never paid for twice, limits generation work and request size, hides developer error details, and sends strict security headers (all enforced by a test). Step-by-step instructions: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Code map
 

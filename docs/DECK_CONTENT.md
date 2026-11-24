@@ -58,7 +58,7 @@ Three independent guards, applied to **every** task before it is published:
 
 - **Tolerance** = half of the smallest local division, the standard rule for reading analogue instruments.
 - **Main suite (384 tasks):** 636 candidates generated and 252 rejected (40%). The top reasons were glare covering the needle (185), printed labels overlapping (146) and needles too close to a zone boundary (80). One candidate can fail more than one check.
-- **14 automated tests**, including mutation tests: if the answer key is shifted by 3 tolerances, the validator **always** catches it.
+- **20 automated tests**, including mutation tests: if the answer key is shifted by 3 tolerances, the validator **always** catches it.
 - **The validator caught a real flaw:** a model miss led us to a cramped dial where the printed numbers ran together. We added an overlap check, and it now rejects those dials automatically.
 
 ## Slide 6: Scoring separates right from wrong
@@ -104,7 +104,7 @@ Screenshot: `docs/images/studio-bench.png`.
 - **Bench:** generate any task live from 11 condition knobs. Read it with a loupe, see what the validator measured and which candidates were rejected, then ask Gemini the same question. Any task can be shared as a link.
 - **Challenge + Daily:** go head to head with the model on real suite tasks (no API calls), or play the Daily: five gauges, the same for everyone, L1 to L5, with a shareable result and day streaks.
 - **Archive, hints and rank:** browse every suite and answer. Hints teach how to read each instrument without giving the value away, and your record ranks you from Trainee to Metrologist.
-- Run it: `python -m gaugebench app`
+- Run it: `python -m gaugebench app`, or open the hosted site (Gemini key kept server-side, usage capped)
 
 ## Slide 8: Architecture
 ```

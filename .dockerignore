@@ -1,0 +1,15 @@
+# never send secrets or local-only data into the image build
+.env
+.env.*
+.git
+.claude
+.pytest_cache
+**/__pycache__
+**/*.pyc
+scratch
+docs
+tests
+# keep only the suites that are in the repository
+runs/*
+!runs/sample
+!runs/instruments

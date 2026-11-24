@@ -295,3 +295,76 @@ def test_hints_never_contain_the_answer():
                 assert f"{t['answer']}" not in h and f"{t['answer']:g}" not in h.split("division")[0]
             else:
                 assert t["answer"] not in h
+
+
+def test_public_mode_protects_key_and_quota(tmp_path, monkeypatch):
+    """Hosted for strangers: the API key is never sent to the browser, visitors can't
+    choose the model, Gemini calls are capped per visitor and per day (and a task is
+    never paid for twice), error details stay on the server, and the answer-holding
+    task.json files of a suite are not served."""
+    import json as _json
+    import threading
+    import urllib.error
+    import urllib.request
+    from http.server import ThreadingHTTPServer
+    from gaugebench import app as studio
+    from gaugebench.models import gemini as gem
+
+    secret = "AIza-test-secret-value-0000"
+    monkeypatch.setenv("GEMINI_API_KEY", secret)
+    monkeypatch.setenv("GEMINI_DAILY_LIMIT", "3")
+    monkeypatch.setenv("GEMINI_PER_IP_HOUR", "2")
+    calls = []
+
+    class FakeGemini:
+        def __init__(self, model, **kw):
+            self.name = model
+            calls.append(model)
+
+        def answer(self, task, image_path):
+            return {"text": f"ANSWER: {task['answer']}"}
+
+    monkeypatch.setattr(gem, "Gemini", FakeGemini)
+    suite = tmp_path / "suite"
+    generate(suite, plan_suite(1, 0, ["read_value"], []), seed=2, log=lambda *a: None)
+    state = studio.State(tmp_path, "server-model", public=True)
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), studio.make_handler(state))
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{httpd.server_address[1]}"
+
+    def call(path, body=None, ip="1.1.1.1"):
+        req = urllib.request.Request(base + path, data=None if body is None else _json.dumps(body).encode(),
+                                     headers={"Content-Type": "application/json", "X-Forwarded-For": ip})
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status, r.read().decode(errors="replace"), dict(r.headers)
+        except urllib.error.HTTPError as e:
+            return e.code, e.read().decode(), dict(e.headers)
+
+    try:
+        code, body, headers = call("/api/meta")
+        assert code == 200 and secret not in body and _json.loads(body)["public"] is True
+        assert "script-src 'self'" in headers["Content-Security-Policy"]
+        assert headers["X-Content-Type-Options"] == "nosniff"
+        ids = [_json.loads(call("/api/generate", {"family": "read_value", "seed": str(s)})[1])["id"]
+               for s in (1, 2, 3, 4)]
+        code, body, _ = call("/api/ask", {"id": ids[0], "model": "gemini-ultra-expensive"})
+        assert code == 200 and _json.loads(body)["score"]["correct"] and secret not in body
+        assert calls == ["server-model"]                         # the visitor's model choice is ignored
+        assert call("/api/ask", {"id": ids[0]})[0] == 200 and len(calls) == 1   # cached, not paid twice
+        assert call("/api/ask", {"id": ids[1]})[0] == 200
+        code, body, _ = call("/api/ask", {"id": ids[2]})        # 3rd paid call from this visitor this hour
+        assert code == 429 and _json.loads(body)["code"] == "gemini_rate_limited"
+        assert call("/api/ask", {"id": ids[2]}, ip="2.2.2.2")[0] == 200       # daily total now 3
+        code, body, _ = call("/api/ask", {"id": ids[3]}, ip="3.3.3.3")
+        assert code == 503 and _json.loads(body)["code"] == "gemini_quota" and len(calls) == 3
+        code, body, _ = call("/api/answer", {"id": "live-nope"})
+        assert code == 410 and _json.loads(body)["detail"] == ""   # no developer details in public mode
+        code, _, _ = call("/api/generate", {"pad": "x" * 40_000})
+        assert code == 413
+        tid = _json.loads((suite / "manifest.jsonl").read_text(encoding="utf-8").splitlines()[0])["id"]
+        assert call(f"/suites/suite/tasks/{tid}/image.png")[0] == 200
+        assert call(f"/suites/suite/tasks/{tid}/task.json")[0] == 404
+        assert call("/healthz")[0] == 200
+    finally:
+        httpd.shutdown()
