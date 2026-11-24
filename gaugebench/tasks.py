@@ -334,3 +334,7 @@ FAMILIES: dict[str, Callable] = {
 # three more instrument geometries (utility clock meter, vernier caliper, digital panel meter)
 from .instruments import NEW_FAMILIES  # noqa: E402  (imports Task etc. from this module)
 FAMILIES.update(NEW_FAMILIES)
+
+# a job rather than a question: log every gauge on a camera round and flag the alarms
+from .inspection import FAMILY as _ROUND, build_inspection_round  # noqa: E402
+FAMILIES[_ROUND] = build_inspection_round

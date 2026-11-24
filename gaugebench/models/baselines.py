@@ -12,13 +12,21 @@ from __future__ import annotations
 
 import random
 
+from ..inspection import format_answer
 from .base import Model
+
+
+def _round_ranges(task):
+    return {g["tag"]: (g["scale"]["vmin"] * g["multiplier"], g["scale"]["vmax"] * g["multiplier"])
+            for g in task["gauges"]}
 
 
 class Oracle(Model):
     name = "oracle"
 
     def answer(self, task, image_path):
+        if task["answer_type"] == "round":
+            return {"text": "ANSWER: " + format_answer(task["answer"]["readings"], task["answer"]["alarms"])}
         return {"text": f"ANSWER: {task['answer']}"}
 
 
@@ -26,6 +34,11 @@ class NearMiss(Model):
     name = "near_miss"
 
     def answer(self, task, image_path):
+        if task["answer_type"] == "round":                 # every reading right except one, just outside
+            r = dict(task["answer"]["readings"])
+            first = next(iter(r))
+            r[first] = r[first] + 2.5 * task["meta"]["tolerances"][first]
+            return {"text": "ANSWER: " + format_answer(r, task["answer"]["alarms"])}
         if task["answer_type"] == "number":
             off = 2.5 * float(task["tolerance"]) or 1      # exact-count questions: off by one
             return {"text": f"ANSWER: {float(task['answer']) + off}"}
@@ -38,6 +51,10 @@ class RandomGuess(Model):
 
     def answer(self, task, image_path):
         rng = random.Random(task["id"])
+        if task["answer_type"] == "round":
+            rr = {t: rng.uniform(lo, hi) for t, (lo, hi) in _round_ranges(task).items()}
+            alarms = [t for t in rr if rng.random() < 0.3]
+            return {"text": "ANSWER: " + format_answer(rr, alarms)}
         if task["answer_type"] == "choice":
             return {"text": f"ANSWER: {rng.choice(task['choices'])}"}
         if task["family"] == "panel_count":
@@ -60,6 +77,9 @@ class Shortcut(Model):
 
     def answer(self, task, image_path):
         fam = task["family"]
+        if task["answer_type"] == "round":                 # mid-scale everywhere, never raise an alarm
+            mid = {t: (lo + hi) / 2 for t, (lo, hi) in _round_ranges(task).items()}
+            return {"text": "ANSWER: " + format_answer(mid, [])}
         if fam == "zone_status":
             return {"text": "ANSWER: normal"}
         if fam == "panel_max":

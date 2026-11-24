@@ -54,6 +54,7 @@ FAMILY_LABELS = {
     "panel_alarm": "Panel alarm", "panel_max": "Panel max", "temporal_change": "Change over time",
     "dual_scale": "Dual scale", "level_reading": "Tank level", "panel_count": "Panel count",
     "dial_meter": "Clock-dial meter", "vernier": "Vernier caliper", "digital_display": "Digital display",
+    "inspection_round": "Inspection round",
 }
 
 PHOTO = ["glare", "tilt", "blur", "noise", "lighting"]
@@ -67,6 +68,7 @@ APPLICABLE = {
     "dial_meter": ["face", *PHOTO],
     "vernier": PHOTO,
     "digital_display": ["multiplier", "face", *PHOTO],
+    "inspection_round": PHOTO,          # each camera has its own dial; the knobs set the camera conditions
 }
 
 
@@ -170,6 +172,7 @@ def public_view(rec: dict) -> dict:
         "choices": t["choices"], "unit": t["unit"], "factors": applicable_factors(t["family"], t["factors"]),
         "seed": t["seed"],
         "n_gauges": len(t["gauges"]) or 1,
+        "cameras": t["meta"].get("cameras"),          # inspection round: tags and units only, never values
         "image": rec["image"], "vision": rec["vision"], "checks": redact_checks(rec["checks"]),
         "rejected": rec["rejected"], "attempts": rec["attempts"], "ms": rec["ms"],
     }
@@ -213,6 +216,10 @@ def _division_hint(scale: dict, unit: str, mult: float = 1.0) -> str:
 def hint_for(t: dict) -> str:
     """A nudge on *how* to read this instrument, never the reading itself."""
     fam = t["family"]
+    if fam == "inspection_round":
+        return ("Work camera by camera. Every dial has its own range, unit and maybe a printed multiplier: find the labelled "
+                "ticks either side of the needle and count the small divisions. A gauge is an alarm only if its needle "
+                "tip is on the red band, and some rounds have no alarms at all.")
     g = t["gauges"][0] if t.get("gauges") else None
     unit = t.get("unit", "")
     if fam in ("read_value", "level_reading") and g:
@@ -250,8 +257,11 @@ def hint_for(t: dict) -> str:
 
 
 def key_view(t: dict) -> dict:
-    return {"answer": t["answer"], "tolerance": t["tolerance"], "unit": t["unit"],
-            "answer_type": t["answer_type"], "choices": t["choices"]}
+    k = {"answer": t["answer"], "tolerance": t["tolerance"], "unit": t["unit"],
+         "answer_type": t["answer_type"], "choices": t["choices"]}
+    if t["answer_type"] == "round":
+        k["tolerances"] = t["meta"]["tolerances"]
+    return k
 
 
 # ---------------------------------------------------------------------------------------
@@ -335,6 +345,7 @@ class Suites:
         if not rows:
             raise ValueError(f"{model} hasn't answered any tasks in this suite yet. Pick another opponent.")
         pool = [t for t in d["tasks"] if t["id"] in rows and not rows[t["id"]].get("error")
+                and t["answer_type"] != "round"                 # rounds are played on the Bench
                 and (not family or t["family"] == family)]
         if not pool:
             raise ValueError("The opponent hasn't answered any tasks of that instrument. Pick another one.")

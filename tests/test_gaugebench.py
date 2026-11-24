@@ -293,6 +293,9 @@ def test_hints_never_contain_the_answer():
             assert 20 < len(h) < 400
             if t["answer_type"] == "number":
                 assert f"{t['answer']}" not in h and f"{t['answer']:g}" not in h.split("division")[0]
+            elif t["answer_type"] == "round":
+                assert not any(f"{v:g}" in h for v in t["answer"]["readings"].values())
+                assert not any(tag in h for tag in t["answer"]["readings"])
             else:
                 assert t["answer"] not in h
 
@@ -388,3 +391,31 @@ def test_fetch_suite_unpacks_and_refuses_unsafe_zips(tmp_path):
         with pytest.raises(SystemExit):
             fetch_suite(str(bad), tmp_path / "runs2")
     assert not (tmp_path / "evil").exists()
+
+
+def test_inspection_round_publishes_valid_tasks_and_scores_partial_credit(tmp_path):
+    """A round is only 'correct' when every reading is in tolerance and the alarm list is
+    exact; partial credit, missed alarms and false alarms are all reported."""
+    from gaugebench.inspection import format_answer, parse_round
+    summary = generate(tmp_path, plan_suite(3, 0, ["inspection_round"], []), seed=4, log=lambda *a: None)
+    assert summary["published"] == 3
+    for line in (tmp_path / "manifest.jsonl").read_text(encoding="utf-8").splitlines():
+        t = json.loads(line)
+        rec = json.loads((tmp_path / t["image"]).with_name("task.json").read_text(encoding="utf-8"))
+        assert all(c["passed"] for c in rec["validation"])
+        assert sum(c["name"].startswith("pixel_reread") for c in rec["validation"]) == t["meta"]["n_gauges"]
+        key = t["answer"]
+        tags = list(key["readings"])
+        assert score(t, "ANSWER: " + format_answer(key["readings"], key["alarms"]))["correct"]
+        off = dict(key["readings"])
+        off[tags[0]] += 3 * t["meta"]["tolerances"][tags[0]]
+        s = score(t, "ANSWER: " + format_answer(off, key["alarms"]))
+        assert not s["correct"] and s["round"]["readings_correct"] == len(tags) - 1
+        wrong_alarms = [x for x in tags if x not in key["alarms"]][:1]
+        s = score(t, "ANSWER: " + format_answer(key["readings"], wrong_alarms))
+        assert not s["correct"] and s["round"]["false_alarms"] == wrong_alarms
+        assert s["round"]["alarms_missed"] == sorted(key["alarms"])
+    # lenient parsing: answer spread over lines, spaces in tags, 'none'
+    p = parse_round("blah\nANSWER:\nPI - 301 = 4.5;\nPI-302: 1,200\n| ALARMS: none", ["PI-301", "PI-302"])
+    assert p == {"readings": {"PI-301": 4.5, "PI-302": 1200.0}, "alarms": []}
+    assert parse_round("no final line here", ["PI-301"]) is None

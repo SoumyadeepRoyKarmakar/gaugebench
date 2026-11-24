@@ -291,7 +291,22 @@ def pipeline() -> Path:
     return out
 
 
+# ------------------------------------------------------------------------------- inspection round
+def inspection() -> Path:
+    import numpy as np
+    from gaugebench.spec import sample_factors
+    from gaugebench.tasks import FAMILIES
+    rng = np.random.default_rng(3)
+    t, sheet, _ = FAMILIES["inspection_round"](rng, sample_factors(rng, 4))
+    im = Image.fromarray(sheet.image)
+    im.thumbnail((1400, 1400), Image.LANCZOS)
+    out = OUT / "readme-round.png"
+    im.save(out, optimize=True)
+    return out
+
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
-    for fn in (gallery, conditions, pipeline, validator, results):
+    for fn in (gallery, conditions, pipeline, validator, results, inspection):
         print(fn())

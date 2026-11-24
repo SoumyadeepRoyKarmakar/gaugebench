@@ -84,6 +84,9 @@ def generate(out: Path, jobs: list[dict], seed: int = 0, log=print) -> dict:
             tid = f"{job['family']}-L{job['level']}-{job['k']:04d}"
         else:
             tid = f"sweep-{job['factor']}-{job['value']}-{job['k']:03d}"
+        for name, k in task.meta.get("camera_retries", {}).items():   # re-shot cameras in an inspection round
+            rejections[name] += k                                      # count as rejected candidates too
+            attempts += k
         task.id = tid
         task.seed = s
         task.factors = factors

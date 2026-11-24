@@ -69,7 +69,7 @@ Put a reverse proxy with HTTPS (Caddy, nginx) in front of it. Behind a proxy, pe
 
 - **Bench, Daily and hints:** work fully (tasks are generated live on the server).
 - **Ask Gemini:** works while the key is set and within the limits.
-- **Archive and Challenge:** show the suites in the repository (`sample`, `instruments`) **plus the full `v2` suite** (384 tasks with Gemini's answers).
+- **Archive and Challenge:** show the suites in the repository (`sample`, `instruments`) **plus the full `v2` suite** (384 tasks with Gemini's answers) and the **inspection rounds** suite (20 rounds).
 
 ### Where the v2 suite lives
 

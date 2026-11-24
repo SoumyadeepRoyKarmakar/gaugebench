@@ -24,6 +24,7 @@ FAMILY_LABELS = {
     "panel_alarm": "Panel alarm", "panel_max": "Panel max (mixed ranges)", "temporal_change": "Change over time",
     "dual_scale": "Dual scale", "level_reading": "Tank level", "panel_count": "Panel count",
     "dial_meter": "Clock-dial meter", "vernier": "Vernier caliper", "digital_display": "Digital display",
+    "inspection_round": "Inspection round",
 }
 
 CSS = """
@@ -153,6 +154,26 @@ def build_report(suite: Path) -> Path:
                      "".join(f"<td>{_pct(_acc([r for r in rows if r['family'] == f]))}</td>" for f in FAMILY_LABELS) + "</tr>")
         H.append("</table></div>")
 
+    # ---- inspection rounds: a job, scored reading by reading and alarm by alarm
+    round_rows = []
+    for m, rows in {**models, **baselines}.items():
+        rr = [r for r in rows if tasks[r["id"]]["answer_type"] == "round" and r.get("round")]
+        if not rr:
+            continue
+        got = sum(r["round"]["readings_correct"] for r in rr)
+        tot = sum(r["round"]["readings_total"] for r in rr)
+        want = sum(len(tasks[r["id"]]["answer"]["alarms"]) for r in rr)
+        caught = sum(len(r["round"]["alarms_caught"]) for r in rr)
+        false = sum(len(r["round"]["false_alarms"]) for r in rr)
+        round_rows.append(f"<tr><td>{html.escape(m)}</td><td>{len(rr)}</td><td>{_pct(_acc(rr))}</td>"
+                          f"<td>{_pct(got / tot if tot else None)}</td><td>{caught}/{want}</td><td>{false}</td></tr>")
+    if round_rows:
+        H.append("<h2>Inspection rounds</h2><p class=sub>A job rather than a question: log every gauge seen by 4–6 "
+                 "cameras and flag every one in its red band. A round counts as perfect only if every reading is "
+                 "within tolerance and the alarm list is exactly right.</p><div class=card><table>"
+                 "<tr><th>Model</th><th>Rounds</th><th>Perfect rounds</th><th>Readings right</th>"
+                 "<th>Alarms caught</th><th>False alarms</th></tr>" + "".join(round_rows) + "</table></div>")
+
     if not models:
         H.append("<h2>Model results</h2><div class=card>No model runs yet. Run "
                  "<code>python -m gaugebench evaluate SUITE --model claude:claude-opus-5-5</code>.</div>")
@@ -254,7 +275,11 @@ def build_report(suite: Path) -> Path:
             H.append(f"<h2>Failure gallery — {html.escape(best)}</h2><div class=gallery>")
             for r in fails:
                 t = tasks[r["id"]]
-                key = t["answer"] if t["answer_type"] == "choice" else f"{t['answer']} ± {t['tolerance']:.3g}"
+                if t["answer_type"] == "round":
+                    from .inspection import format_answer
+                    key = format_answer(t["answer"]["readings"], t["answer"]["alarms"])
+                else:
+                    key = t["answer"] if t["answer_type"] == "choice" else f"{t['answer']} ± {t['tolerance']:.3g}"
                 H.append(f"<div class=card><img loading=lazy src='{t['image']}' alt='{html.escape(t['id'])}'>"
                          f"<p><b>{html.escape(FAMILY_LABELS.get(t['family'], t['family']))}</b> · <code>{html.escape(t['id'])}</code><br>"
                          f"Key: <span class=ok>{html.escape(str(key))}</span> · Model: <span class=no>{html.escape(f"{r['parsed']:.4g}" if isinstance(r['parsed'], float) else str(r['parsed']))}</span></p></div>")

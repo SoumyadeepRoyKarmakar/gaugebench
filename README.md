@@ -19,6 +19,7 @@ Innodata AI Hackathon · Track 2: Visual Task Factory
 - **The problem.** Factories, refineries and utilities still run on analogue dials. Companies now point cameras at them and ask AI to log the readings and raise alarms. A misread pressure gauge can mean a missed over-pressure or a needless shutdown.
 - **The question.** Can today's AI models actually *read* an instrument, or do they just get close?
 - **What we built.** A factory that draws gauges, photographs them with realistic glare, tilt and blur, writes a question, and **proves the answer is readable from the pixels** before anyone is asked. It makes unlimited fresh tasks, so models can't have memorised them.
+- **Questions and jobs.** Besides single questions, GaugeBench sets a whole **inspection round**: log every gauge seen by several cameras and flag the ones in the red, the way a technician's shift round works.
 - **What we found.** Gemini 3.5 Flash-Lite is perfect at "roughly where is the needle?" but reads the **exact value right only about a third of the time**. In a plant, the exact value is the job.
 
 ## Results
@@ -64,6 +65,7 @@ Every task comes with:
 | Clock-dial meter | read an electricity meter whose 4–5 dials turn in alternating directions, using the "take the lower number" rule | exact integer (kWh) |
 | Vernier caliper | whole millimetres from the main scale plus tenths from the one vernier line that aligns | number ± 0.05 mm |
 | Digital display | read a 7-segment LCD/LED/VFD with ghost segments and a ×10/×100 indicator. This is the **control**: if models fail analogue dials but pass this, the problem is analogue reading, not the photo | number ± ½ last digit |
+| **Inspection round** | **a job:** log every gauge across 4–6 camera photos and flag the ones in the red | readings ± tolerance + alarm list |
 
 </details>
 
@@ -112,6 +114,25 @@ Eleven conditions are recorded for every task. Besides mixed tasks at levels 1�
 
 </details>
 
+## Inspection rounds: a job, not a question
+
+A single question shows whether a model can *read* a gauge. A plant needs more: someone has to walk the round, log every reading and catch the one gauge that is in trouble. An **inspection round** tests exactly that.
+
+![An inspection round: five camera photos, each a different instrument, unit and set of conditions](docs/images/readme-round.png)
+
+- **The job.** Photos from 4–6 plant cameras, each showing a different gauge with its own range, unit, multiplier and camera conditions. The model must log the reading of **every** gauge and list every gauge whose needle is **in its red band**. Some rounds have no alarms at all, so false alarms count too.
+- **Every photo is verified.** Each camera's photo passes the full single-dial validation (pixel re-read, glare, legibility, distance from the red band). A camera that fails is re-shot; the re-shots are logged as rejections.
+- **Scored like a supervisor would.** Each reading is checked against its own tolerance, and the alarm list is compared with the truth: alarms caught, alarms missed, false alarms. A round counts as passed **only if everything is right**, because missing one red gauge is the failure that matters.
+
+| Reference answerer | Perfect rounds | Readings right | Alarms caught | False alarms |
+|---|---|---|---|---|
+| Knows the key | 100% | 100% | 31 / 31 | 0 |
+| One reading just outside tolerance | 0% | 81% | 31 / 31 | 0 |
+| Random guessing | 0% | 7% | 10 / 31 | 21 |
+| Mid-scale guess, never raises an alarm | 0% | 2% | 0 / 31 | 0 |
+
+*20 rounds, offline reference answerers. Play one yourself in the Studio: pick **Inspection round** on the Bench.*
+
 ## GaugeBench Studio: try it yourself
 
 The Studio is the benchmark as an interactive web app. **[Open the live demo](https://gaugebench-studio.onrender.com)** or run it locally with `python -m gaugebench app`.
@@ -122,6 +143,8 @@ The Studio is the benchmark as an interactive web app. **[Open the live demo](ht
 | ![Daily](docs/images/studio-daily.png) | **Daily: five gauges a day.** The same for everyone, from a clean dial to a brutal one. One shot each, with a shareable row of result tiles and a day streak. |
 | ![Challenge](docs/images/studio-challenge.png) | **Challenge: you against the model.** Same images, same tolerance. After each answer you see what the model said and its reasoning. |
 | ![Archive](docs/images/studio-archive.png) | **Archive: every result.** Browse every task and every model answer, filter by instrument or by right/wrong, and open any task to see its key and validation evidence. |
+
+The Bench also plays **inspection rounds**: one row per camera on the work order, an ALARM toggle for gauges in the red, and a gauge-by-gauge readout of your round (and Gemini's) against the key.
 
 Also: **hints** that teach how to read each instrument without revealing the value, a **rank** from Trainee to Metrologist, and keyboard shortcuts (`G` generate, `H` hint, `L` loupe, `V` validator vision, `?` all shortcuts).
 
@@ -142,7 +165,8 @@ python -m gaugebench evaluate runs/demo --model gemini:gemini-3.5-flash-lite --b
 
 python -m gaugebench report runs/demo   # writes runs/demo/report.html
 python -m gaugebench app                # opens GaugeBench Studio
-python -m pytest -q                     # 21 tests, including mutation tests of the validator
+python -m gaugebench all runs/rounds --families inspection_round --per-family 20 --sweep 0   # inspection rounds
+python -m pytest -q                     # 22 tests, including mutation tests of the validator
 ```
 
 Evaluations are **cached and resumable**: a task that has been answered is never paid for twice. To add another model provider, write a small `Model` subclass in `gaugebench/models/`.
@@ -170,6 +194,7 @@ report.html                   leaderboard, capability curves, error analysis, fa
 | `spec.py` | conditions, realistic range presets, sampler, zones |
 | `render.py`, `level.py` | draw dials and sight-glasses with their evidence layers |
 | `instruments.py` | clock-dial meter, vernier caliper and digital display: renderers, pixel readers, task builders |
+| `inspection.py` | inspection rounds: per-camera photos and validation, the contact sheet, answer format and round scoring |
 | `scene.py` | panels and photo pairs; glare, perspective, exposure, blur, noise (applied to the evidence too) |
 | `tasks.py` | the dial and sight-glass task families and their ambiguity checks |
 | `validate.py` | independent pixel reader, visibility checks |

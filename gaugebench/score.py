@@ -48,6 +48,9 @@ def parse_choice(text: str, choices: list[str]) -> str | None:
 
 
 def score(task: dict, text: str) -> dict:
+    if task["answer_type"] == "round":                     # inspection round: readings + alarms
+        from .inspection import score_round
+        return score_round(task, text)
     if task["answer_type"] == "number":
         v = parse_number(text)
         if v is None:

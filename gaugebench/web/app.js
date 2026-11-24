@@ -81,8 +81,29 @@
     dial_meter: `<circle cx="6.5" cy="16" r="4.6" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="16" cy="16" r="4.6" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="25.5" cy="16" r="4.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path class="ac" d="M6.5 16 l2.4 -2.6 M16 16 l-2.6 -2.2 M25.5 16 l1.2 3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4 9.5 a4 4 0 0 1 5 0 M18.5 9.5 a4 4 0 0 0 -5 0" fill="none" stroke="#ff4f4f" stroke-width="1"/>`,
     vernier: `<rect x="3" y="8" width="26" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 16 v-3 M9 16 v-2 M12 16 v-2 M15 16 v-3 M18 16 v-2 M21 16 v-2 M24 16 v-3" stroke="currentColor" stroke-width="1"/><rect class="ac" x="9" y="16" width="14" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><path class="ac" d="M10 16 v3 M13 16 v2 M16 16 v3 M19 16 v2 M22 16 v3" stroke="currentColor" stroke-width="1"/>`,
     digital_display: `<rect x="3" y="8" width="26" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path class="ac" d="M7 12 h4 M11 12 v3.5 M7 15.5 h4 M7 15.5 v3.5 M7 19 h4 M14 12 h4 M18 12 v7 M21 12 h4 M21 12 v3.5 M21 15.5 h4 M25 15.5 v3.5 M21 19 h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`,
+    inspection_round: `<rect x="3" y="5" width="11" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="18" y="5" width="11" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="3" y="18" width="11" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect class="ac" x="18" y="18" width="11" height="9" rx="1.5" fill="rgba(255,79,79,.25)" stroke="#ff4f4f" stroke-width="1.6"/><circle cx="6" cy="8" r="1.2" fill="#ff4f4f"/><circle cx="21" cy="8" r="1.2" fill="#ff4f4f"/><circle cx="6" cy="21" r="1.2" fill="#ff4f4f"/>`,
     panel_count: `<circle cx="9" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="23" cy="9" r="5" fill="none" stroke="#ff4f4f" stroke-width="1.5"/><circle cx="9" cy="23" r="5" fill="none" stroke="#ff4f4f" stroke-width="1.5"/><circle cx="23" cy="23" r="5" fill="none" stroke="currentColor" stroke-width="1.3"/><text class="ac" x="16" y="19" font-size="8" text-anchor="middle" fill="currentColor" font-family="monospace" font-weight="700">2</text>`,
   };
+
+  // inspection rounds: the answer is a set of readings plus a list of alarms
+  const roundKeyText = (a) => `${Object.keys(a.readings).length} readings · alarms: ${a.alarms.length ? a.alarms.join(", ") : "none"}`;
+  function keyText(t, withTol = false) {
+    if (t.answer_type === "round") return roundKeyText(t.answer);
+    if (t.answer_type !== "number") return t.answer;
+    const unit = t.unit ? " " + t.unit : "";
+    return withTol ? `${fmtNum(t.answer)} ± ${fmtNum(t.tolerance)}${unit}` : `${fmtNum(t.answer)}${unit}`;
+  }
+  function roundAnswerText() {
+    const rows = $$("#answer-round .rr-row");
+    const parts = [], alarms = [];
+    for (const r of rows) {
+      const v = $(".rr-in", r).value.trim().replace(",", ".");
+      if (v === "") return null;
+      parts.push(`${r.dataset.tag}=${v}`);
+      if ($(".rr-alarm", r).getAttribute("aria-pressed") === "true") alarms.push(r.dataset.tag);
+    }
+    return `${parts.join("; ")} | ALARMS: ${alarms.length ? alarms.join(", ") : "none"}`;
+  }
 
   const FACTOR_LABEL = {
     scale_kind: "Scale", sweep: "Sweep", minors_per_major: "Minors", label_every: "Labels", multiplier: "Multiplier",
@@ -357,6 +378,7 @@
   }
 
   function showTask(t) {
+    S.lastRound = null;
     S.task = t; S.answered = false; S.choice = null; S.lastKey = null; S.lastYou = null; S.lastGem = null; S.checksFull = null;
     const vp = $("#viewport");
     const img = $("#task-img");
@@ -433,12 +455,28 @@
     $("#gem-wait").hidden = true;
     $("#btn-ask").hidden = false;
     $("#btn-ask").disabled = false;
-    const num = t.answer_type === "number";
+    const num = t.answer_type === "number", isRound = t.answer_type === "round";
     $("#answer-num").hidden = !num;
     const ch = $("#answer-choices");
-    ch.hidden = num;
+    ch.hidden = num || isRound;
     ch.innerHTML = "";
-    if (num) {
+    const rf = $("#answer-round");
+    rf.hidden = !isRound;
+    rf.innerHTML = "";
+    $("#btn-submit").firstChild.textContent = isRound ? "Submit round " : "Submit reading ";
+    if (isRound) {
+      rf.append(h("div", { class: "rr-head" }, h("span", {}, "Gauge"), h("span", {}, "Reading"), h("span", {}, "In the red?")));
+      (t.cameras || []).forEach((c, i) => {
+        const alarm = h("button", { type: "button", class: "rr-alarm", "aria-pressed": "false", title: "Flag this gauge as an alarm (needle in the red band)" }, "ALARM");
+        alarm.addEventListener("click", () => { alarm.setAttribute("aria-pressed", String(alarm.getAttribute("aria-pressed") !== "true")); sfx.click(); });
+        rf.append(h("div", { class: "rr-row", "data-tag": c.tag },
+          h("span", { class: "rr-cam" }, h("b", {}, `CAM ${i + 1}`), ` ${c.tag}`),
+          h("span", { class: "rr-field" }, h("input", { class: "rr-in", inputmode: "decimal", "aria-label": `Reading for ${c.tag}`, placeholder: "reading" }),
+            h("span", { class: "rr-unit" }, c.unit || "")),
+          alarm));
+      });
+      setTimeout(() => $("#answer-round .rr-in")?.focus({ preventScroll: true }), 50);
+    } else if (num) {
       $("#answer-input").value = "";
       $("#answer-unit").textContent = t.unit || "";
       setTimeout(() => $("#answer-input").focus({ preventScroll: true }), 50);
@@ -461,13 +499,18 @@
     e?.preventDefault();
     const t = S.task;
     if (!t || S.answered) return;
-    const raw = t.answer_type === "number" ? $("#answer-input").value.trim().replace(",", ".") : S.choice;
-    if (raw == null || raw === "") { toast(t.answer_type === "number" ? "Type your reading first." : "Pick an option first."); return; }
+    const raw = t.answer_type === "round" ? roundAnswerText()
+      : t.answer_type === "number" ? $("#answer-input").value.trim().replace(",", ".") : S.choice;
+    if (raw == null || raw === "") {
+      toast(t.answer_type === "round" ? "Log a reading for every gauge first." : t.answer_type === "number" ? "Type your reading first." : "Pick an option first.");
+      return;
+    }
     try {
       const r = await api("/api/answer", { id: t.id, answer: raw });
       S.answered = true;
       S.lastKey = r.key;
       S.lastYou = r.score.parsed;
+      S.lastRound = r.score.round || null;
       bump("you", r.score.correct);
       record({ f: t.family, c: r.score.correct, tu: r.score.err_tol_units ?? null, h: !!S.hinted, m: "bench" });
       showVerdict(r.score.correct ? "pass" : "fail", r.key, r.score);
@@ -506,8 +549,38 @@
     scrollOnPhone(v);
   }
 
+  function renderRoundReadout() {
+    const key = S.lastKey, you = S.lastRound, gem = S.lastGem?.round;
+    const tags = Object.keys(key.answer.readings);
+    const unitOf = Object.fromEntries((S.task.cameras || []).map((c) => [c.tag, c.unit]));
+    const flag = (r, tag) => {
+      const flagged = r.alarms_caught.includes(tag) || r.false_alarms.includes(tag);
+      const isAlarm = key.answer.alarms.includes(tag);
+      if (!flagged && !isAlarm) return "";
+      return ` <span class="rr-flag ${flagged === isAlarm ? "ok" : "bad"}">${flagged ? "⚑ alarm" : "missed alarm"}</span>`;
+    };
+    const cell = (r, tag) => {
+      const g = r.per_gauge[tag];
+      if (g.given == null) return `<td class="bad">—${flag(r, tag)}</td>`;
+      return `<td class="${g.correct ? "ok" : "bad"}">${esc(fmtExact(g.given))} ${g.correct ? "✓" : "✗"}${flag(r, tag)}</td>`;
+    };
+    const rows = tags.map((tag) => `<tr><td class="rr-g">${esc(tag)}${key.answer.alarms.includes(tag) ? ' <span class="rr-red">RED</span>' : ""}</td>`
+      + (you ? cell(you, tag) : "")
+      + `<td>${esc(fmtNum(key.answer.readings[tag]))} <span class="rr-tol">± ${esc(fmtNum(key.tolerances[tag]))} ${esc(unitOf[tag] || "")}</span></td>`
+      + (gem ? cell(gem, tag) : "") + "</tr>").join("");
+    const summary = (who, r) => r ? `<p class="rr-sum"><b>${who}:</b> ${r.readings_correct}/${r.readings_total} readings right · `
+      + `${r.alarms_caught.length}/${key.answer.alarms.length} alarms caught`
+      + (r.false_alarms.length ? ` · ${r.false_alarms.length} false alarm${r.false_alarms.length > 1 ? "s" : ""}` : "") + "</p>" : "";
+    $("#readout").innerHTML = `<table class="rr-table"><thead><tr><th>Gauge</th>${you ? "<th>You</th>" : ""}<th>Key</th>${gem ? "<th>Gemini</th>" : ""}</tr></thead>`
+      + `<tbody>${rows}</tbody></table>${summary("You", you)}${summary("Gemini", gem)}`;
+    $("#readout").classList.add("is-round");
+    $("#strip").style.display = "none";
+  }
+
   function renderReadout() {
     const key = S.lastKey, t = S.task;
+    $("#readout").classList.remove("is-round");
+    if (key.answer_type === "round") return renderRoundReadout();
     const num = key.answer_type === "number";
     const unit = key.unit ? ` ${key.unit}` : "";
     const rows = [];
@@ -756,7 +829,7 @@
     for (const t of list) {
       const r = res[t.id];
       const badge = !r || r.error ? "none" : r.correct ? "pass" : "fail";
-      const keyTxt = t.answer_type === "number" ? `${fmtNum(t.answer)}${t.unit ? " " + t.unit : ""}` : t.answer;
+      const keyTxt = keyText(t);
       const ans = r && !r.error ? (t.answer_type === "number" ? fmtExact(r.parsed) : r.parsed ?? "—") : null;
       const card = h("button", { class: "card", "data-id": t.id, title: t.id },
         h("img", { src: `/thumb/${encodeURIComponent(A.suite)}/${encodeURIComponent(t.id)}.jpg`, loading: "lazy", alt: "",
@@ -797,7 +870,7 @@
         </div>
         <p class="dr-q">${esc(t.question)}</p>
         <div class="dr-key"><span class="dk-label">Answer key</span>
-          <span class="dk-val">${esc(num ? `${fmtNum(t.answer)} ± ${fmtNum(t.tolerance)}${unit}` : t.answer)}</span></div>
+          <span class="dk-val">${esc(keyText(t, true))}</span></div>
         <section class="dr-section"><h4>Answers</h4>
           ${rows ? `<table class="ans-table"><thead><tr><th>Model</th><th>Answer</th><th></th><th>Error</th></tr></thead><tbody>${rows}</tbody></table>` : `<p style="color:var(--ink-3)">No model has answered this suite yet.</p>`}
         </section>
@@ -1244,7 +1317,7 @@
   function dailyPlan(key = dateKey()) {
     let s = fnv(`gaugebench-daily:${key}`);
     const rnd = () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-    const fams = S.meta.families.map((f) => f.id);
+    const fams = S.meta.families.map((f) => f.id).filter((f) => f !== "inspection_round");
     for (let i = fams.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [fams[i], fams[j]] = [fams[j], fams[i]]; }
     return fams.slice(0, 5).map((f, i) => ({ family: f, level: i + 1, seed: fnv(`${key}:${i}:${f}`) }));
   }
