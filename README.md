@@ -1,59 +1,114 @@
-# GaugeBench: a visual task factory for industrial gauge reading
+<div align="center">
 
-**Innodata AI Hackathon, Track 2 (Visual Task Factory)**
+# GaugeBench
 
-**Live demo: [gaugebench-studio.onrender.com](https://gaugebench-studio.onrender.com)** (GaugeBench Studio: generate and read gauges, play the Daily, challenge Gemini, browse every result). On the free plan the first visit after a quiet spell takes about a minute to wake the server.
+**A visual task factory that tests whether AI can really read industrial gauges.**
 
-GaugeBench generates synthetic photos of analogue industrial gauges, writes questions about them, and stores answer keys that are known exactly and checked independently of the model under test. It then measures how well multimodal AI models actually *read* instruments.
+Innodata AI Hackathon · Track 2: Visual Task Factory
 
-## Why this problem matters
+[**▶ Try the live demo**](https://gaugebench-studio.onrender.com) · [How it works](#how-it-works) · [Results](#results) · [Run it yourself](#run-it-yourself)
 
-Plants still run on analogue dials: pressure, temperature, flow and vacuum. Utilities and factories increasingly point cameras or phones at those dials and ask an AI to log the reading or raise an alarm. A misread pressure gauge can mean a missed over-pressure, a wrong maintenance call, or a false shutdown. Reading a dial looks easy but combines several skills where models are known to be weak:
+![GaugeBench Studio: a clock-dial meter generated live, with its validator checks and the work order](docs/images/studio-bench.png)
 
-- finding the needle angle precisely
-- mapping that angle onto a scale that may be non-linear
-- applying a printed multiplier
-- comparing dials with different ranges
-- coping with glare and camera tilt
+</div>
 
-## What the factory produces
+> The live demo runs on a free server. If nobody has visited for a while, the first page load takes about a minute.
 
-Each **task package** is one folder:
+## The idea in 30 seconds
 
-```
-tasks/<task_id>/image.png     the photographed gauge / panel
-tasks/<task_id>/task.json     question, answer key, tolerance, every visual factor,
-                              gauge specs, seed, and the full validation evidence
-manifest.jsonl                one line per published task
-generation_log.json           attempts, acceptances, and rejection reasons
-results/<model>.jsonl         raw model outputs and per-task scores
-report.html                   leaderboard, capability curves, error analysis, failure gallery
-```
+- **The problem.** Factories, refineries and utilities still run on analogue dials. Companies now point cameras at them and ask AI to log the readings and raise alarms. A misread pressure gauge can mean a missed over-pressure or a needless shutdown.
+- **The question.** Can today's AI models actually *read* an instrument, or do they just get close?
+- **What we built.** A factory that draws gauges, photographs them with realistic glare, tilt and blur, writes a question, and **proves the answer is readable from the pixels** before anyone is asked. It makes unlimited fresh tasks, so models can't have memorised them.
+- **What we found.** Gemini 3.5 Flash-Lite is perfect at "roughly where is the needle?" but reads the **exact value right only about a third of the time**. In a plant, the exact value is the job.
 
-### Twelve task families on five instrument geometries (different reasoning, not just different wording)
+## Results
+
+![Gemini 3.5 Flash-Lite accuracy by skill: zone status 100%, exact reading 36%](docs/images/readme-results.png)
+
+What this shows:
+
+- **Coarse judgements are solved.** Which colour band is the needle in? Which gauge on a panel is in alarm? The model gets these right almost every time.
+- **Precise reading is not.** Asked for the actual number, it is right about 1 time in 3. It snaps to the nearest labelled tick: a needle at 4.6 bar becomes "about 4". Its wrong numbers are close but outside tolerance, not wild guesses.
+- **Hard conditions barely matter.** Accuracy is about the same on clean dials and on the hardest tilted, glary ones. The weakness is precise reading itself, not bad photos.
+- **The scoring is provably fair.** An answerer that knows the key scores 100%, one that is just outside tolerance scores 0%, and random guessing scores about 7%.
+
+*Results so far cover the answered tasks shown in the chart (the free API tier has a daily limit). Every answer, with the model's reasoning, is browsable in the [live Archive](https://gaugebench-studio.onrender.com/?view=archive).*
+
+## What a task looks like
+
+Twelve kinds of question on five kinds of instrument. Each tests a different visual skill, not just different wording.
+
+![Twelve example tasks, one per task family, each with its answer key](docs/images/readme-gallery.png)
+
+Every task comes with:
+
+- **the image** a model or a person sees
+- **a question**, e.g. *"What is the actual measured value it shows, in kPa?"*
+- **an answer key with a tolerance** of half the smallest scale division, the standard rule for reading instruments
+- **every condition used to make it** and **the full validation evidence**, so any task can be audited or regenerated from its seed
+
+<details>
+<summary><b>All 12 task families, explained</b></summary>
 
 | Family | What the model must do | Answer |
 |---|---|---|
-| `read_value` | precise reading, including non-linear (√, log) scales, offset/negative ranges and printed multipliers (×10, ×0.1) | number ± tolerance |
-| `zone_status` | relate the needle to coloured safety bands (high- *and* low-alarm layouts) | normal / warning / danger |
-| `setpoint_deviation` | read two needles (actual and red set point) and subtract | signed number |
-| `panel_alarm` | scan a 3–6 gauge panel and find the one in its red zone | instrument tag |
-| `panel_max` | compare values across dials with **different ranges**; the furthest-turned needle is often *not* the highest value (a recorded "range trap") | instrument tag |
-| `temporal_change` | read the same dial in two photos and compute the change | signed number |
-| `dual_scale` | pick the right ring on a two-scale dial (bar/psi, kPa/psi, °C/°F) — the other ring is a built-in distractor | number ± tolerance |
-| `level_reading` | read a vertical tank sight-glass (a different instrument geometry: linear, vertical, liquid surface) | number ± tolerance |
-| `panel_count` | count how many of 4–6 dials are outside their green band (counting + per-dial judgement) | exact integer |
-| `dial_meter` | read a utility **clock-dial meter**: 4–5 small dials that turn in alternating directions, applying the "take the lower number" convention across them | exact integer (kWh) |
-| `vernier` | read a **vernier caliper**: whole mm from the main scale (numbered in cm) plus tenths from the one vernier line that aligns, which is sub-division precision in its purest form | number ± 0.05 mm |
-| `digital_display` | read a **7-segment panel meter** (LCD, red LED or VFD) with ghost segments, a decimal point and sometimes a lit ×10/×100 annunciator. It is the *digital control*: does a model's trouble come from analogue reading or from the photo? | number ± ½ last digit |
+| Read the value | precise reading, including non-linear (√, log) scales, negative ranges and printed multipliers (×10, ×0.1) | number ± tolerance |
+| Zone status | relate the needle to coloured safety bands (high- *and* low-alarm layouts) | normal / warning / danger |
+| Set-point deviation | read two needles (actual and red set point) and subtract | signed number |
+| Panel alarm | scan a 3–6 gauge panel and find the one in its red zone | instrument tag |
+| Panel max | compare dials with **different ranges**: the furthest-turned needle is often *not* the highest value | instrument tag |
+| Change over time | read the same dial in two photos and compute the change | signed number |
+| Dual scale | pick the right ring on a two-scale dial (bar/psi, °C/°F); the other ring is a distractor | number ± tolerance |
+| Tank level | read a vertical sight-glass: a different geometry with a liquid surface | number ± tolerance |
+| Panel count | count how many of 4–6 dials are outside their green band | exact integer |
+| Clock-dial meter | read an electricity meter whose 4–5 dials turn in alternating directions, using the "take the lower number" rule | exact integer (kWh) |
+| Vernier caliper | whole millimetres from the main scale plus tenths from the one vernier line that aligns | number ± 0.05 mm |
+| Digital display | read a 7-segment LCD/LED/VFD with ghost segments and a ×10/×100 indicator. This is the **control**: if models fail analogue dials but pass this, the problem is analogue reading, not the photo | number ± ½ last digit |
 
-The three newer instruments have their own independent pixel readers: pointer angles per dial for the meter, tick-mask alignment for the vernier, and luminance at segment positions for the display. They also have their own ambiguity checks: no meter pointer sitting exactly on a number, and the vernier's aligned line resolvable after blur.
+</details>
 
-### Eleven visual difficulty factors, all recorded per task
+## How it works
+
+```mermaid
+flowchart LR
+    A["1. Sample a spec<br/>range · scale · zones · conditions"] --> B["2. Draw the instrument<br/>+ hidden evidence masks"]
+    B --> C["3. Photograph it<br/>glare · tilt · blur · noise"]
+    C --> D{"4. Re-read it<br/>from the pixels"}
+    D -- "readable" --> E["5. Publish<br/>image + question + key"]
+    D -- "not readable" --> R["Reject, log why,<br/>retry with a new seed"]
+    R --> A
+    E --> F["6. Ask the models<br/>Gemini · Claude · baselines"]
+    F --> G["7. Score within tolerance<br/>→ report + Studio"]
+```
+
+The same seed always produces the same task, byte for byte. A new seed produces brand-new tasks, so the benchmark can be regenerated whenever a model might have trained on the old one.
+
+### Proving every answer is readable
+
+The generator chooses the needle position, so it knows the answer. But that doesn't prove the *photo* shows it clearly. So before any task is published, an **independent checker reads it back from the pixels** like a technician would. It finds the needle, finds the tick marks, counts divisions between the printed numbers and interpolates. It never uses the generator's formula.
+
+![The photo the model sees, what the validator measured, and a candidate it rejected](docs/images/readme-validator.png)
+
+A candidate is rejected if any check fails:
+
+- **the pixel reading** doesn't match the answer key within tolerance
+- **visibility:** glare covers the needle, the needle is too faint, tick marks are under 3 px apart, or the numbers are under 9 px tall
+- **ambiguity:** the needle sits on a zone boundary, two gauges are too close to call, or two needles overlap
+
+In the main suite, **40% of candidates were rejected** before publication. The top reasons were glare over the needle and printed numbers overlapping. Nobody, human or model, is ever asked an unreadable question. Mutation tests prove it: shift the answer key by 3 tolerances and the validator catches it every time.
+
+### Controlled difficulty
+
+Eleven conditions are recorded for every task. Besides mixed tasks at levels 1–5, the suite includes **single-factor sweeps**: the same clean dial with exactly one condition changed. These show which visual skill breaks a model.
+
+![The same gauge under eight different conditions](docs/images/readme-conditions.png)
+
+<details>
+<summary><b>All 11 difficulty factors</b></summary>
 
 | Factor | Values |
 |---|---|
-| Scale type | linear, offset, sqrt, log |
+| Scale type | linear, offset, square-root, log |
 | Sweep | 270°, 180°, 90° |
 | Minor divisions | 2, 5, 10 |
 | Label density | every major tick, or every other one |
@@ -65,126 +120,80 @@ The three newer instruments have their own independent pixel readers: pointer an
 | Sensor noise | 0–16 |
 | Exposure | 1.0 down to 0.45 |
 
-A suite contains two parts:
+</details>
 
-- **Mixed tasks** at difficulty levels 1–5.
-- **Single-factor sweeps**: a clean dial where exactly one factor changes. These produce capability curves that pinpoint which visual skill fails.
+## GaugeBench Studio: try it yourself
 
-## How the answer keys are verified (independently of the model)
+The Studio is the benchmark as an interactive web app. **[Open the live demo](https://gaugebench-studio.onrender.com)** or run it locally with `python -m gaugebench app`.
 
-The generator chooses the needle value, so it knows the answer. That alone does not prove the *image* shows it. Every candidate task therefore passes three groups of checks before it is published. A failed candidate is regenerated with a new seed, and the rejection reason is logged.
+| | |
+|---|---|
+| ![Bench](docs/images/studio-bench.png) | **Bench: the factory, live.** Pick an instrument, turn the condition knobs, press Generate. A new task is drawn, photographed and validated in about a second. Read it with the loupe, get scored with the same tolerance the models get, see what the validator measured and which candidates were rejected, then **Ask Gemini** the same question. |
+| ![Daily](docs/images/studio-daily.png) | **Daily: five gauges a day.** The same for everyone, from a clean dial to a brutal one. One shot each, with a shareable row of result tiles and a day streak. |
+| ![Challenge](docs/images/studio-challenge.png) | **Challenge: you against the model.** Same images, same tolerance. After each answer you see what the model said and its reasoning. |
+| ![Archive](docs/images/studio-archive.png) | **Archive: every result.** Browse every task and every model answer, filter by instrument or by right/wrong, and open any task to see its key and validation evidence. |
 
-1. **Independent pixel re-reading** (`validate.cv_read`). A deterministic computer-vision reader reads the dial the way a technician does, and never uses the generator's value→angle formula:
-   - finds the needle direction from needle pixels
-   - finds individual tick marks from tick pixels (connected components)
-   - attaches the printed labels to their ticks
-   - counts the divisions between the two labels on either side of the needle
-   - interpolates within the division
+Also: **hints** that teach how to read each instrument without revealing the value, a **rank** from Trainee to Metrologist, and keyboard shortcuts (`G` generate, `H` hint, `L` loupe, `V` validator vision, `?` all shortcuts).
 
-   Its reading must match the key within tolerance. On clean dials its error averages under 0.15× the tolerance, and dials too dense to resolve are rejected.
-2. **Visibility checks on the final photographed image**:
-   - glare must not cover the needle
-   - the needle must contrast with its surroundings
-   - neighbouring tick marks must stay at least 3 px apart after perspective
-   - printed numbers must be at least 9 px tall
-3. **Ambiguity checks per family**:
-   - the needle is not on a zone boundary
-   - the "highest" gauge wins by more than twice the combined reading error
-   - the set-point and actual needles do not overlap
-   - a change is larger than its reading error
+**Secure by design.** The answer key stays on the server until you answer. On the hosted site the Gemini API key lives only on the server, never in the browser, and usage is capped per visitor and per day. See [docs/DEPLOY.md](docs/DEPLOY.md).
 
-**Tolerance** follows instrument-reading practice: **half of the smallest local division**. When an answer combines two readings, both tolerances are added.
-
-### Proof that scoring separates right from wrong
-
-`python -m gaugebench all` runs four offline reference answerers on every suite:
-
-| Answerer | What it does | Expected |
-|---|---|---|
-| `oracle` | returns the key | 100% |
-| `near_miss` | key shifted by 2.5× tolerance, or a wrong option | 0% |
-| `random` | uniform guess | chance (~9%) |
-| `shortcut` | mid-scale guess, always "normal", always 1, furthest-turned needle | low (~8%) |
-
-There is also a **blind ablation**: `--blind` sends the same question without the image, to show the tasks really need vision.
-
-## Quick start
+## Run it yourself
 
 ```bash
 pip install -r requirements.txt
 
-# generate + validate + offline baselines + report (no API key needed)
+# Build a suite: generate, validate, run the offline baselines, write the report (no API key needed)
 python -m gaugebench all runs/demo --per-family 20 --sweep 6 --seed 7
 
-# evaluate a Claude model (credentials come from ANTHROPIC_API_KEY — never commit keys)
+# Evaluate a model. Put API keys in a git-ignored .env file: GEMINI_API_KEY=... / ANTHROPIC_API_KEY=...
+python -m gaugebench evaluate runs/demo --model gemini:gemini-3.5-flash-lite --workers 1
 python -m gaugebench evaluate runs/demo --model claude:claude-opus-5-5 --workers 4
-python -m gaugebench evaluate runs/demo --model claude:claude-opus-5-5 --blind --limit 60
-# evaluate a Gemini model — free API key from https://aistudio.google.com
-# put keys in a local .env file (git-ignored, loaded automatically):  GEMINI_API_KEY=...  ANTHROPIC_API_KEY=...
-python -m gaugebench list-models gemini      # which model ids your key can use
-python -m gaugebench evaluate runs/demo --model gemini:<model-id> --workers 1   # free tier is rate-limited
+python -m gaugebench evaluate runs/demo --model gemini:gemini-3.5-flash-lite --blind --limit 60   # no image: proves tasks need vision
 
-python -m gaugebench report runs/demo        # open runs/demo/report.html
-
-python -m pytest -q                          # 21 tests incl. mutation tests of the validator
-
-python -m gaugebench app                     # GaugeBench Studio, the interactive web app
+python -m gaugebench report runs/demo   # writes runs/demo/report.html
+python -m gaugebench app                # opens GaugeBench Studio
+python -m pytest -q                     # 21 tests, including mutation tests of the validator
 ```
 
-Evaluation runs are **resumable and cached**. Tasks already answered are never paid for twice. To add another provider, write a `Model` subclass in `gaugebench/models/` that returns `{"text": ...}`.
+Evaluations are **cached and resumable**: a task that has been answered is never paid for twice. To add another model provider, write a small `Model` subclass in `gaugebench/models/`.
 
-## GaugeBench Studio (interactive web app)
+<details>
+<summary><b>What a suite contains on disk</b></summary>
 
-`python -m gaugebench app` opens a local web app at `http://127.0.0.1:8765`. It needs no extra installs (Python standard library server, vanilla JS front end).
+```
+tasks/<task_id>/image.png     the photographed instrument
+tasks/<task_id>/task.json     question, answer key, tolerance, every condition, seed, validation evidence
+manifest.jsonl                one line per published task
+generation_log.json           attempts, acceptances and rejection reasons
+results/<model>.jsonl         raw model outputs and per-task scores
+report.html                   leaderboard, capability curves, error analysis, failure gallery
+```
 
-**Bench**: the factory, live.
-- Pick one of the 12 task families and set the 11 conditions on rotary knobs (or roll a random L1–L5 mix), then **Generate**. A new task is drawn, photographed and validated in about a second.
-- Read it yourself, using the **loupe** (hover to magnify) if you like. You are scored with the same tolerance the models get, on a paper work order with a tolerance strip that shows your reading against the key.
-- **Validator vision** shows what the independent checker measured: needle pixels in orange, set points in magenta, glare in cyan.
-- The **factory floor** shows every candidate that was rejected before this task was published, and why (glare over the needle, numbers overlapping, needle on a zone edge...).
-- **Ask Gemini** sends the exact same image and question to the model (needs `GEMINI_API_KEY` in `.env`) and puts its answer on the same strip, with its reasoning.
-- The answer key and the true needle value stay on the server until you submit or reveal (enforced by a test).
-- **Copy link** recreates exactly the task on screen (instrument, seed and conditions) for anyone running the app.
-- **Task pack** downloads the image plus a JSON with the key, the factors and the full validation evidence, so any live task can join a dataset.
+</details>
 
-**Daily**: five gauges a day, the same for everyone (seeded by the date), ramping from a clean L1 to a brutal L5. You get one shot. Your result is a row of tiles you can copy and share (🟧 right, 🟨 right with a hint, ⬛ missed), with a day streak and a countdown to the next one.
-
-**Challenge**: you against a model, head to head, on 5, 10 or 20 real tasks from a suite. After each answer you see the model's recorded answer and reasoning on the same image; at the end you get the final score and your time against the model's. It makes no API calls, because the model's answers come from the suite's results.
-
-**Archive**: browse any suite in `runs/` as a grid, filter by family or by right/wrong for any model, and open a task to see the image, the key, every model's answer and reasoning, and all validator checks.
-
-**Hints**: every task has a *Hint* button that explains how to read that instrument (division size, which ring, the multiplier, the meter's reading rule) without ever giving the value away (enforced by a test). Answers given after a hint are marked as assisted.
-
-**Your record**: click your score in the header to see your rank (Trainee → Apprentice → Technician → Senior technician → Calibration engineer → Metrologist, based on recent accuracy), accuracy per instrument, best streak, and how you miss: near misses (snapping to a tick, like the models) or wild misses (a missed multiplier or the wrong scale). Rank-ups and 5-in-a-row streaks get a little celebration.
-
-Small touches: synthesised mechanical sounds (knob clicks, the stamp, pass/fail chimes; `M` to mute), confetti on wins, and a shortcuts panel (`?`).
-
-Keyboard: `G` generate, `Enter` submit, `1`–`9` pick a choice, `H` hint, `L` loupe, `V` validator vision, `M` sound, `R` your record, `?` shortcuts, `Esc` close.
-
-### Putting it online
-
-The repository is ready to host as a public site (`Dockerfile`, `render.yaml`). **The Gemini API key stays on the server**: it is set as a secret in the host's dashboard, read only by the Python backend, and never sent to the browser or stored in the image or the repository. Public mode (`GAUGEBENCH_PUBLIC=1`) also caps Ask Gemini per visitor and per day, ignores any model a visitor tries to choose, caches answers so a task is never paid for twice, limits generation work and request size, hides developer error details, and sends strict security headers (all enforced by a test). The large `v2` suite (171 MB of images) is kept out of git as an asset of the repository's `data` release and baked into the image at build time, so the hosted Archive and Challenge have the full results. Step-by-step instructions: [docs/DEPLOY.md](docs/DEPLOY.md).
-
-## Code map
+<details>
+<summary><b>Code map</b></summary>
 
 | File | Role |
 |---|---|
 | `scales.py` | value ↔ angle for linear, sqrt and log scales; ticks; tolerance |
-| `spec.py` | factors, realistic range presets, sampler, zones |
-| `render.py` | draws a gauge and its evidence layers (needle, tick masks, label positions) |
-| `scene.py` | panels and pairs; glare, perspective, exposure, blur, noise, applied to the masks too |
-| `validate.py` | independent pixel reader, visibility checks, margin checks |
-| `tasks.py` | the nine dial and sight-glass task families with their ambiguity checks |
-| `level.py` | tank level sight-glass renderer |
+| `spec.py` | conditions, realistic range presets, sampler, zones |
+| `render.py`, `level.py` | draw dials and sight-glasses with their evidence layers |
 | `instruments.py` | clock-dial meter, vernier caliper and digital display: renderers, pixel readers, task builders |
-| `generate.py` | sample → validate → publish or reject; deterministic seeds |
-| `models/` | Claude and Gemini adapters (official SDKs) and offline baselines |
-| `evaluate.py`, `score.py`, `report.py` | running models, scoring, and the HTML report |
-| `app.py`, `web/` | GaugeBench Studio: JSON API and the interactive front end |
+| `scene.py` | panels and photo pairs; glare, perspective, exposure, blur, noise (applied to the evidence too) |
+| `tasks.py` | the dial and sight-glass task families and their ambiguity checks |
+| `validate.py` | independent pixel reader, visibility checks |
+| `generate.py` | sample → validate → publish or reject, with deterministic seeds |
+| `models/` | Gemini and Claude adapters (official SDKs) and offline baselines |
+| `evaluate.py`, `score.py`, `report.py` | running models, scoring, the HTML report |
+| `app.py`, `web/` | GaugeBench Studio: JSON API and front end |
+| `scripts/readme_figures.py` | regenerates the figures in this README |
 
-## Limitations (honest statement)
+</details>
 
-- Images are rendered, not real photos. Glare, tilt, blur and noise approximate camera effects, but there are no real-world textures, scratches or reflections on curved glass.
-- The pixel reader uses label *positions and values* from the renderer instead of running OCR. Needle and tick evidence come from pixels.
-- Answers are parsed from a final `ANSWER:` line. A model that ignores the format is scored as a parse failure, and the report shows these separately.
-- Covered instruments: round dials (single, set-point and dual-scale) and level sight-glasses. Digital displays, multi-pointer clocks and strip-chart recorders are natural extensions.
+## Limitations
+
+- **Rendered, not real photos.** Glare, tilt, blur and noise approximate a camera, but there are no real scratches, textures or curved-glass reflections. Next step: a small real-photo validation set.
+- **No OCR in the checker.** The pixel reader takes the printed numbers' positions and values from the renderer; the needle and tick evidence come from the pixels.
+- **Strict answer format.** Answers are parsed from a final `ANSWER:` line. A model that ignores the format is counted as a parse failure, reported separately.
+- **Next instruments:** strip-chart recorders and multimeters with range switches.
