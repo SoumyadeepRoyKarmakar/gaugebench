@@ -1,5 +1,5 @@
 cachedir: .pytest_cache
-rootdir: C:\Users\KIIT\Downloads\Innodata AI Hackathon\gauge-bench
+rootdir: gauge-bench
 plugins: anyio-4.10.0
 collecting ... collected 23 items
 

@@ -4,8 +4,6 @@
 
 **A visual task factory that tests whether AI can really read industrial gauges.**
 
-Innodata AI Hackathon · Track 2: Visual Task Factory
-
 [**▶ Try the live demo**](https://gaugebench-studio.onrender.com) · [How it works](#how-it-works) · [Results](#results) · [Run it yourself](#run-it-yourself) · [Technical design](docs/TECHNICAL.md) · [Validation evidence](docs/VALIDATION.md)
 
 ![GaugeBench Studio: a clock-dial meter generated live, with its validator checks and the work order](docs/images/studio-bench.png)
@@ -18,9 +16,9 @@ Innodata AI Hackathon · Track 2: Visual Task Factory
 
 - **The problem.** Factories, refineries and utilities still run on analogue dials. Companies now point cameras at them and ask AI to log the readings and raise alarms. A misread pressure gauge can mean a missed over-pressure or a needless shutdown.
 - **The question.** Can today's AI models actually *read* an instrument, or do they just get close?
-- **What we built.** A factory that draws gauges, photographs them with realistic glare, tilt and blur, writes a question, and **proves the answer is readable from the pixels** before anyone is asked. It makes unlimited fresh tasks, so models can't have memorised them.
+- **What it is.** A factory that draws gauges, photographs them with realistic glare, tilt and blur, writes a question, and **proves the answer is readable from the pixels** before anyone is asked. It makes unlimited fresh tasks, so models can't have memorised them.
 - **Questions and jobs.** Besides single questions, GaugeBench sets a whole **inspection round**: log every gauge seen by several cameras and flag the ones in the red, the way a technician's shift round works.
-- **What we found.** Gemini 3.5 Flash-Lite is perfect at "roughly where is the needle?" but reads the **exact value right only about a third of the time**. In a plant, the exact value is the job.
+- **What it found.** Gemini 3.5 Flash-Lite is perfect at "roughly where is the needle?" but reads the **exact value right only about a third of the time**. In a plant, the exact value is the job.
 
 ## Results
 

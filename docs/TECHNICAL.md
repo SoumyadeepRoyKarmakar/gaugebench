@@ -1,6 +1,6 @@
 # GaugeBench: technical explanation
 
-This document covers the design decisions, core assumptions, reused components, model choices and task-variation strategy behind GaugeBench (Innodata AI Hackathon, Track 2: Visual Problem & Model Evaluation). The evidence that the pipeline works is in [VALIDATION.md](VALIDATION.md); how to run it is in the [README](../README.md).
+This document covers the design decisions, core assumptions, reused components, model choices and task-variation strategy behind GaugeBench. The evidence that the pipeline works is in [VALIDATION.md](VALIDATION.md); how to run it is in the [README](../README.md).
 
 ## 1. The visual problem
 
