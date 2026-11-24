@@ -241,7 +241,57 @@ def results(suite: str = "v2", model: str = "gemini-3.5-flash-lite") -> Path:
     return out
 
 
+# ------------------------------------------------------------------------------- pipeline
+STEPS = [("Sample a spec", "range, scale, zones,\nconditions"), ("Draw it", "dial + hidden\nevidence masks"),
+         ("Photograph it", "glare, tilt,\nblur, noise"), ("Re-read it", "from the pixels,\nindependently"),
+         ("Publish", "image, question,\nanswer key"), ("Ask the models", "Gemini, Claude,\nbaselines"),
+         ("Score", "within tolerance,\nreport + Studio")]
+
+
+def pipeline() -> Path:
+    S = 2
+    n, bw, bh, gap, pad = len(STEPS), 200 * S, 112 * S, 44 * S, 24 * S
+    W = n * bw + (n - 1) * gap + 2 * pad
+    H = pad + bh + 76 * S
+    img = Image.new("RGB", (W, H), BG)
+    d = ImageDraw.Draw(img)
+    ft, fs, fn = font(19 * S, True), font(14 * S), font(12 * S, True)
+    xs = [pad + i * (bw + gap) for i in range(n)]
+    y = pad
+    for i, (title, sub) in enumerate(STEPS):
+        verify = i == 3
+        fill = ORANGE if verify else (NAVY if i >= 5 else (232, 238, 247))
+        fg = (255, 255, 255) if (verify or i >= 5) else NAVY
+        d.rounded_rectangle([xs[i], y, xs[i] + bw, y + bh], 12 * S, fill=fill)
+        d.text((xs[i] + 16 * S, y + 12 * S), f"{i + 1:02d}", font=fn, fill=fg if fg != NAVY else ORANGE)
+        d.text((xs[i] + 16 * S, y + 30 * S), title, font=ft, fill=fg)
+        d.multiline_text((xs[i] + 16 * S, y + 58 * S), sub, font=fs, fill=fg if fg != NAVY else MUTED,
+                         spacing=3 * S)
+        if i < n - 1:                            # arrow to the next step
+            ax, ay = xs[i] + bw + 8 * S, y + bh // 2
+            bx = xs[i + 1] - 8 * S
+            d.line([ax, ay, bx - 10 * S, ay], fill=MUTED, width=3 * S)
+            d.polygon([(bx, ay), (bx - 12 * S, ay - 7 * S), (bx - 12 * S, ay + 7 * S)], fill=MUTED)
+    # reject loop: from "Re-read it" back to "Sample a spec"
+    lx1, lx0 = xs[3] + bw // 2, xs[0] + bw // 2
+    ly = y + bh + 46 * S
+    col = ORANGE
+    d.line([lx1, y + bh + 6 * S, lx1, ly], fill=col, width=3 * S)
+    d.line([lx1, ly, lx0, ly], fill=col, width=3 * S)
+    d.line([lx0, ly, lx0, y + bh + 18 * S], fill=col, width=3 * S)
+    d.polygon([(lx0, y + bh + 6 * S), (lx0 - 7 * S, y + bh + 18 * S), (lx0 + 7 * S, y + bh + 18 * S)], fill=col)
+    label = "not readable? reject it, log why, retry with a new seed"
+    f = font(15 * S, True)
+    tw = d.textlength(label, font=f)
+    d.rectangle([(lx0 + lx1) / 2 - tw / 2 - 10 * S, ly - 12 * S, (lx0 + lx1) / 2 + tw / 2 + 10 * S, ly + 12 * S],
+                fill=BG)
+    d.text(((lx0 + lx1) / 2 - tw / 2, ly - 10 * S), label, font=f, fill=col)
+    out = OUT / "readme-pipeline.png"
+    img.save(out, optimize=True)
+    return out
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
-    for fn in (gallery, conditions, validator, results):
+    for fn in (gallery, conditions, pipeline, validator, results):
         print(fn())

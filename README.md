@@ -69,17 +69,7 @@ Every task comes with:
 
 ## How it works
 
-```mermaid
-flowchart LR
-    A["1. Sample a spec<br/>range · scale · zones · conditions"] --> B["2. Draw the instrument<br/>+ hidden evidence masks"]
-    B --> C["3. Photograph it<br/>glare · tilt · blur · noise"]
-    C --> D{"4. Re-read it<br/>from the pixels"}
-    D -- "readable" --> E["5. Publish<br/>image + question + key"]
-    D -- "not readable" --> R["Reject, log why,<br/>retry with a new seed"]
-    R --> A
-    E --> F["6. Ask the models<br/>Gemini · Claude · baselines"]
-    F --> G["7. Score within tolerance<br/>→ report + Studio"]
-```
+![The pipeline: sample a spec, draw, photograph, re-read from pixels (reject and retry if unreadable), publish, ask the models, score](docs/images/readme-pipeline.png)
 
 The same seed always produces the same task, byte for byte. A new seed produces brand-new tasks, so the benchmark can be regenerated whenever a model might have trained on the old one.
 
