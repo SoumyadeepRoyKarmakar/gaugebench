@@ -1,7 +1,7 @@
 # Deck content: GaugeBench
 
 Paste each section into the matching slide of the **official Hack2skill template** (Resources tab). The template is mandatory, so this file is content only.
-`[[ ... ]]` marks things to fill in after the real model run.
+`[[ ... ]]` marks things still to fill in.
 
 **Built deck (official template, filled in):** Google Slides copy in the team leader's Drive, titled "Larp-Maxxing | GaugeBench | Innodata Idea Submission". Update it there after the full run.
 
@@ -68,7 +68,7 @@ Three independent guards, applied to **every** task before it is published:
 - **The validator caught a real flaw:** a model miss led us to a cramped dial where the printed numbers ran together. We added an overlap check, and it now rejects those dials automatically.
 
 ## Slide 8c: Inspection rounds (in the built deck before "Results")
-Image: `docs/images/readme-round.png` (a contact sheet of 5 camera photos, each a different instrument). Side panel: the job (log every reading, flag every gauge in the red), every photo verified (re-shot if it fails), scored like a supervisor (a round passes only if everything is right), baselines: knows the key 100%, one reading off 0%, random 0% with 21 false alarms, never-alarm 0 of 31 caught. [[add Gemini's inspection-round result after the run]]
+Image: `docs/images/readme-round.png` (a contact sheet of 5 camera photos, each a different instrument). Side panel: the job (log every reading, flag every gauge in the red), every photo verified (re-shot if it fails), scored like a supervisor (a round passes only if everything is right), baselines: knows the key 100%, one reading off 0%, random 0% with 21 false alarms, never-alarm 0 of 31 caught. **Gemini 3.5 Flash-Lite: 0 of 20 perfect rounds, 32% of readings right, 16 of 31 alarms caught, 4 false alarms.**
 
 ## Slide 6: Scoring separates right from wrong
 | Reference answerer | Score |
@@ -81,32 +81,32 @@ Image: `docs/images/readme-round.png` (a contact sheet of 5 camera photos, each 
 - **Blind ablation:** the same questions sent **without the image** show the tasks need vision. [[blind score]]
 
 ## Slide 7: Results on frontier models
-*Gemini 3.5 Flash-Lite, 198 of 384 tasks answered so far (free-tier daily cap); refresh after the full run.* [[update with final numbers]]
+*Gemini 3.5 Flash-Lite, all 384 tasks answered.*
 
 | Skill | Accuracy |
 |---|---|
 | Zone status | **100%** |
 | Panel max (mixed ranges) | 95% |
 | Panel alarm | 85% |
-| Set-point deviation | 69% |
-| Panel count | 68% |
+| Panel count | 70% |
 | Dual scale | 65% |
 | Tank level | 65% |
+| Set-point deviation | 60% |
 | Change over time | 50% |
-| **Read the exact value** | **37%** |
-| **Overall** | **67%** |
+| **Read the exact value** (224 tasks incl. sweeps) | **36%** |
+| **Overall** (384 tasks; mixed tasks average 72%) | **52%** |
 
 - **Headline:** the model is near-perfect at "roughly where is the needle?" but reads the exact value correctly only about a third of the time. In a plant, the exact value is the job.
-- **It snaps to tick marks:** a needle at 4.6 bar was reported as "approximately 4". 23 of 56 wrong numbers (41%) were near misses within 2× the tolerance; only 1 was wild (>20×). The errors are imprecision, not misread scales.
-- **Difficulty barely matters:** accuracy is 72% on clean dials (level 1) and 69% on the hardest mixed dials (level 5), so the main weakness is precise reading itself, not glare or tilt.
-- **Capability curves:** accuracy as one factor gets harder (glare, tilt, scale type, …): [[1–2 key curves, after full run]]
+- **It snaps to tick marks:** a needle at 4.6 bar was reported as "approximately 4". 77 of 175 wrong numbers (44%) were near misses within 2× the tolerance; only 1 was wild (>20×). The errors are imprecision, not misread scales.
+- **Difficulty barely matters:** mixed tasks score 72% at level 1 and 67% at level 5, so the main weakness is precise reading itself, not glare or tilt.
+- **Capability curves (6 tasks per setting, a signal rather than a precise curve):** tick density matters most, 83% with 2 small divisions between labels vs 17% with 10; camera tilt drops it from 50% (none) to 17% (15° or more).
 - **Range trap:** the model avoided it. 0 of 1 wrong panel-max answers picked the furthest-turned needle.
 - **Wrong ring:** 0 of 7 wrong dual-scale answers were the other scale's reading. It finds the right ring and then misreads it.
 
 ## Slide 7b: New instruments (in the built deck after "Example tasks")
 Images from `runs/instruments`: a clock-dial meter (key 8072 kWh), a vernier caliper (key 57.5 mm), and an LCD showing 469.9 with ×10 lit (key 4699 V).
 - Each has its own independent pixel re-reader and ambiguity checks.
-- The digital display is the control: is the models' trouble analogue reading itself, or the photo? [[add Gemini's digital vs analogue accuracy after the run]]
+- The digital display is the control. **Gemini 3.5 Flash-Lite: digital display 62% (all 3 misses ignored the ×10/×100 indicator), clock-dial meter 12%, vernier 0%.** It reads digits, not analogue sub-divisions: the trouble is analogue reading itself, not the photo.
 
 ## Slide 7c: GaugeBench Studio (in the built deck after "Features")
 Screenshot: `docs/images/studio-bench.png`.

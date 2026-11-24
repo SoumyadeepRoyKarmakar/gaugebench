@@ -29,11 +29,13 @@ Innodata AI Hackathon · Track 2: Visual Task Factory
 What this shows:
 
 - **Coarse judgements are solved.** Which colour band is the needle in? Which gauge on a panel is in alarm? The model gets these right almost every time.
-- **Precise reading is not.** Asked for the actual number, it is right about 1 time in 3. It snaps to the nearest labelled tick: a needle at 4.6 bar becomes "about 4". Its wrong numbers are close but outside tolerance, not wild guesses.
-- **Hard conditions barely matter.** Accuracy is about the same on clean dials and on the hardest tilted, glary ones. The weakness is precise reading itself, not bad photos.
+- **Precise reading is not.** Asked for the actual number, it is right about 1 time in 3 (36% of 224 tasks). It snaps to the nearest labelled tick: a needle at 4.6 bar becomes "about 4". Of 175 wrong numbers, 44% were within twice the tolerance and only 1 was off by more than 20×: imprecision, not misread scales.
+- **Hard conditions barely matter, fine ticks do.** Mixed tasks score 72% at level 1 and 67% at level 5. The clearest single factor is tick density: 83% with 2 small divisions between labels, 17% with 10 (the sweeps have 6 tasks per setting, so treat them as a signal, not a precise curve).
+- **It reads digits, not analogue sub-divisions.** On the new instruments: digital display 62% (all 3 misses ignored the ×10/×100 indicator), clock-dial meter 12%, vernier caliper 0%. The digital display is the control, so the trouble is analogue reading itself, not the photos.
+- **The whole job is out of reach.** On 20 inspection rounds it never got a round fully right: 32% of readings correct, 16 of 31 alarms caught, 4 false alarms (see [Inspection rounds](#inspection-rounds-a-job-not-a-question)).
 - **The scoring is provably fair.** An answerer that knows the key scores 100%, one that is just outside tolerance scores 0%, and random guessing scores about 7%.
 
-*Results so far cover the answered tasks shown in the chart (the free API tier has a daily limit). Every answer, with the model's reasoning, is browsable in the [live Archive](https://gaugebench-studio.onrender.com/?view=archive).*
+*All 384 tasks answered. The overall figure includes 204 single-factor sweeps of exact reading; the mixed tasks average 72%. Every answer, with the model's reasoning, is browsable in the [live Archive](https://gaugebench-studio.onrender.com/?view=archive).*
 
 ## What a task looks like
 
@@ -126,12 +128,13 @@ A single question shows whether a model can *read* a gauge. A plant needs more: 
 
 | Reference answerer | Perfect rounds | Readings right | Alarms caught | False alarms |
 |---|---|---|---|---|
+| **Gemini 3.5 Flash-Lite** | **0%** | **32%** | **16 / 31** | **4** |
 | Knows the key | 100% | 100% | 31 / 31 | 0 |
 | One reading just outside tolerance | 0% | 81% | 31 / 31 | 0 |
 | Random guessing | 0% | 7% | 10 / 31 | 21 |
 | Mid-scale guess, never raises an alarm | 0% | 2% | 0 / 31 | 0 |
 
-*20 rounds, offline reference answerers. Play one yourself in the Studio: pick **Inspection round** on the Bench.*
+*20 rounds; Gemini answered all of them. Play one yourself in the Studio: pick **Inspection round** on the Bench.*
 
 ## GaugeBench Studio: try it yourself
 

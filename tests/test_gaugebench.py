@@ -425,3 +425,15 @@ def test_inspection_round_publishes_valid_tasks_and_scores_partial_credit(tmp_pa
     p = parse_round("blah\nANSWER:\nPI - 301 = 4.5;\nPI-302: 1,200\n| ALARMS: none", ["PI-301", "PI-302"])
     assert p == {"readings": {"PI-301": 4.5, "PI-302": 1200.0}, "alarms": []}
     assert parse_round("no final line here", ["PI-301"]) is None
+
+
+def test_evaluate_limit_keeps_earlier_answers(tmp_path):
+    """A partial run (--limit / --families) must never drop answers cached by an earlier run."""
+    from gaugebench.evaluate import evaluate
+    from gaugebench.models import get_model
+    generate(tmp_path, plan_suite(2, 0, ["read_value", "zone_status"], []), seed=8, log=lambda *a: None)
+    evaluate(tmp_path, get_model("oracle"), workers=1, log=lambda *a: None)
+    evaluate(tmp_path, get_model("oracle"), workers=1, limit=1, log=lambda *a: None)
+    evaluate(tmp_path, get_model("oracle"), workers=1, families=["zone_status"], log=lambda *a: None)
+    rows = (tmp_path / "results" / "oracle.jsonl").read_text(encoding="utf-8").splitlines()
+    assert len(rows) == 4

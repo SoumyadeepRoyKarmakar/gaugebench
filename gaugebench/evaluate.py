@@ -69,8 +69,10 @@ def evaluate(suite: Path, model: Model, workers: int = 4, limit: int | None = No
             if i % 10 == 0 or i == len(futs):
                 log(f"  {i}/{len(futs)}  running acc {n_ok / i:.1%}  ({time.time() - t0:.0f}s)")
 
+    # compact the file: every cached answer is kept (also those outside --limit / --families),
+    # in manifest order, and failed attempts are dropped so the next run retries them
+    order = {t["id"]: i for i, t in enumerate(load_manifest(suite))}
     with open(out, "w", encoding="utf-8") as f:
-        for t in tasks:
-            if t["id"] in done:
-                f.write(json.dumps(done[t["id"]], ensure_ascii=False) + "\n")
+        for tid in sorted(done, key=lambda k: order.get(k, len(order))):
+            f.write(json.dumps(done[tid], ensure_ascii=False) + "\n")
     return out
